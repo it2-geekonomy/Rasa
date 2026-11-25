@@ -1,5 +1,6 @@
 "use client";
 
+import { forwardRef } from "react";
 import { DAYS, EV } from "@/lib/rasa/catalog";
 import { fmtMinutes } from "@/lib/rasa/time";
 import { usePlan } from "@/contexts/plan-context";
@@ -54,7 +55,10 @@ function clashes(planIds: string[]) {
   return out;
 }
 
-export function PlanSidebar({ mobileOpen, onMobileClose }: Props) {
+export const PlanSidebar = forwardRef<HTMLElement, Props>(function PlanSidebar(
+  { mobileOpen, onMobileClose },
+  ref,
+) {
   const { plan, clearPlan } = usePlan();
   const { toast } = useToast();
   const events = plan.map((id) => EV.find((e) => e.id === id)).filter(Boolean);
@@ -62,6 +66,7 @@ export function PlanSidebar({ mobileOpen, onMobileClose }: Props) {
 
   return (
     <aside
+      ref={ref}
       className={`sticky top-[132px] rounded-2xl bg-tint p-5 max-md:static max-md:mt-5 ${
         mobileOpen ? "max-md:!block" : "max-md:hidden"
       }`}
@@ -130,4 +135,4 @@ export function PlanSidebar({ mobileOpen, onMobileClose }: Props) {
       ) : null}
     </aside>
   );
-}
+});

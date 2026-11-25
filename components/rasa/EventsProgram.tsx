@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DAYS, EV, TYPES, dayOf } from "@/lib/rasa/catalog";
 import type { DayId } from "@/lib/rasa/types";
@@ -13,9 +13,9 @@ import { usePlan } from "@/contexts/plan-context";
 type Props = { day: DayId; focusId?: string };
 
 export function EventsProgram({ day: initialDay, focusId }: Props) {
-  const { day, setDay, plan } = usePlan();
+  const { day, setDay, mobilePlanOpen, closeMobilePlan } = usePlan();
   const [type, setType] = useState("all");
-  const [mobilePlan, setMobilePlan] = useState(false);
+  const planAsideRef = useRef<HTMLElement>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -29,6 +29,12 @@ export function EventsProgram({ day: initialDay, focusId }: Props) {
       el?.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   }, [focusId]);
+
+  useEffect(() => {
+    if (mobilePlanOpen) {
+      planAsideRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [mobilePlanOpen]);
 
   const d = dayOf(day as DayId);
   let list = EV.filter(
@@ -108,16 +114,13 @@ export function EventsProgram({ day: initialDay, focusId }: Props) {
               </p>
             )}
           </div>
-          <PlanSidebar mobileOpen={mobilePlan} onMobileClose={() => setMobilePlan(false)} />
+          <PlanSidebar
+            ref={planAsideRef}
+            mobileOpen={mobilePlanOpen}
+            onMobileClose={closeMobilePlan}
+          />
         </div>
       </div>
-      <button
-        type="button"
-        className="planfab fixed bottom-[calc(78px+env(safe-area-inset-bottom))] right-3.5 z-25 hidden max-md:flex min-h-12 items-center gap-2 rounded-full bg-burg px-5 py-3 font-bold text-white shadow-[0_6px_18px_rgba(63,20,65,.35)]"
-        onClick={() => setMobilePlan((v) => !v)}
-      >
-        Your plan <b>{plan.length}</b>
-      </button>
     </>
   );
 }
