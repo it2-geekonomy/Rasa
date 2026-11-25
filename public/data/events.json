@@ -1,0 +1,507 @@
+[
+ {
+  "id": "f1",
+  "d": "fri",
+  "s": 990,
+  "e": 1080,
+  "ty": "perf",
+  "t": "Inauguration and Dance Performances by Upcoming Artists",
+  "w": "All are welcome",
+  "v": "Amphitheatre",
+  "x": "The inauguration of RASA, followed by dance performances by upcoming artists. All are welcome. Details coming soon."
+ },
+ {
+  "id": "f5",
+  "d": "fri",
+  "s": 1110,
+  "e": 1320,
+  "tl": "6:30 PM",
+  "ts": "onwards",
+  "dl": "Three Forces, One Stage 6:30 to 7:30 PM, then Agam Band from 7:30 PM",
+  "ty": "perf",
+  "t": "Three Forces, One Stage, then Agam Band",
+  "w": "One ticket (includes both shows)",
+  "v": "Auditorium",
+  "a": [
+   "harish",
+   "sumanth",
+   "banjo",
+   "agam"
+  ],
+  "x": "Three Forces, One Stage, 6:30 to 7:30 PM: Harish Sivaramakrishnan, Sumanth Manjunath and Banjo Rancho bring together diverse sounds and traditions in a special musical collaboration. Harish Sivaramakrishnan is the lead vocalist and a founder member of the Bengaluru Carnatic progressive rock band Agam, and a playback singer in Malayalam, Tamil and Telugu cinema; in 2021 he won the SIIMA award for Best Playback Singer (Male) in Tamil for \"Veyyon Silli\" from Soorarai Pottru. Sumanth Manjunath is a violinist from Mysuru and Banjo Rancho is a drummer from Malta. Then Agam Band, 7:30 PM onwards: AGAM, the Carnatic Progressive Rock Experience, an acclaimed Bengaluru band that brings together the richness of Carnatic music and the energy of progressive rock. One ticket includes both shows.",
+  "img": [
+   "poster-fri1",
+   "poster-fri2"
+  ],
+  "imgalt": [
+   "Poster: Three Forces, One Stage",
+   "Poster: Agam Band, live in concert"
+  ]
+ },
+ {
+  "id": "f4",
+  "d": "fri",
+  "s": 1320,
+  "e": 1320,
+  "nt": 1,
+  "tl": "Open",
+  "ts": "all are welcome",
+  "ty": "art",
+  "t": "TANDAV Art Show",
+  "w": "By Artist Bhagya Ajaikumar",
+  "v": "Welcome Area",
+  "x": "Abstract prints and sculptures by Artist Bhagya Ajaikumar, bringing together colour, movement and Indian artistic expression. Displayed on Friday, opening day, in the Welcome Area. All are welcome."
+ },
+ {
+  "id": "s4",
+  "d": "sat",
+  "s": 600,
+  "e": 780,
+  "o": 0,
+  "ty": "work",
+  "ws": 1,
+  "t": "Kolu: Kalaripayattu and Animal Poses",
+  "w": "By Mandira (Atha Beyond)",
+  "v": "Banquet Hall",
+  "a": [
+   "atha"
+  ],
+  "x": "A three hour hands-on session in Kalaripayattu, one of the oldest martial arts in the world, with Mandira of Atha Beyond. Includes the animal poses (Kolu). Any number of participants.",
+  "price": "₹899 per person",
+  "pic": "atha-4",
+  "pp": "50% 35%",
+  "palt": "Mandira of Atha Beyond holding a Kalaripayattu shield, ready to strike"
+ },
+ {
+  "id": "s1",
+  "d": "sat",
+  "s": 600,
+  "e": 660,
+  "o": 1,
+  "ty": "work",
+  "ws": 1,
+  "t": "Salsa Workshop",
+  "w": "By Lourd Vijay (LVDS)",
+  "v": "Rehearsal Studio",
+  "a": [
+   "lourd"
+  ],
+  "x": "A one hour So Salsa session led by Lourd Vijay of LVDS. Any number of participants. Take Salsa and Jive together at a lower price.",
+  "price": "₹999 per person. Salsa and Jive together (2 hours): ₹1,499",
+  "pic": "lourd-1",
+  "pp": "50% 55%",
+  "palt": "Dancers following the instructor in a salsa workshop"
+ },
+ {
+  "id": "s1b",
+  "d": "sat",
+  "s": 660,
+  "e": 720,
+  "ty": "work",
+  "ws": 1,
+  "t": "Jive Workshop",
+  "w": "By Lourd Vijay (LVDS)",
+  "v": "Rehearsal Studio",
+  "a": [
+   "lourd"
+  ],
+  "x": "A one hour Jive session led by Lourd Vijay of LVDS. Any number of participants. Take Salsa and Jive together at a lower price.",
+  "price": "₹999 per person. Salsa and Jive together (2 hours): ₹1,499"
+ },
+ {
+  "id": "s2a",
+  "d": "sat",
+  "s": 720,
+  "e": 780,
+  "ty": "well",
+  "ws": 1,
+  "t": "Sound Healing Workshop, session 1",
+  "w": "By Siddharth Venkat",
+  "v": "Rehearsal Studio",
+  "a": [
+   "siddharth"
+  ],
+  "x": "An immersive experience using therapeutic sounds and vibrations to promote relaxation, inner balance and holistic well-being. Siddharth Venkat works with traditional and tribal instruments in sound baths and sound journeys.",
+  "price": "₹999 per person",
+  "seats": "Limited seats: 25 participants per session",
+  "pic": "sid-bath",
+  "pp": "50% 45%",
+  "palt": "Siddharth Venkat kneeling among singing bowls and drums for a sound bath"
+ },
+ {
+  "id": "s2b",
+  "d": "sat",
+  "s": 780,
+  "e": 840,
+  "ty": "well",
+  "ws": 1,
+  "t": "Sound Healing Workshop, session 2",
+  "w": "By Siddharth Venkat",
+  "v": "Rehearsal Studio",
+  "a": [
+   "siddharth"
+  ],
+  "x": "An immersive experience using therapeutic sounds and vibrations to promote relaxation, inner balance and holistic well-being. The second of two sessions on Saturday.",
+  "price": "₹999 per person",
+  "seats": "Limited seats: 25 participants per session"
+ },
+ {
+  "id": "s3",
+  "d": "sat",
+  "s": 840,
+  "e": 930,
+  "ty": "work",
+  "ws": 1,
+  "t": "The Art of Drumming",
+  "w": "By Banjo Rancho",
+  "v": "Rehearsal Studio",
+  "a": [
+   "banjo"
+  ],
+  "x": "Exploring rhythm, creativity and possibilities of the drum set. An engaging, fun and interactive workshop on the drum set, its history and evolution, and how it is used across musical styles and beyond music, in dance, theatre, film and sound effects. It looks at traditional and contemporary approaches, solo and group playing, composition and improvisation, with practical demonstrations and hands-on work on rhythmic patterns, stick techniques, coordination and practice methods. Open to everyone. No previous experience is necessary.",
+  "price": "₹599 per person",
+  "seats": "Limited seats: 30 participants",
+  "pic": "ws-group",
+  "pp": "50% 45%",
+  "palt": "Banjo Rancho with a group of workshop participants holding drums and percussion"
+ },
+ {
+  "id": "s5",
+  "d": "sat",
+  "s": 840,
+  "e": 960,
+  "ty": "well",
+  "ws": 1,
+  "t": "Yoga Raaga",
+  "w": "By Dr. Vinaya Nair and Sumanth Manjunath",
+  "v": "Banquet Hall",
+  "a": [
+   "vinaya",
+   "sumanth"
+  ],
+  "x": "Yoga Raaga: Ancient Raagas for the Inner Harmony. Any number of participants.",
+  "price": "₹999 per person",
+  "pic": "vin-read",
+  "pp": "50% 40%",
+  "palt": "Dr. Vinaya Nair speaking at a podium about the Carnatic framework of raga, tala and shruti"
+ },
+ {
+  "id": "s8",
+  "d": "sat",
+  "s": 930,
+  "e": 990,
+  "ty": "perf",
+  "t": "A Kathak Performance",
+  "w": "By Labonee Mohanta",
+  "v": "Auditorium",
+  "a": [
+   "labonee"
+  ],
+  "pair": "One ticket (includes this show and Khechara Academy of Bharatanatyam)",
+  "x": "Internationally touring Kathak dancer Labonee Mohanta will captivate you with lightning-fast spins, intricate footwork, expressive storytelling, and dynamic rhythmic interplay with live musicians. She will also showcase the unique innovation of Kathak Yoga, in which she dances, plays an instrument, and sings, all at the same time!",
+  "img": [
+   "poster-kathak"
+  ],
+  "imgalt": [
+   "Poster: A Kathak Performance by Labonee Mohanta"
+  ]
+ },
+ {
+  "id": "s9",
+  "d": "sat",
+  "s": 990,
+  "e": 1065,
+  "ty": "perf",
+  "t": "Khechara Academy of Bharatanatyam",
+  "w": "Anuradha Sridhar",
+  "v": "Auditorium",
+  "a": [
+   "anuradha"
+  ],
+  "pair": "One ticket (includes this show and Kathak Performance)",
+  "x": "A Bharatanatyam performance by Anuradha Sridhar and Khechara Academy of Bharatanatyam, Bengaluru.",
+  "img": [
+   "poster-khechara"
+  ],
+  "imgalt": [
+   "Poster: Khechara Academy of Bharatanatyam"
+  ]
+ },
+ {
+  "id": "s14",
+  "d": "sat",
+  "s": 1065,
+  "e": 1100,
+  "ty": "perf",
+  "t": "Dance Alchemy",
+  "w": "By LVDS, Lourd Vijay Dance Studio",
+  "v": "Auditorium",
+  "a": [
+   "lourd"
+  ],
+  "pair": "One ticket (includes this show and Sri Nimishambha School of Dance)",
+  "x": "Experience Dance Alchemy, a first-of-its-kind celebration of movement, bringing together Western dance styles, Indian classical forms, folk traditions and cultural influences. Curated by globally acclaimed Latin dance exponent Lourd Vijay, this unique production promises an exciting fusion of rhythms and styles.",
+  "img": [
+   "poster-alchemy"
+  ],
+  "imgalt": [
+   "Poster: Dance Alchemy by Lourd Vijay Dance Studio"
+  ]
+ },
+ {
+  "id": "s13",
+  "d": "sat",
+  "s": 1080,
+  "e": 1200,
+  "ty": "art",
+  "t": "Art Exhibition by Swasti Gallery (HCG Foundation)",
+  "w": "Open for all",
+  "v": "Banquet Hall",
+  "x": "An art exhibition by Swasti Gallery, the art gallery of HCG Foundation, in the Banquet Hall. All are welcome. More about the gallery: <a class=\"lnk\" href=\"https://www.hcgfoundation.org/swasti-art-gallery\" target=\"_blank\" rel=\"noopener\">Swasti Art Gallery at HCG Foundation</a> and <a class=\"lnk\" href=\"https://www.instagram.com/swasti_gallery/\" target=\"_blank\" rel=\"noopener\">Swasti Gallery on Instagram</a>."
+ },
+ {
+  "id": "s10",
+  "d": "sat",
+  "s": 1100,
+  "e": 1175,
+  "ty": "perf",
+  "t": "Sri Nimishambha School of Dance",
+  "w": "Mysuru",
+  "v": "Auditorium",
+  "a": [
+   "nimishambha"
+  ],
+  "pair": "One ticket (includes this show and Dance Alchemy)",
+  "x": "Sri Nimishambha School of Dance, curated by Apthamitra-fame Guru Vidwan Sridhar Jain, presenting a vibrant showcase of Bharatanatyam, Kathak, Odissi and Indian folk, beautifully interwoven with elements of fusion.",
+  "img": [
+   "poster-nimi"
+  ],
+  "imgalt": [
+   "Poster: Sri Nimishambha School of Dance"
+  ]
+ },
+ {
+  "id": "s12",
+  "d": "sat",
+  "s": 1185,
+  "e": 1320,
+  "tl": "7:45 PM",
+  "ts": "onwards",
+  "dl": "7:45 PM onwards",
+  "ty": "perf",
+  "t": "Fusion Express",
+  "w": "Concert night",
+  "pair": "One ticket grants access to all other ticketed events taking place on the same day",
+  "v": "Auditorium",
+  "a": [
+   "bickram",
+   "sumanth",
+   "venkat",
+   "ghatam",
+   "banjo",
+   "ned",
+   "quinten"
+  ],
+  "x": "Bickram Ghosh on tabla, Ghatam Giridhar Udupa on percussion, Sumanth Manjunath on violin, Venkatraman S on Carnatic piano and harmonium, Banjo Rancho on drums, Ned McGowan on electric flute and Quinten Rutgers on vocals and guitar. Mysore Manjunath joins as a special appearance in the last 30 minutes of the show.",
+  "img": [
+   "poster-fusion"
+  ],
+  "imgalt": [
+   "Poster: Fusion Express"
+  ]
+ },
+ {
+  "id": "u1",
+  "d": "sun",
+  "s": 435,
+  "e": 510,
+  "ty": "well",
+  "ws": 1,
+  "t": "Dance Fitness",
+  "w": "Details coming soon",
+  "v": "Amphitheatre",
+  "x": "A dance fitness session to start the Sunday morning. The teacher and price will be announced."
+ },
+ {
+  "id": "u3",
+  "d": "sun",
+  "s": 510,
+  "e": 570,
+  "ty": "well",
+  "t": "Talk on Active Health and Longevity",
+  "w": "With Soul Santé",
+  "v": "Amphitheatre"
+ },
+ {
+  "id": "u2",
+  "d": "sun",
+  "s": 570,
+  "e": 690,
+  "ty": "art",
+  "t": "Organic Food Breakfast",
+  "w": "Arogya (HCG)",
+  "v": "Amphitheatre",
+  "x": "An organic food breakfast by Arogya, HCG. Price to be announced."
+ },
+ {
+  "id": "u4",
+  "d": "sun",
+  "s": 600,
+  "e": 690,
+  "ty": "work",
+  "ws": 1,
+  "t": "Meipadam Workshop",
+  "w": "By Vijayalakshmi Somashekarappa",
+  "v": "Rehearsal Studio",
+  "a": [
+   "vijay"
+  ],
+  "pic": "vijay",
+  "pp": "50% 30%",
+  "palt": "Vijayalakshmi S in a warrior fitness pose on rocks",
+  "x": "Meipadam, an Indian martial art whose name means \"body art\" in Tamil, led by Vijayalakshmi Somashekarappa, certified Meipadam and Karlakattai coach. Any number of participants.",
+  "price": "₹499 per person"
+ },
+ {
+  "id": "u5",
+  "d": "sun",
+  "s": 690,
+  "e": 870,
+  "ty": "work",
+  "ws": 1,
+  "t": "Bharatanatyam Workshop: Dikshitar Kriti",
+  "w": "By Guru Smt. Anuradha Sridhar",
+  "v": "Rehearsal Studio",
+  "a": [
+   "anuradha"
+  ],
+  "x": "A three hour Bharatanatyam workshop on a Dikshitar kriti, led by Guru Smt. Anuradha Sridhar. Prerequisite: Senior exam passed.",
+  "price": "₹2,500 per person"
+ },
+ {
+  "id": "u6",
+  "d": "sun",
+  "s": 870,
+  "e": 1020,
+  "ty": "work",
+  "ws": 1,
+  "t": "Carving Rhythm – Linocut Printmaking Workshop",
+  "w": "By Artist Bhagya Ajaikumar",
+  "v": "Rehearsal Studio",
+  "a": [
+   "bhagya"
+  ],
+  "x": "Discover the art of linocut printmaking in this hands-on creative workshop. Drawing inspiration from classical Indian dance mudras, rhythmic percussion patterns and traditional temple architecture, participants will sketch, carve and print their own unique designs. Learn basic carving techniques, explore textures and patterns, and create beautiful handmade prints on cotton rag paper to take home. No prior printmaking experience required.<br>Age: 18+<br>Duration: 2.5 hours<br>Prerequisites: None",
+  "price": "₹1,200 per person",
+  "seats": "Limited seats: 20 participants",
+  "pic": "lino-2",
+  "pp": "50% 55%",
+  "palt": "Artist Bhagya Ajaikumar pressing a linocut block onto paper at a table"
+ },
+ {
+  "id": "u7",
+  "d": "sun",
+  "s": 960,
+  "e": 1080,
+  "ty": "art",
+  "ws": 1,
+  "t": "Fusion Culinary Exploration",
+  "w": "By Chef Shruthi Agrawal",
+  "v": "Banquet Hall",
+  "a": [
+   "shruthi"
+  ],
+  "x": "A fusion culinary exploration led by Chef Shruthi Agrawal in the Banquet Hall. Price to be announced."
+ },
+ {
+  "id": "u8",
+  "d": "sun",
+  "s": 990,
+  "e": 1080,
+  "ty": "perf",
+  "t": "Interactive Discussion on Mahabharata",
+  "w": "By Dr B S Ajaikumar",
+  "v": "Amphitheatre",
+  "x": "An interactive discussion on the Mahabharata led by Dr B S Ajaikumar. Open for all."
+ },
+ {
+  "id": "u9",
+  "d": "sun",
+  "s": 1080,
+  "e": 1140,
+  "tl": "6:00 PM",
+  "ts": "onwards",
+  "dl": "6:00 PM onwards",
+  "ty": "perf",
+  "t": "Nritya Naada",
+  "w": "Sumanth, Labonee and Aagnika",
+  "v": "Amphitheatre",
+  "a": [
+   "sumanth",
+   "labonee",
+   "aagnika"
+  ],
+  "x": "Nritya Naada brings dance and music together, with Sumanth Manjunath on violin, Labonee Mohanta in Kathak and Aagnika Ajaikumar in Bharatanatyam. Open for all."
+ },
+ {
+  "id": "u10",
+  "d": "sun",
+  "s": 1140,
+  "e": 1170,
+  "tl": "7:00 PM",
+  "ts": "onwards",
+  "dl": "7:00 PM onwards",
+  "ty": "perf",
+  "t": "The Warrior's Path",
+  "w": "Kalaripayattu, by Atha Beyond",
+  "v": "Auditorium",
+  "a": [
+   "atha"
+  ],
+  "pair": "One ticket (includes this show and Mahabharata: A Mirror to Humanity)",
+  "x": "The Making of an Epic Warrior. A Kalaripayattu performance by Atha Beyond that imagines how a warrior of the Mahabharata age would have trained, in body, mind and spirit: surrender to the guru, forging the body, one-pointed focus, mastery of weapons, and the warrior's code of knowing when not to strike. Told through authentic Kalari practice, with an oil lamp, live percussion and moments of silence. Continues straight into Mahabharata: A Mirror to Humanity, with no break between the two.",
+  "img": [
+   "poster-warrior"
+  ],
+  "imgalt": [
+   "Poster: The Warrior's Path, Kalaripayattu by Atha Beyond"
+  ]
+ },
+ {
+  "id": "u11",
+  "d": "sun",
+  "s": 1170,
+  "e": 1290,
+  "tl": "7:00 PM",
+  "ts": "onwards",
+  "dl": "7:00 PM onwards",
+  "ty": "perf",
+  "t": "Mahabharata: A Mirror to Humanity: The Dilemma of Dharma",
+  "w": "Mallika Sarabhai, Dr. Lakshminarayan, Dr. Vasanth Kiran and Vyjayanthi Kashi",
+  "v": "Auditorium",
+  "a": [
+   "mallika",
+   "jena",
+   "vasanth",
+   "vyjayanthi"
+  ],
+  "pair": "One ticket (includes this show and The Warrior's Path)",
+  "x": "The evening begins with The Warrior's Path at 7:00 PM and continues straight into Mahabharata, with no break between them. A captivating theatrical dance and movement experience exploring the untold stories, emotions and complexities of Ambe, Karna, Draupadi, Bheema and Duryodhana. Vyjayanthi Kashi as Ambe, Mallika Sarabhai as Draupadi, Dr. Lakshminarayan as Karna and Dr. Vasanth Kiran as Bheema bring the timeless epic to life through powerful storytelling and dance. 7:00 PM onwards in the Auditorium, after The Warrior's Path.",
+  "img": "poster-mb",
+  "imgalt": "Poster of Mahabharata: A Mirror to Humanity, The Dilemma of Dharma, with Mallika Sarabhai, Vyjayanthi Kashi, Dr. Lakshminarayan and Dr. Vasanth Kiran"
+ },
+ {
+  "id": "u12",
+  "d": "sun",
+  "s": 1350,
+  "e": 1350,
+  "nt": 1,
+  "tl": "Post-show",
+  "ts": "",
+  "ty": "perf",
+  "t": "Meet the RASA Artists",
+  "w": "",
+  "v": "",
+  "x": "Meet the artists after the show."
+ }
+]

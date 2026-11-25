@@ -1,0 +1,64 @@
+{
+ "posters_by_event_id": {
+  "f5": [
+   [
+    "poster-fri1",
+    "Poster: Three Forces, One Stage"
+   ],
+   [
+    "poster-fri2",
+    "Poster: Agam Band, live in concert"
+   ]
+  ],
+  "s8": [
+   [
+    "poster-kathak",
+    "Poster: A Kathak Performance by Labonee Mohanta"
+   ]
+  ],
+  "s9": [
+   [
+    "poster-khechara",
+    "Poster: Khechara Academy of Bharatanatyam"
+   ]
+  ],
+  "s14": [
+   [
+    "poster-alchemy",
+    "Poster: Dance Alchemy by Lourd Vijay Dance Studio"
+   ]
+  ],
+  "s10": [
+   [
+    "poster-nimi",
+    "Poster: Sri Nimishambha School of Dance"
+   ]
+  ],
+  "s12": [
+   [
+    "poster-fusion",
+    "Poster: Fusion Express"
+   ]
+  ],
+  "u10": [
+   [
+    "poster-warrior",
+    "Poster: The Warrior's Path, Kalaripayattu by Atha Beyond"
+   ]
+  ]
+ },
+ "workshops": [
+  "s4",
+  "s1",
+  "s1b",
+  "s2a",
+  "s2b",
+  "s3",
+  "s5",
+  "u1",
+  "u4",
+  "u5",
+  "u6",
+  "u7"
+ ]
+}

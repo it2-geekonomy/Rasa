@@ -1,0 +1,630 @@
+[
+ {
+  "id": "anuradha",
+  "n": "Anuradha Sridhar",
+  "r": "Khechara Academy of Bharatanatyam and Bharatanatyam workshop",
+  "c": "dance",
+  "img": [
+   "kh-1",
+   "kh-2",
+   "kh-3"
+  ],
+  "pos": "50% 45%",
+  "land": 1,
+  "ev": [
+   "s9",
+   "u5"
+  ],
+  "bio": [
+   "Anuradha Sridhar is a Bharatanatyam dancer and teacher. With her husband Dr. Sridhar she has performed as a duo since their marriage in 1991, and their profile describes them as one of the leading dance couples in Bharatanatyam. Both trained first under Guru Radha Sridhar of Bengaluru and then in the Kalakshetra style under Guru M.R. Krishnamurthy and Krishnaveni Lakshmanan. Anuradha graduated from Kalakshetra College of Fine Arts, Chennai, with distinction in 1993.",
+   "Their choreography draws on the epics and great literary works, including the Ramayana, Mahabharata, Mahaveera Karna and Upanishad Sandesha. They have danced at the Madras Music Academy, Sri Krishna Gana Sabha, Narada Gana Sabha, the Sangeet Natak Akademi and the Hampi festival, and in the USA, France, Germany, Switzerland, the UK, Singapore, Kenya, Sri Lanka and the Gulf.",
+   "Dr. Sridhar received a D.Lit from Kannada University, Hampi, in 2015, the Karnataka Rajyotsava Prashasti in 2002 and the Karnataka Kalasri award in 2007, and was a film actor in five languages in the 1980s and 90s. In 1994 the couple founded Khechara Academy of Bharatanatyam in Bengaluru. At RASA, Anuradha Sridhar and Khechara Academy perform on Saturday at 4:30 PM in the Auditorium, and she leads the Bharatanatyam workshop on a Dikshitar kriti on Sunday."
+  ],
+  "ct": {
+   "ig": "anuradhabharatanatyam",
+   "web": "www.khechara.com"
+  }
+ },
+ {
+  "id": "shruthi",
+  "n": "Chef Shruthi Agrawal",
+  "r": "Fusion culinary chef",
+  "c": "well",
+  "img": [
+   "chef-2",
+   "chef-1",
+   "chef-3",
+   "chef-4",
+   "chef-5",
+   "chef-6"
+  ],
+  "pos": "50% 30%",
+  "ev": [
+   "u7"
+  ],
+  "bio": [
+   "Chef Shruthi Agrawal is a fusion culinary chef.",
+   "At RASA she leads the Fusion Culinary Exploration on Sunday, 4 to 6 PM, in the Banquet Hall."
+  ],
+  "ct": {
+   "ig": "shruti.unique"
+  }
+ },
+ {
+  "id": "aagnika",
+  "n": "Vid. Dr. Aagnika Ajaikumar",
+  "r": "Dancer, Festival Director and Curator",
+  "c": "dance",
+  "img": [
+   "aag-team",
+   "aag-ardha",
+   "aag-1",
+   "aag-2",
+   "aag-3",
+   "aag-4",
+   "aag-5"
+  ],
+  "pos": "50% 30%",
+  "land": 1,
+  "ev": [
+   "u9"
+  ],
+  "bio": [
+   "Vidushi Dr. Aagnika Ajaikumar was three and a half years old when she and her twin sister began training under Guru Vidwan Sridhar Jain in Mysuru. Under his guidance she became the youngest dancer to complete her Rangapravesha, at the age of nine, in 2010 at Jaganmohan Palace, Mysuru.",
+   "The year after, she performed the solo Nritya Sambrama at Ravindra Kalakshetra, Bengaluru. In 2024 she presented Nritya Samarpane, a Bharatanatyam margam, in Mysuru, Shivamogga and Bengaluru on three consecutive weekends, and showcased Ardhanareeswara. She completed her MBBS at M. S. Ramaiah Medical College, Bengaluru, and her Vidwat in Bharatanatyam.",
+   "She owes her ascent to her guru and the guru-shishya bond, and to the support of her parents and siblings. She is currently learning under Guru Anuradha Sridhar. Choreography that shows integral values is one of her great interests, and she aspires to pursue higher education in medicine and contribute to the healthcare sector."
+  ],
+  "ct": {
+   "ig": "aagnika_ajaikumar"
+  }
+ },
+ {
+  "id": "jena",
+  "n": "Dr. Lakshminarayan",
+  "r": "Kathak dancer",
+  "c": "dance",
+  "img": [
+   "jena-1",
+   "jena-2",
+   "jena-3",
+   "jena-6",
+   "jena-7"
+  ],
+  "pos": "50% 25%",
+  "ev": [
+   "u11"
+  ],
+  "bio": [
+   "Dr. Lakshminarayan is a Kathak dancer and a disciple of Guru Mysore B. Nagaraj of Articulate Dance Studios, Bengaluru, whose satvik abhinaya is his forte. He is trained in the Lucknow and Jaipur gharanas as practised by Dr Maya Rao, with a touch of Banaras. He presents Avadhana, an extempore form of abhinaya performed on the spot to anecdotes given by the audience.",
+   "He is empanelled by the Indian Council for Cultural Relations to represent India abroad, is a graded artist of Doordarshan and a trustee of Articulate Trust for Arts in Bengaluru, and has given more than 600 solo performances across India. His honours include the Ustad Bismillah Yuva Puraskar from the Sangeet Natak Akademi (2024), the Ramgopal Best Male Solist Award (2023) and the Pt. Durgalal Endowment Prize (2018).",
+   "He holds a PhD (2021) and a CCRT Junior Fellowship on the tenets of Natya Shastra in Kathak."
+  ],
+  "ct": {
+   "ig": "drlaxminarayanjena"
+  }
+ },
+ {
+  "id": "bhagya",
+  "n": "Artist Bhagya Ajaikumar",
+  "r": "Lead Facilitator, Carving Rhythm linocut workshop and art show",
+  "c": "well",
+  "img": [
+   "bhagya-ws",
+   "bhagya",
+   "lino-4",
+   "lino-2",
+   "lino-1",
+   "lino-3"
+  ],
+  "pos": "50% 25%",
+  "ev": [
+   "f4",
+   "u6"
+  ],
+  "bio": [
+   "Artist Bhagya Ajaikumar is a visual artist, printmaking specialist, educator and curator, with decades of studio, teaching and curatorial work across India and the United States. She holds an MFA in Printmaking from the School of the Art Institute of Chicago and a BFA from the University of Iowa.",
+   "She was associated with the Department of Visual Arts at Bangalore University from 2011 and has been a Visiting Professor at the Chamarajendra Academy of Fine Arts (CAVA) and the University School of Design in Mysuru. Her research is on nontoxic studio and printmaking practice, so that learners work in a safe, health-conscious space.",
+   "She founded an independent printmaking studio in Jayanagar, Bengaluru, is Founder-Director of Swasti Contemporary Art Gallery, and has led workshops, residencies and national art camps for students, faculty and community groups. At RASA she shows abstract prints and sculptures that bring together colour, movement and Indian artistic expression at the TANDAV Art Show on opening day, and on Sunday she leads the 2.5 hour Carving Rhythm linocut workshop."
+  ],
+  "ct": {
+   "ig": "bhagyaajaikumar"
+  }
+ },
+ {
+  "id": "mallika",
+  "n": "Mallika Sarabhai",
+  "r": "Dancer",
+  "c": "dance",
+  "img": [
+   "mal-8",
+   "mal-3",
+   "mal-9",
+   "mal-5",
+   "mal-7"
+  ],
+  "pos": "50% 30%",
+  "land": 1,
+  "ev": [
+   "u11"
+  ],
+  "bio": [
+   "Padma Bhushan Mallika Sarabhai is a Kuchipudi and Bharatanatyam dancer, choreographer, actor and activist from Ahmedabad. The daughter of dancer Mrinalini Sarabhai and scientist Vikram Sarabhai, she played Draupadi in Peter Brook's The Mahabharata and won the Golden Star award for best dance soloist in Paris in 1977.",
+   "She leads the Darpana Academy of Performing Arts, which uses the arts for social change. At RASA she presents Mahabharata: A Mirror to Humanity: The Dilemma of Dharma."
+  ],
+  "ct": {
+   "ig": "mallikasarabhai"
+  }
+ },
+ {
+  "id": "vyjayanthi",
+  "n": "Vyjayanthi Kashi",
+  "r": "Kuchipudi dancer",
+  "c": "dance",
+  "img": [
+   "vyj"
+  ],
+  "pos": "50% 25%",
+  "ev": [
+   "u11"
+  ],
+  "bio": [
+   "Vyjayanthi Kashi is a Kuchipudi dancer, choreographer and teacher from Bengaluru, from the family of Dr Gubbi Veeranna, a pioneer of Kannada theatre. She began with Bharatanatyam at six and returned to dance through Kuchipudi under Guru C. R. Acharya.",
+   "She founded the Shambhavi School of Dance, is a former chairperson of the Karnataka Sangeetha Nritya Academy, and has danced at festivals in the USA, the UK, Germany, Korea, Italy and Israel, often with her daughter Prateeksha Kashi."
+  ],
+  "cred": "Photo: Anjali Reddy J, Wikimedia Commons, licensed <a class=\"lnk\" href=\"https://creativecommons.org/licenses/by-sa/3.0/\" target=\"_blank\" rel=\"noopener\">CC BY-SA 3.0</a>. Bio: Wikipedia."
+ },
+ {
+  "id": "atha",
+  "n": "Atha Beyond",
+  "r": "Kalaripayattu, led by Mandira",
+  "c": "dance",
+  "img": [
+   "atha-4",
+   "atha-3",
+   "atha-2",
+   "atha-1"
+  ],
+  "pos": "50% 35%",
+  "ev": [
+   "s4",
+   "u10"
+  ],
+  "bio": [
+   "Atha Beyond is a Kalaripayattu performance and workshop group led by Mandira. Kalaripayattu is one of the oldest martial arts in the world, and Atha Beyond works with artists trained in it from childhood, to keep the lineage alive and to put their work on stage.",
+   "Its live performance KALA, directed by Mandira, was staged at Elev8 Bengaluru, an architecture festival, and opened Season One of Bangalore Creative Circus in 2026.",
+   "At RASA, Mandira leads the Kalaripayattu workshop, Kolu, with animal poses, on Saturday morning in the Banquet Hall. On Sunday, Atha Beyond presents The Warrior's Path, a performance that imagines how a warrior of the Mahabharata age would have trained."
+  ],
+  "ct": {
+   "ig": "atha_beyond",
+   "web": "atha-performance.netlify.app"
+  }
+ },
+ {
+  "id": "harish",
+  "n": "Harish Sivaramakrishnan",
+  "r": "Vocalist, Agam. Three Forces, One Stage",
+  "c": "music",
+  "img": [
+   "harish"
+  ],
+  "pos": "50% 30%",
+  "ev": [
+   "f5"
+  ],
+  "bio": [
+   "Harish Sivaramakrishnan is the lead vocalist and a founder member of Agam, the Bengaluru Carnatic progressive rock band. He is also a playback singer in Malayalam, Tamil and Telugu cinema, and grew up in Shoranur, Kerala.",
+   "In 2021 he won the SIIMA award for Best Playback Singer (Male) in Tamil for \"Veyyon Silli\" from the film Soorarai Pottru. At RASA he joins Sumanth Manjunath and Banjo Rancho for Three Forces, One Stage, and Agam takes the stage after."
+  ]
+ },
+ {
+  "id": "sumanth",
+  "n": "Sumanth Manjunath",
+  "r": "Violinist and Festival Curator",
+  "c": "music",
+  "img": [
+   "sumanth-us",
+   "sumanth-portrait",
+   "sumanth-outdoor",
+   "sumanth-blue",
+   "sumanth-yellow",
+   "sumanth-stage"
+  ],
+  "pos": "50% 20%",
+  "ev": [
+   "f5",
+   "s5",
+   "s12",
+   "u9"
+  ],
+  "bio": [
+   "Sumanth Manjunath is a violinist and one of the organisers of RASA. He is the son and disciple of the violin maestro Dr. Mysore Manjunath, and a third-generation violinist, trained by his grandfather Vidwan Mahadevappa, his father and his uncle, the violin maestro Mysore Nagaraj. He gave his first concert at the age of eight.",
+   "He has performed in more than 25 countries, including at Oxford and Cambridge universities, the Singapore International Festival of Arts, and gave a special concert at Rashtrapati Bhavan on Republic Day 2025. He holds a master's degree in music from Mysore University with a gold medal, and the Bharat Ratna M.S. Subbulakshmi fellowship from the Shanmukhananda Sangeetha Sabha, Mumbai.",
+   "In October 2026 he completed his first United States tour: a concert and a Carnatic music workshop at Cornell University, the Ragas Live Festival in New York City before an audience of over 2,000 people, and a performance at Vassar College.",
+   "He collaborates with western classical, jazz, Persian, Arabic, flamenco and Turkish musicians, including the composer and flutist Ned McGowan, and is cultural president of Seilerei, a multicultural centre in Frankfurt. At RASA he plays in Three Forces, One Stage on Friday, in Yoga Raaga and Fusion Express on Saturday and in Nritya Naada on Sunday."
+  ],
+  "ct": {
+   "ig": "sumanth__manjunath"
+  }
+ },
+ {
+  "id": "ghatam",
+  "n": "Ghatam Giridhar Udupa",
+  "r": "Carnatic percussion",
+  "c": "music",
+  "img": [
+   "ghatam-pot-smile",
+   "ghatam-pots",
+   "ghatam-portrait",
+   "ghatam-three-pots"
+  ],
+  "pos": "50% 25%",
+  "ev": [
+   "s12"
+  ],
+  "bio": [
+   "Ghatam Giridhar Udupa is a Carnatic percussionist whom Rave Magazine called \"The King of Pot Music\". He began at the age of four under his father, the mridangam artist Vidwan Ullur Nagendra Udupa, and later trained under Vidushi Sukkanya Ramgopal and Vidwan V. Suresh. Rooted in Carnatic classical music, he has widened his repertoire through collaborations with eminent artists across the world and has played in more than 50 countries.",
+   "He plays with his own Carnatic world music band Layatharanga, the flamenco band Indialucia and the Carnatic-jazz European band Saagara. In 2015 he founded The Udupa Foundation, a registered charitable trust that promotes music, performing arts and culture, and he is the brand ambassador for Harman AKG microphones."
+  ],
+  "ct": {
+   "ig": "ghatamudupa",
+   "web": "ghatamudupa.com"
+  },
+  "land": 1
+ },
+ {
+  "id": "agam",
+  "n": "Agam Band",
+  "r": "Carnatic progressive rock, Friday",
+  "c": "music",
+  "img": [
+   "agam-hero"
+  ],
+  "pos": "65% 30%",
+  "ev": [
+   "f5"
+  ],
+  "bio": [
+   "AGAM, The Carnatic Progressive Rock Experience.",
+   "Agam is an acclaimed Bengaluru-based band which brings together the richness of Carnatic music and the energy of progressive rock, creating an electrifying musical experience rooted in Indian tradition and contemporary sound.",
+   "Before the band takes the stage, vocalist Harish Sivaramakrishnan joins Sumanth Manjunath (violinist from Mysuru) and Banjo Rancho (drummer from Malta) for a special musical collaboration, bringing together diverse sounds and traditions. Three Forces, One Stage."
+  ],
+  "ct": {
+   "ig": "agamtheband"
+  },
+  "land": 1
+ },
+ {
+  "id": "nimishambha",
+  "n": "Sri Nimishambha School of Dance",
+  "r": "Guru Vidwan Sridhar Jain and team, Mysuru",
+  "c": "dance",
+  "img": [
+   "nim-cover",
+   "nim-field",
+   "nim-stage",
+   "nim-duet",
+   "nim-steps",
+   "nim-three",
+   "nim-sridhar"
+  ],
+  "pos": "50% 40%",
+  "ev": [
+   "s10"
+  ],
+  "bio": [
+   "Sri Nimishambha School of Dance is a dance school in Mysuru, founded by Natyacharya Guru Vidwan Sridhar Jain, presenting Bharatanatyam, Kathak, Odissi and Indian folk with elements of fusion. The school performs on Saturday evening in the Auditorium.",
+   "Guru Vidwan Sridhar Jain is a renowned Bharatanatyam dancer from Mysuru. He has taught more than 5,000 students over the past 27 years, and 300 disciples of all ages under 60 currently learn Bharatanatyam from him across five branches of the Nrityashala.",
+   "His dance sequence with the late actress Soundarya in the song \"Raa Raa\" helped the Kannada film Apthamitra reach cult status. He has performed many times at the Mysore Palace and at the Yuva Dasara during the Dasara festival, and has choreographed dance sequences for thousands of students at the Mysore Dasara Torch Light Parade.",
+   "For the silver jubilee of his annual dance festival Hejje-Gejje, staged at the Mysore University Open Air Stadium, 500 artists presented 30 dance forms of India without a break. He gives his students costumes, jewellery and makeup free of charge, and bears the cost of their food and travel during programmes."
+  ],
+  "ct": {
+   "ig": "hejje_gejje_official"
+  }
+ },
+ {
+  "id": "vinaya",
+  "n": "Dr. Vinaya Nair",
+  "r": "Yoga Raaga, workshop leader",
+  "c": "well",
+  "img": [
+   "vin-portrait",
+   "vin-b",
+   "vin-read",
+   "vin-podium",
+   "vin-stage"
+  ],
+  "pos": "50% 30%",
+  "land": 1,
+  "ev": [
+   "s5"
+  ],
+  "bio": [
+   "Dr. Vinaya Nair leads Yoga Raaga, Ancient Raagas for the Inner Harmony, on Saturday afternoon in the Banquet Hall, with Sumanth Manjunath. She is a yoga and naturopathy physician and a music therapist, with a BNYS in Naturopathy and Yogic Sciences from SDMCNYS, Ujire, and a diploma in music therapy from Delhi.",
+   "She has practised and taught for more than 23 years in naturopathy hospitals, wellness resorts and lifestyle clinics, and as a professor. She also practises iris diagnosis and acupuncture, and her profile credits her drugless therapies and lifestyle corrections with helping more than one lakh people.",
+   "She uses Indian ragas and percussion rhythms to support healing in psychosomatic, autoimmune, lifestyle and metabolic conditions, researches the healing effects of music, and is a B-High graded vocalist at All India Radio. She also gives talks for schools, colleges and health clubs, and music therapy concerts."
+  ]
+ },
+ {
+  "id": "mysoremanjunath",
+  "n": "Dr. Mysore Manjunath",
+  "r": "Violin, special appearance in Fusion Express",
+  "c": "music",
+  "img": [
+   "mm-1",
+   "mm-5",
+   "mm-4",
+   "mm-6"
+  ],
+  "pos": "50% 25%",
+  "land": 1,
+  "ev": [
+   "s12"
+  ],
+  "bio": [
+   "Dr. Mysore Manjunath is an acclaimed violin maestro, the father and teacher of Sumanth Manjunath and the brother of the violin maestro Mysore Nagaraj. He makes a special appearance in Fusion Express on Saturday."
+  ],
+  "ct": {
+   "ig": "mysoremanjunath"
+  }
+ },
+ {
+  "id": "vasanth",
+  "n": "Dr. Vasanth Kiran",
+  "r": "Kuchipudi and Bharatanatyam dancer",
+  "c": "dance",
+  "img": [
+   "vk-3",
+   "vk-1",
+   "vk-2"
+  ],
+  "pos": "50% 25%",
+  "ev": [
+   "u11"
+  ],
+  "bio": [
+   "Pre eminent dancer, Nattuvangam exponent, choreographer, teacher and scholar par excellence of Kuchipudi and Bharatnatyam styles, Dr Vasanth is a sought after speaker and internationally acclaimed in the field of performing arts. He holds a Ph.D from Banasthali University, M.Phil, MBA from Marshall University, USA, MA Kuchipudi (Gold Medal), MA Bhatatanatyam (1st Rank), MA Philosophy, Religion and Indian Culture. Currently pursuing Executive Doctoral Fellowship from South Asian University, New Delhi in the area of Performing Arts.",
+   "He also holds Vidwath and Alankar in Bharatanatyam. A well known scholar, he is associated with several performing arts departments in India. He also served as visiting professor in India,  Germany and France. He has trained innumerable students across the globe and have performed in over 35 countries.",
+   "Several dance dramas like Ardhasaankaram, Panchaarama Ksehtram, Dwadasha Ragabharabam,  Nava Shakti and others have been staged in some of the most prestigious dance festivals. He has composed over 100 dance compositions for Bharathanatyam and Kuchipudi and released at CD.",
+   "Several honors have followed him at international and national level including prestigious Central Sangeet Natak Akademi's Ustad Bismillah Khan Yuva puraskar, Govt of India in Kuchipudi for the year 2020. Ugadi Puraskar from Government of Andhra Pradesh by the hands of Chief Minister. A member of Karnataka Sangeeta Nrutya Academy, Ministry of Culture, Govt of Karnataka. He runs the residential Gurukulam Bharata Kala Grama in Bangarpet, Kolar, Karnataka."
+  ],
+  "cred": "Stage photos: Kishor Gumaste, as credited on the photos."
+ },
+ {
+  "id": "labonee",
+  "n": "Labonee Mohanta",
+  "r": "Kathak",
+  "c": "dance",
+  "img": [
+   "lab-pink",
+   "lab-green",
+   "lab-shiva",
+   "lab-profile"
+  ],
+  "pos": "50% 25%",
+  "ev": [
+   "s8",
+   "u9"
+  ],
+  "bio": [
+   "Labonee Mohanta is a disciple of the Kathak maestro Pandit Chitresh Das and began training at the age of 8. She performs as a solo artist across the United States, Canada, India and Europe, and is known for her rhythmic footwork and fast pirouettes.",
+   "She is a leading exponent of Kathak Yoga, a technique in which she recites and sings rhythmic cycles, performs intricate footwork and plays the harmonium at the same time.",
+   "In 2025 she received the Dresher Ensemble Artist Residency Award, which supported Milana, a work blending Kathak with jazz, North Indian music and South Indian percussion. She is Artistic Director of Lavanya Academy of Indian Arts in California and mentors over 70 students in the Bay Area."
+  ],
+  "ct": {
+   "ig": "labonee_mohanta",
+   "web": "labonee.com"
+  }
+ },
+ {
+  "id": "bickram",
+  "n": "Bickram Ghosh",
+  "r": "Tabla maestro and composer",
+  "c": "music",
+  "img": [
+   "bg-1",
+   "bg-2",
+   "bg-3"
+  ],
+  "pos": "50% 22%",
+  "land": 1,
+  "ev": [
+   "s12"
+  ],
+  "bio": [
+   "Bickram Ghosh is widely considered one of India's most versatile artists: one of the country's greatest tabla maestros, a pioneer of new-age fusion music and a prolific film composer with over 60 feature films. He also curates at big festivals, including the Serendipity Arts Festival.",
+   "He is the son and disciple of the tabla maestro Late Pandit Shankar Ghosh, learnt Carnatic percussion from Vidwaan S. Sekhar, and had Pandit Ravi Shankar as a guru, playing with him for over a decade. In 2023 he received the Sangeet Natak Akademi Award, the highest national honour in the performing arts. He has played on four Grammy-nominated albums and one Grammy-awarded album, Full Circle (2002), with Ravi Shankar.",
+   "He founded the band Rhythmscape in 2002 and has played at Royal Albert Hall and Carnegie Hall. In 2026 he was made Artistic Director of Music for the Venice Biennale (India Pavilion). He is Principal of The Bickram Ghosh Academy of Performing Arts."
+  ],
+  "cred": "Photos: Avishek Dey Click, as credited on the photos.",
+  "ct": {
+   "ig": "bickramghoshofficial"
+  }
+ },
+ {
+  "id": "banjo",
+  "n": "Banjo Rancho",
+  "r": "Drums, multi-percussion and workshop leader",
+  "c": "music",
+  "img": [
+   "banjo-main",
+   "banjo-portrait",
+   "banjo-hand",
+   "banjo-live",
+   "ws-action",
+   "ws-stage",
+   "ws-studio"
+  ],
+  "pos": "72% 30%",
+  "ev": [
+   "f5",
+   "s12",
+   "s3"
+  ],
+  "bio": [
+   "Benji Cachia is an award-winning multi-percussionist and international touring musician whose work spans performance, collaboration and education across diverse musical and multidisciplinary contexts. He has toured and collaborated with internationally renowned artists including Pete Lockett, John Butler, Guthrie Govan and Giri Udupa.",
+   "His latest solo project, Akshara, explores rhythm as language, bringing together global percussion traditions, contemporary sound and personal sonic research. Alongside performing, he leads workshops and projects worldwide with children, adults and people with disabilities, using rhythm as a tool for creativity, communication and empowerment. He also performs as Banjo Rancho.",
+   "At RASA he joins the opening-day fusion collaboration, plays drums in Fusion Express and leads the drumming masterclass The Art of Drumming."
+  ],
+  "ct": {
+   "web": "banjorancho.com",
+   "ig": "banjo_rancho",
+   "em": "banjorancho@gmail.com",
+   "ph": "+356 77875511"
+  }
+ },
+ {
+  "id": "ned",
+  "n": "Ned McGowan",
+  "r": "Composer and flutist",
+  "c": "music",
+  "img": [
+   "ned"
+  ],
+  "pos": "55% 50%",
+  "ev": [
+   "s12"
+  ],
+  "bio": [
+   "Ned McGowan (b. 1970) is an American-Dutch composer, flutist, researcher and teacher living in Amsterdam. Known for rhythmical vitality and technical virtuosity, his music has been performed at Carnegie Hall, the Concertgebouw and the Purcell Room, and at festivals around the world.",
+   "As a flutist he plays classical, contemporary and improvised concerts internationally, with a special love for the contrabass flute. He teaches composition and is Head of Artistic Research at the Utrecht Conservatory. At RASA he plays electric flute in Fusion Express."
+  ],
+  "ct": {
+   "ig": "ned_mcgowan",
+   "web": "nedmcgowan.com"
+  },
+  "land": 1
+ },
+ {
+  "id": "quinten",
+  "n": "Quinten Rutgers",
+  "r": "Singer-songwriter and multi-instrumentalist",
+  "c": "music",
+  "img": [
+   "quinten-a",
+   "quinten-b"
+  ],
+  "pos": "50% 30%",
+  "ev": [
+   "s12"
+  ],
+  "bio": [
+   "Singer-songwriter, multi-instrumentalist, troubadour and musical storyteller. Quinten Rutgers is an Amsterdam-based singer-songwriter whose music transcends genres, cultures and traditions. Having grown up internationally, he was immersed in a rich diversity of cultures and musical influences from an early age, shaping his open-minded and adventurous approach to music.",
+   "A modern-day troubadour at heart, Quinten is a guitarist, pianist and expressive vocalist with a deep love for storytelling through song. Drawing from folk, blues, jazz, soul, rock and a wide range of global musical traditions, his music is both intimate and expansive. His lyrical songwriting and heartfelt vocal delivery explore the beauty, vulnerability, joy and complexity of the human experience.",
+   "Improvisation lies at the heart of his musical expression. For Quinten, music is a living conversation, an opportunity to listen, respond, explore and discover something new together. His performances move naturally between carefully crafted songs and spontaneous musical moments, creating space for authenticity, playfulness and unexpected connections.",
+   "Having performed extensively throughout the Netherlands and internationally, he has shared stages and collaborated with musicians from across the globe. He is also the founder of The Elements Fellowship, a multicultural musical collective that brings together artists from diverse backgrounds in a celebration of musical freedom, creativity and cross-cultural exchange.",
+   "Beyond his work as a performer, Quinten is a passionate connector and bridge-builder, bringing people together through music, storytelling and shared experiences. At the heart of his artistic journey lies a simple belief: music has the power to cross boundaries, celebrate our differences and remind us of the humanity we share. In Fusion Express he sings and plays guitar."
+  ],
+  "ct": {
+   "ig": "rutgersquinten"
+  }
+ },
+ {
+  "id": "venkat",
+  "n": "Venkatraman S",
+  "r": "Carnatic piano, harmonium and composer",
+  "c": "music",
+  "img": [
+   "venkat-stage",
+   "venkat-portrait",
+   "venkat-stage2",
+   "venkat-green"
+  ],
+  "pos": "50% 25%",
+  "ev": [
+   "s12"
+  ],
+  "bio": [
+   "Venkatraman S is an educator, Carnatic pianist, harmonium player and composer who has performed and taught since 2008. He trained under S.V. Narayan in the Carnatic tradition and Dr. Ravindra Katoti in the Hindustani tradition.",
+   "He has toured the United States with concerts in more than 20 cities, represented Indian classical music in the Philippines in 2018, and served as a judge at the Cleveland Thyagaraja Festival in 2025. He is a regular harmonium accompanist to leading Carnatic vocalists, including Unnikrishnan, Kalaimamani Dr Udayalur K Kalyanaraman, Kalyanapuram S Aravind and O.S. Arun, and co-founded the V&V duo with violinist Vittal Rangan.",
+   "He received the Gana Sphurana Kala Sadhaka award in 2018 for his contribution to the harmonium, and works as a music arranger on cine-classical and fusion projects with vocalists such as Dr Charulatha Mani and Sriranjani Santhanagopalan. In Fusion Express he plays Carnatic piano and harmonium."
+  ]
+ },
+ {
+  "id": "siddharth",
+  "n": "Siddharth Venkat (Xenkat)",
+  "r": "Sound healing",
+  "c": "well",
+  "img": [
+   "sid-portrait",
+   "sid-bath"
+  ],
+  "pos": "50% 25%",
+  "ev": [
+   "s2a",
+   "s2b"
+  ],
+  "bio": [
+   "Siddharth, who performs as Xenkat, has worked in music education and therapy for more than 8 years. He uses traditional and tribal instruments such as the didgeridoo and the mouth harp in sound baths and sound journeys, often with breathwork, meditation and body flow.",
+   "He has facilitated sessions for corporate, community, rural and urban groups, and also runs workshops where participants make their own instruments. His sound healing workshop runs twice on Saturday, 12 to 1 PM and 1 to 2 PM, with a maximum of 25 people in each."
+  ],
+  "ct": {
+   "ig": "xen_kat",
+   "ph": "+91 99806 72201",
+   "em": "xenkat.paws@gmail.com"
+  }
+ },
+ {
+  "id": "lourd",
+  "n": "Lourd Vijay",
+  "r": "Salsa, Jive and Dance Alchemy, Lourd Vijay Dance Studio (LVDS)",
+  "c": "dance",
+  "img": [
+   "lourd-smile",
+   "lourd-bw",
+   "lourd-cert",
+   "lourd-seat",
+   "lourd-1",
+   "lourd-2",
+   "lourd-3",
+   "lourd-4",
+   "lourd-5"
+  ],
+  "pos": "50% 50%",
+  "land": 1,
+  "altn": "Lourd Vijay",
+  "ev": [
+   "s14",
+   "s1",
+   "s1b"
+  ],
+  "ct": {
+   "ig": "lvdsindia",
+   "web": "lvds.in",
+   "ph": "+91 98450 15123",
+   "em": "lourdvijay@lvds.in"
+  },
+  "bio": [
+   "Lourd Vijay of LVDS leads the Salsa and Jive workshops on Saturday morning and curates Dance Alchemy on Saturday evening, a first-of-its-kind celebration of movement bringing together Western dance styles, Indian classical forms and folk traditions.",
+   "He is the founder and artistic director of Lourd Vijay's Dance Studio (LVDS) and the principal promoter of Latin culture, music and dance in the Asian region. He is a Guinness World Record holder for the most swing dance flips in a minute, and his profile credits him with bringing salsa to India in 1997.",
+   "He has trained over 1.5 lakh students and travelled to more than 30 countries to train, perform and teach. LVDS has had a presence in Bangalore, Chennai, Delhi and Mumbai. His own training covers salsa (LA and Cuban style), bachata, cha-cha, zouk, Afro Cuban funk, freestyle jive, acro duo, lifts and tricks.",
+   "He has worked on feature films, ad films and musicals, and on reality shows including Dance India Dance, where he is the official Latin dance, lifts and tricks trainer. His LVDS teams have won medals at the Dance World Cup and the Australian Salsa Classic.",
+   "He judged the Asian Open Salsa Championship in 2008, 2009 and 2010, was Head Judge of the Asia-Pacific Salsa Open Championships in 2011, received a Lifetime Achievement Award at India Fiesta Latin, and is a TEDx speaker."
+  ],
+  "cred": "Managing trustee and CEO of the Indian Society for the Performers and Teachers of Dance (ISPTD) and of the Spreading Hope Foundation. Director of Dance World Cup India Qualifiers."
+ },
+ {
+  "id": "vijay",
+  "n": "Vijayalakshmi S",
+  "r": "Meipadam and Karlakattai, workshop leader",
+  "c": "well",
+  "img": [
+   "vijay",
+   "vijay-2"
+  ],
+  "pos": "50% 38%",
+  "ev": [
+   "u4"
+  ],
+  "bio": [
+   "Vijayalakshmi S is a certified Meipadam and Karlakattai coach, an Indian dance and warrior fitness coach, and the founder of Neela Kalaa Bhoomi, a cultural and educational institution with branches in Bangalore and Hospet.",
+   "Born and raised in Mysuru, she began dancing at seven. She trained in Bharatanatyam, in the Mysore style and then the Pandanallur style under Vidushi Dr. Vasundhara Doraswamy, and in Kathak in the Lucknow gharana. She also explored folk forms such as Lavani, Patta Kunitha, Pooja Kunitha and Veeragase, and attended two workshops with Pandit Birju Maharaj, performing in his presence.",
+   "She trained in Meipadam and Karlakattai under Guru Trusha and Grandmaster Jyothi Kannan from Pondicherry, and was honoured with the title \"Kshatriee\". Meipadam, meaning \"body art\" in Tamil, is a traditional Indian martial art that builds body awareness, control and strength. Karlakattai is Indian club swinging, a rhythmic practice for strength, agility and focus.",
+   "She has choreographed for hundreds of school students, college students and women across Mysuru, Bengaluru and Hospet, and has taught Bharatanatyam and Kathak at Sri Sharada International School for six years. She is married with two sons, and after a serious illness in 2015 these fitness arts helped her rebuild her strength."
+  ],
+  "ct": {
+   "ig": "neela_kalaa_bhoomi",
+   "ph": "+91 92417 15008",
+   "em": "neelakalaabhoomi@gmail.com"
+  }
+ }
+]

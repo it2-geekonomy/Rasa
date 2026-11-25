@@ -1,0 +1,47 @@
+[
+ {
+  "id": "fri",
+  "short": "Fri",
+  "num": "8 Jan",
+  "long": "Friday 8 January",
+  "title": "Opening Day",
+  "cls": "d-fri",
+  "info": "Opening evening in the Auditorium and Amphitheatre, with the TANDAV art show by Artist Bhagya Ajaikumar in the Welcome Area.",
+  "pts": [
+   "Inauguration and dance performances by upcoming artists, 4:30 to 6:00 PM",
+   "Three Forces, One Stage at 6:30 PM, then Agam Band at 7:30 PM (One ticket includes both shows)",
+   "TANDAV art show, open for all"
+  ]
+ },
+ {
+  "id": "sat",
+  "short": "Sat",
+  "num": "9 Jan",
+  "long": "Saturday 9 January",
+  "title": "Music and Dance",
+  "cls": "d-sat",
+  "info": "Studio spaces run from 10 AM to 4 PM in the Rehearsal Studio, the Banquet Hall and the Amphitheatre. Performances in the Auditorium from 3:30 PM.",
+  "pts": [
+   "Workshops from 10 AM",
+   "A Kathak performance and Khechara Academy of Bharatanatyam (One ticket includes both shows)",
+   "Dance Alchemy and Sri Nimishambha School of Dance (One ticket includes both shows)",
+   "Fusion Express at 7:45 PM (One ticket grants access to all other ticketed events taking place on the same day)"
+  ]
+ },
+ {
+  "id": "sun",
+  "short": "Sun",
+  "num": "10 Jan",
+  "long": "Sunday 10 January",
+  "title": "Fusion and Finale",
+  "cls": "d-sun",
+  "info": "Studio spaces run from 7:15 AM to 6 PM. Evening programme from 4:30 PM.",
+  "pts": [
+   "Wellness morning from 7:15 AM",
+   "Meipadam, Bharatanatyam and Carving Rhythm linocut workshops",
+   "Interactive Discussion on Mahabharata, 4:30 to 6:00 PM",
+   "Nritya Naada at 6:00 PM",
+   "The Warrior's Path, then Mahabharata: A Mirror to Humanity (One ticket includes both shows)"
+  ]
+ }
+]
