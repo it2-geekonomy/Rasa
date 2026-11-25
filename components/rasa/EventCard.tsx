@@ -132,9 +132,7 @@ export function EventCard({ event: e, defaultOpen }: Props) {
       </div>
       <button
         type="button"
-        className={`star tick grid size-11 place-items-center rounded-rasa border-2 ${
-          onPlan ? "border-burg bg-burg text-white" : "border-plum bg-white text-plum"
-        }`}
+        className="star tick"
         aria-pressed={onPlan}
         aria-label={`${onPlan ? "Remove from" : "Add to"} my plan: ${e.t}`}
         onClick={() => {
@@ -142,7 +140,7 @@ export function EventCard({ event: e, defaultOpen }: Props) {
           toast(onPlan ? `Removed: ${e.t}` : `Added: ${e.t}`);
         }}
       >
-        <svg viewBox="0 0 24 24" className={`size-6 ${onPlan ? "stroke-white opacity-100" : "stroke-transparent opacity-0"}`} fill="none" strokeWidth={3}>
+        <svg viewBox="0 0 24 24" aria-hidden>
           <polyline points="5 12.5 10 17.5 19 7" />
         </svg>
       </button>

@@ -92,3 +92,26 @@
     @apply font-display font-semibold leading-tight text-plum;
   }
 }
+
+/* Programme “add to plan” tick — matches public/css/style.css .star.tick */
+@layer components {
+  .star.tick {
+    @apply grid size-11 place-items-center rounded-rasa border-2 border-plum bg-white text-plum;
+  }
+  .star.tick[aria-pressed="true"] {
+    @apply border-burg bg-burg text-white;
+  }
+  .star.tick svg {
+    width: 26px;
+    height: 26px;
+    fill: none;
+    stroke: #fff;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0;
+  }
+  .star.tick[aria-pressed="true"] svg {
+    opacity: 1;
+  }
+}

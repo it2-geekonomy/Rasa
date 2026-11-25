@@ -19,6 +19,9 @@ type PlanContextValue = {
   plan: string[];
   togglePlan: (id: string) => void;
   clearPlan: () => void;
+  mobilePlanOpen: boolean;
+  toggleMobilePlan: () => void;
+  closeMobilePlan: () => void;
 };
 
 const PlanContext = createContext<PlanContextValue | null>(null);
@@ -26,6 +29,7 @@ const PlanContext = createContext<PlanContextValue | null>(null);
 export function PlanProvider({ children }: { children: ReactNode }) {
   const [day, setDayState] = useState("fri");
   const [plan, setPlan] = useState<string[]>([]);
+  const [mobilePlanOpen, setMobilePlanOpen] = useState(false);
   useEffect(() => {
     try {
       const d = localStorage.getItem(STORAGE_DAY);
@@ -46,8 +50,7 @@ export function PlanProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const persistPlan = useCallback((next: string[]) => {
-    setPlan(next);
+  const savePlan = useCallback((next: string[]) => {
     try {
       localStorage.setItem(STORAGE_PLAN, JSON.stringify(next));
     } catch {
@@ -60,18 +63,33 @@ export function PlanProvider({ children }: { children: ReactNode }) {
       setPlan((prev) => {
         const i = prev.indexOf(id);
         const next = i >= 0 ? prev.filter((x) => x !== id) : [...prev, id];
-        persistPlan(next);
+        savePlan(next);
         return next;
       });
     },
-    [persistPlan],
+    [savePlan],
   );
 
-  const clearPlan = useCallback(() => persistPlan([]), [persistPlan]);
+  const clearPlan = useCallback(() => {
+    setPlan([]);
+    savePlan([]);
+  }, [savePlan]);
+
+  const toggleMobilePlan = useCallback(() => setMobilePlanOpen((v) => !v), []);
+  const closeMobilePlan = useCallback(() => setMobilePlanOpen(false), []);
 
   const value = useMemo(
-    () => ({ day, setDay, plan, togglePlan, clearPlan }),
-    [day, setDay, plan, togglePlan, clearPlan],
+    () => ({
+      day,
+      setDay,
+      plan,
+      togglePlan,
+      clearPlan,
+      mobilePlanOpen,
+      toggleMobilePlan,
+      closeMobilePlan,
+    }),
+    [day, setDay, plan, togglePlan, clearPlan, mobilePlanOpen, toggleMobilePlan, closeMobilePlan],
   );
 
   return <PlanContext.Provider value={value}>{children}</PlanContext.Provider>;
