@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# RASA, Roots to Rhythm (Next.js + Tailwind)
 
-## Getting Started
+Festival site rebuilt as a **React / Next.js App Router** project with **Tailwind CSS v4** and the same content as the 2026-11-25 handover.
 
-First, run the development server:
+## Run
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Routes (real URLs, not hash links)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Path | Page |
+|------|------|
+| `/` | Home |
+| `/events`, `/events/fri`, `/events/sat`, `/events/sun` | Programme + Your plan |
+| `/workshops` | Workshops |
+| `/artists`, `/artists/[id]` | Artists (25 profiles, static) |
+| `/booking` | Tickets |
+| `/exhibitions`, `/venue`, `/stalls` | Festival info |
+| `/faq` | FAQ and policies |
+| `/about`, `/team` | Why RASA, team |
+| `/sponsors`, `/partners` | Sponsors, donations |
 
-## Learn More
+## Stack
 
-To learn more about Next.js, take a look at the following resources:
+- **UI**: Tailwind utility classes + shared tokens in `lib/rasa/ui.ts` (`bg-plum`, `text-burg`, etc.)
+- **Data**: JSON under `public/data/` loaded from `lib/rasa/catalog.ts` (same data as handover `data.js`)
+- **Images**: `lib/rasa/img-map.ts` → `/public/images/`
+- **State**: “Your plan” in `localStorage` via `contexts/plan-context.tsx`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Legacy static SPA files (`public/rasa.html`, `public/js/app.js`) remain for reference only; the live app does not use them.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Content edits
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Events / artists / FAQ: edit JSON in `public/data/` or regenerate from `public/js/data.js` if you still maintain that file.
+- Styles: `app/globals.css` (theme) and `lib/rasa/ui.ts` (shared class strings).
