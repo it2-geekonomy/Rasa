@@ -93,7 +93,7 @@
   }
 }
 
-/* Programme “add to plan” tick — matches public/css/style.css .star.tick */
+/* Programme “add to plan” tick — handover .star.tick behaviour */
 @layer components {
   .star.tick {
     @apply grid size-11 place-items-center rounded-rasa border-2 border-plum bg-white text-plum;

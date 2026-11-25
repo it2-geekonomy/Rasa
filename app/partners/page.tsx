@@ -66,14 +66,15 @@ export default function PartnersPage() {
         </div>
         <h2 className="mt-11 font-display text-[clamp(1.5rem,3vw,2rem)]">Donate to IHDUA</h2>
         <div className="grid items-center gap-6 rounded-2xl bg-tint p-[22px] max-md:grid-cols-1 md:grid-cols-[minmax(0,230px)_minmax(0,1fr)]">
-          <p className="text-muted max-md:col-span-full">
-            Use the UPI ID below (same as on the handover site). Full IHDUA QR is embedded in the legacy static file at{" "}
-            <a href="/rasa.html#/partners" className="font-bold text-burg">
-              rasa.html
-            </a>{" "}
-            if you need the exact graphic.
-          </p>
-          <div className="max-md:col-span-full">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/images/ihdua-upi-qr.svg"
+            alt="UPI QR code for IHDUA"
+            width={228}
+            height={228}
+            className="w-full max-w-[260px] rounded-xl bg-white"
+          />
+          <div>
             <h3 className="font-display text-xl text-plum">Pay IHDUA by UPI</h3>
             <p className="my-2 text-[1.05rem] text-muted">Scan with any UPI app, or pay to the ID below.</p>
             <UpiRow
