@@ -12,4 +12,7 @@ export default () => ({
     webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET ?? '',
   },
   corsOrigin: process.env.CORS_ORIGIN ?? 'http://localhost:3000',
+  holds: {
+    ttlMinutes: parseInt(process.env.HOLD_TTL_MINUTES ?? '10', 10),
+  },
 });

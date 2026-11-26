@@ -8,6 +8,13 @@ import { PrismaModule } from './common/prisma/prisma.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
+import { VenuesModule } from './modules/venues/venues.module';
+import { SeatingModule } from './modules/seating/seating.module';
+import { EventsModule } from './modules/events/events.module';
+import { SessionsModule } from './modules/sessions/sessions.module';
+import { BookingsModule } from './modules/bookings/bookings.module';
+import { PaymentsModule } from './modules/payments/payments.module';
+import { TicketsModule } from './modules/tickets/tickets.module';
 
 @Module({
   imports: [
@@ -19,6 +26,13 @@ import { UsersModule } from './modules/users/users.module';
     PrismaModule,
     AuthModule,
     UsersModule,
+    VenuesModule,
+    SeatingModule,
+    EventsModule,
+    SessionsModule,
+    TicketsModule,
+    PaymentsModule,
+    BookingsModule,
   ],
   controllers: [AppController],
   providers: [

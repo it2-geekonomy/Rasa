@@ -1,0 +1,47 @@
+import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Public } from '../../common/decorators/public.decorator';
+import { ListBookingsQueryDto } from '../payments/dto/payment.dto';
+import { BookingsService } from './bookings.service';
+import { BookingStatusQueryDto, CreateBookingDto } from './dto/booking.dto';
+
+@ApiTags('Bookings')
+@Controller('bookings')
+export class BookingsController {
+  constructor(private readonly bookings: BookingsService) {}
+
+  @Public()
+  @Post()
+  @ApiOperation({ summary: 'Create a booking from a seat hold or workshop capacity' })
+  create(@Body() dto: CreateBookingDto) {
+    return this.bookings.create(dto);
+  }
+
+  @Get()
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'List bookings' })
+  findAll(@Query() query: ListBookingsQueryDto) {
+    return this.bookings.findAll(query);
+  }
+
+  @Public()
+  @Get(':id/status')
+  @ApiOperation({ summary: 'Customer booking status. Email must match the booking.' })
+  status(@Param('id', ParseUUIDPipe) id: string, @Query() query: BookingStatusQueryDto) {
+    return this.bookings.status(id, query.email);
+  }
+
+  @Get(':id')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get a booking' })
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.bookings.findOne(id);
+  }
+
+  @Public()
+  @Post(':id/payments')
+  @ApiOperation({ summary: 'Start another Razorpay attempt for a pending booking' })
+  retry(@Param('id', ParseUUIDPipe) id: string) {
+    return this.bookings.retryCheckout(id);
+  }
+}
