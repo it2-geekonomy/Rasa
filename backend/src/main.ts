@@ -23,8 +23,13 @@ async function bootstrap() {
   app.useGlobalFilters(new GlobalHttpExceptionFilter());
   app.useGlobalInterceptors(new ResponseTransformInterceptor());
 
+  const configuredOrigins = process.env.CORS_ORIGIN?.split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
   app.enableCors({
-    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : '*',
+    origin: configuredOrigins?.length
+      ? configuredOrigins
+      : ['http://localhost:3000', 'http://127.0.0.1:3000'],
     credentials: true,
   });
   app.setGlobalPrefix('api');

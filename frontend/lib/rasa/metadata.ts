@@ -28,6 +28,9 @@ export function pageTitleLabel(pathname: string): string {
     const artist = ARTISTS.find((a) => a.id === id);
     return artist?.n ?? "Artist";
   }
+  if (clean.startsWith("/admin")) {
+    return clean === "/admin/login" ? "Admin login" : "Admin";
+  }
   const segment = clean.replace(/^\//, "").split("/")[0] || "home";
   if (segment === "events") return PAGE_TITLES.events;
   return PAGE_TITLES[segment] ?? "RASA";
