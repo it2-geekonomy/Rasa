@@ -9,13 +9,13 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List all admin/organizer users' })
+  @ApiOperation({ summary: 'List admin users' })
   findAll() {
     return this.usersService.findAll();
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get user details by ID' })
+  @ApiOperation({ summary: 'Get an admin user by ID' })
   findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
   }

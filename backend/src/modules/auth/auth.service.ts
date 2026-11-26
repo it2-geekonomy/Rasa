@@ -20,21 +20,26 @@ export class AuthService {
   constructor(private readonly prisma: PrismaService) {}
 
   async login(dto: LoginDto) {
-    const user = await this.prisma.user.findUnique({
-      where: { email: dto.email.toLowerCase() },
+    const email = dto.email.toLowerCase();
+    const admin = await this.prisma.adminUser.findUnique({
+      where: { email },
     });
 
-    if (!user) {
+    const passwordOk = admin
+      ? await bcrypt.compare(dto.password, admin.passwordHash)
+      : false;
+
+    if (!admin || !passwordOk || !admin.isActive) {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    const isValid = await bcrypt.compare(dto.password, user.password);
-    if (!isValid) {
-      throw new UnauthorizedException('Invalid email or password');
-    }
+    await this.prisma.adminUser.update({
+      where: { id: admin.id },
+      data: { lastLoginAt: new Date() },
+    });
 
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role, name: user.name },
+      { id: admin.id, email: admin.email, name: admin.name },
       this.jwtSecret,
       { expiresIn: this.jwtExpiresIn },
     );
@@ -42,40 +47,38 @@ export class AuthService {
     return {
       accessToken: token,
       user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
+        id: admin.id,
+        email: admin.email,
+        name: admin.name,
+        isActive: admin.isActive,
       },
     };
   }
 
   async registerInitialAdmin(dto: RegisterUserDto) {
-    const existing = await this.prisma.user.findUnique({
-      where: { email: dto.email.toLowerCase() },
+    const email = dto.email.toLowerCase();
+    const existing = await this.prisma.adminUser.findUnique({
+      where: { email },
     });
     if (existing) {
       throw new ConflictException('User with this email already exists');
     }
 
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
-    const user = await this.prisma.user.create({
+    const passwordHash = await bcrypt.hash(dto.password, 10);
+    return this.prisma.adminUser.create({
       data: {
-        email: dto.email.toLowerCase(),
+        email,
         name: dto.name,
-        password: hashedPassword,
-        role: 'SUPER_ADMIN',
+        passwordHash,
       },
       select: {
         id: true,
         email: true,
         name: true,
-        role: true,
+        isActive: true,
         createdAt: true,
       },
     });
-
-    return user;
   }
 
   verifyToken(token: string) {

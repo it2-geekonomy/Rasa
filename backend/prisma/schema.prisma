@@ -7,20 +7,328 @@ generator client {
   provider = "prisma-client-js"
 }
 
-enum Role {
-  SUPER_ADMIN
-  ADMIN
-  USER
+enum VenueType {
+  RESERVED_SEATING
+  GENERAL_ADMISSION
 }
 
-model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  name      String?
-  role      Role     @default(ADMIN)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+enum EventType {
+  PERFORMANCE
+  WORKSHOP
+  EXHIBITION
+  WELLNESS
+  OTHER
+}
 
-  @@map("users")
+enum BookingMode {
+  SEAT_BASED
+  CAPACITY_BASED
+  FREE_ENTRY
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+  COMPLETED
+}
+
+enum SessionStatus {
+  SCHEDULED
+  OPEN
+  SOLD_OUT
+  CANCELLED
+  COMPLETED
+}
+
+enum SeatType {
+  NORMAL
+  WHEELCHAIR
+}
+
+enum AllocationOwner {
+  RASA
+  BOOKMYSHOW
+  VENUE
+  VIP
+}
+
+enum EventSeatStatus {
+  AVAILABLE
+  BLOCKED
+  HELD
+  BOOKED
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+  CANCELLED
+  EXPIRED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  CREATED
+  AUTHORIZED
+  CAPTURED
+  FAILED
+  REFUNDED
+}
+
+enum TicketStatus {
+  ACTIVE
+  USED
+  CANCELLED
+}
+
+enum CheckinStatus {
+  SUCCESS
+  REJECTED
+}
+
+model AdminUser {
+  id           String    @id @default(uuid()) @db.Uuid
+  name         String    @db.VarChar(150)
+  email        String    @unique @db.VarChar(255)
+  passwordHash String    @map("password_hash")
+  isActive     Boolean   @default(true) @map("is_active")
+  lastLoginAt  DateTime? @map("last_login_at") @db.Timestamptz(3)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  events Event[]
+
+  @@map("admin_users")
+}
+
+model Venue {
+  id            String    @id @default(uuid()) @db.Uuid
+  name          String    @unique @db.VarChar(150)
+  venueType     VenueType @map("venue_type")
+  description   String?   @db.Text
+  totalCapacity Int?      @map("total_capacity")
+  isActive      Boolean   @default(true) @map("is_active")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  sections SeatingSection[]
+  sessions EventSession[]
+
+  @@map("venues")
+}
+
+model SeatingSection {
+  id             String   @id @default(uuid()) @db.Uuid
+  venueId        String   @map("venue_id") @db.Uuid
+  sectionName    String   @map("section_name") @db.VarChar(100)
+  sectionCode    String   @map("section_code") @db.VarChar(30)
+  displayOrder   Int      @default(0) @map("display_order")
+  layoutMetadata Json?    @map("layout_metadata")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  venue Venue  @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  seats Seat[]
+
+  @@unique([venueId, sectionCode])
+  @@map("seating_sections")
+}
+
+model Seat {
+  id         String   @id @default(uuid()) @db.Uuid
+  sectionId  String   @map("section_id") @db.Uuid
+  rowLabel   String   @map("row_label") @db.VarChar(10)
+  seatNumber Int      @map("seat_number")
+  seatLabel  String   @map("seat_label") @db.VarChar(30)
+  seatType   SeatType @default(NORMAL) @map("seat_type")
+  xPosition  Float?   @map("x_position")
+  yPosition  Float?   @map("y_position")
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  section    SeatingSection @relation(fields: [sectionId], references: [id], onDelete: Restrict)
+  eventSeats EventSeat[]
+
+  @@unique([sectionId, rowLabel, seatNumber])
+  @@unique([sectionId, seatLabel])
+  @@map("seats")
+}
+
+model Event {
+  id               String      @id @default(uuid()) @db.Uuid
+  title            String      @db.VarChar(255)
+  slug             String      @unique @db.VarChar(255)
+  category         String      @db.VarChar(100)
+  eventType        EventType   @map("event_type")
+  bookingMode      BookingMode @map("booking_mode")
+  description      String?     @db.Text
+  shortDescription String?     @map("short_description") @db.Text
+  bannerImage      String?     @map("banner_image") @db.Text
+  status           EventStatus @default(DRAFT)
+  isFeatured      Boolean     @default(false) @map("is_featured")
+  createdBy        String?     @map("created_by") @db.Uuid
+  createdAt        DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  admin    AdminUser?     @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+  sessions EventSession[]
+
+  @@index([status])
+  @@index([category])
+  @@map("events")
+}
+
+model EventSession {
+  id             String        @id @default(uuid()) @db.Uuid
+  eventId        String        @map("event_id") @db.Uuid
+  venueId        String        @map("venue_id") @db.Uuid
+  sessionName    String?       @map("session_name") @db.VarChar(150)
+  startAt        DateTime      @map("start_at") @db.Timestamptz(3)
+  endAt          DateTime      @map("end_at") @db.Timestamptz(3)
+  capacity       Int?
+  price          Decimal       @default(0) @db.Decimal(10, 2)
+  bookingOpenAt  DateTime?     @map("booking_open_at") @db.Timestamptz(3)
+  bookingCloseAt DateTime?     @map("booking_close_at") @db.Timestamptz(3)
+  status         SessionStatus @default(SCHEDULED)
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  event      Event           @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  venue      Venue           @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  eventSeats EventSeat[]
+  bookings   Booking[]
+  tickets    BookingTicket[]
+
+  @@index([eventId])
+  @@index([venueId, startAt])
+  @@index([status])
+  @@map("event_sessions")
+}
+
+model EventSeat {
+  id              String          @id @default(uuid()) @db.Uuid
+  eventSessionId  String          @map("event_session_id") @db.Uuid
+  seatId          String          @map("seat_id") @db.Uuid
+  allocationOwner AllocationOwner @default(RASA) @map("allocation_owner")
+  status          EventSeatStatus @default(AVAILABLE)
+  price           Decimal         @default(0) @db.Decimal(10, 2)
+  holdExpiresAt   DateTime?       @map("hold_expires_at") @db.Timestamptz(3)
+  holdToken       String?         @map("hold_token") @db.VarChar(64)
+  updatedAt       DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  session      EventSession  @relation(fields: [eventSessionId], references: [id], onDelete: Restrict)
+  seat         Seat          @relation(fields: [seatId], references: [id], onDelete: Restrict)
+  bookingSeats BookingSeat[]
+
+  @@unique([eventSessionId, seatId])
+  @@index([eventSessionId, status])
+  @@index([allocationOwner])
+  @@index([holdToken])
+  @@map("event_seats")
+}
+
+model Booking {
+  id                String        @id @default(uuid()) @db.Uuid
+  bookingReference  String        @unique @map("booking_reference") @db.VarChar(50)
+  eventSessionId    String        @map("event_session_id") @db.Uuid
+  customerName      String        @map("customer_name") @db.VarChar(150)
+  customerEmail     String        @map("customer_email") @db.VarChar(255)
+  customerPhone     String        @map("customer_phone") @db.VarChar(20)
+  quantity          Int
+  subtotal          Decimal       @db.Decimal(10, 2)
+  discountAmount    Decimal       @default(0) @map("discount_amount") @db.Decimal(10, 2)
+  totalAmount       Decimal       @map("total_amount") @db.Decimal(10, 2)
+  currency          String        @default("INR") @db.VarChar(3)
+  bookingStatus     BookingStatus @default(PENDING) @map("booking_status")
+  paymentStatus     PaymentStatus @default(CREATED) @map("payment_status")
+  bookedAt          DateTime?     @map("booked_at") @db.Timestamptz(3)
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  session      EventSession    @relation(fields: [eventSessionId], references: [id], onDelete: Restrict)
+  bookingSeats BookingSeat[]
+  payments     Payment[]
+  tickets      BookingTicket[]
+
+  @@index([customerEmail])
+  @@index([customerPhone])
+  @@index([eventSessionId, bookingStatus])
+  @@index([createdAt])
+  @@map("bookings")
+}
+
+model BookingSeat {
+  id          String   @id @default(uuid()) @db.Uuid
+  bookingId   String   @map("booking_id") @db.Uuid
+  eventSeatId String   @map("event_seat_id") @db.Uuid
+  price       Decimal  @db.Decimal(10, 2)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  booking   Booking        @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+  eventSeat EventSeat      @relation(fields: [eventSeatId], references: [id], onDelete: Restrict)
+  ticket    BookingTicket?
+
+  @@unique([bookingId, eventSeatId])
+  @@index([eventSeatId])
+  @@map("booking_seats")
+}
+
+model Payment {
+  id                String        @id @default(uuid()) @db.Uuid
+  bookingId         String        @map("booking_id") @db.Uuid
+  provider          String        @default("RAZORPAY") @db.VarChar(30)
+  razorpayOrderId   String?       @unique @map("razorpay_order_id") @db.VarChar(150)
+  razorpayPaymentId String?       @unique @map("razorpay_payment_id") @db.VarChar(150)
+  razorpaySignature String?       @map("razorpay_signature") @db.Text
+  amount            Decimal       @db.Decimal(10, 2)
+  currency          String        @default("INR") @db.VarChar(3)
+  status            PaymentStatus @default(CREATED)
+  paidAt            DateTime?     @map("paid_at") @db.Timestamptz(3)
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+
+  @@index([bookingId])
+  @@index([status])
+  @@map("payments")
+}
+
+model BookingTicket {
+  id             String       @id @default(uuid()) @db.Uuid
+  bookingId      String       @map("booking_id") @db.Uuid
+  eventSessionId String       @map("event_session_id") @db.Uuid
+  bookingSeatId  String?      @unique @map("booking_seat_id") @db.Uuid
+  ticketNumber   String       @unique @map("ticket_number") @db.VarChar(100)
+  qrToken        String       @unique @map("qr_token") @db.VarChar(255)
+  attendeeName   String       @map("attendee_name") @db.VarChar(150)
+  attendeeEmail  String?      @map("attendee_email") @db.VarChar(255)
+  attendeePhone  String?      @map("attendee_phone") @db.VarChar(20)
+  status         TicketStatus @default(ACTIVE)
+  issuedAt       DateTime     @default(now()) @map("issued_at") @db.Timestamptz(3)
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  booking     Booking         @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+  session     EventSession    @relation(fields: [eventSessionId], references: [id], onDelete: Restrict)
+  bookingSeat BookingSeat?    @relation(fields: [bookingSeatId], references: [id], onDelete: Restrict)
+  checkins    TicketCheckin[]
+
+  @@index([bookingId])
+  @@index([eventSessionId, status])
+  @@map("booking_tickets")
+}
+
+model TicketCheckin {
+  id              String        @id @default(uuid()) @db.Uuid
+  bookingTicketId String        @map("booking_ticket_id") @db.Uuid
+  scannedBy       String?       @map("scanned_by") @db.Uuid
+  checkinStatus   CheckinStatus @map("checkin_status")
+  checkedInAt     DateTime      @default(now()) @map("checked_in_at") @db.Timestamptz(3)
+  notes           String?       @db.Text
+
+  ticket BookingTicket @relation(fields: [bookingTicketId], references: [id], onDelete: Restrict)
+
+  @@index([bookingTicketId, checkedInAt])
+  @@map("ticket_checkins")
 }
