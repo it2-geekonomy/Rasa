@@ -1,11 +1,13 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { BookingMode, EventStatus, EventType } from '@prisma/client';
 import {
+  IsArray,
   IsBoolean,
   IsEnum,
   IsIn,
   IsOptional,
   IsString,
+  IsUUID,
   Matches,
   MaxLength,
 } from 'class-validator';
@@ -63,6 +65,12 @@ export class CreateEventDto {
   @IsOptional()
   @IsBoolean()
   isFeatured?: boolean;
+
+  @ApiPropertyOptional({ type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsUUID('4', { each: true })
+  artistIds?: string[];
 }
 
 export class UpdateEventDto extends PartialType(CreateEventDto) {}

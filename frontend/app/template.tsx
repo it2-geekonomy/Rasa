@@ -8,7 +8,7 @@ export default function Template({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const reduced = useReducedMotion();
 
-  if (reduced) return children;
+  if (reduced || pathname.startsWith("/admin")) return children;
 
   return (
     <motion.div

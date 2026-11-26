@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { api, ApiError, type PageMeta } from "@/lib/admin/api";
-import { FRONT_ROWS, REAR_ROWS } from "@/lib/rasa/auditorium-seats";
+import { ALL_ROWS, FRONT_ROWS, REAR_ROWS } from "@/lib/rasa/auditorium-seats";
 import { fieldClass, Notice, primaryButtonClass, quietButtonClass } from "./ui";
 
 type SeatRow = {
@@ -56,6 +56,11 @@ export function AdminSeatMap({
   const [price, setPrice] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const pickedRef = useRef(picked);
+  const dragRef = useRef<Drag | null>(null);
+  const suppressClick = useRef(false);
+  const stopDrag = useRef<(() => void) | null>(null);
+  pickedRef.current = picked;
 
   useEffect(() => {
     let cancel = false;
@@ -105,6 +110,10 @@ export function AdminSeatMap({
   }, [seats, picked]);
 
   function toggle(seat: SeatRow) {
+    if (suppressClick.current) {
+      suppressClick.current = false;
+      return;
+    }
     if (seat.status === "BOOKED") return;
     setPicked((current) => {
       const next = new Set(current);
@@ -113,6 +122,48 @@ export function AdminSeatMap({
       return next;
     });
   }
+
+  function paintDrag(label: string | null) {
+    const drag = dragRef.current;
+    if (!drag || !label) return;
+    if (!drag.moved && label === drag.anchor.seat.seatLabel) return;
+    const seat = byLabel.get(label);
+    if (!seat) return;
+    drag.moved = true;
+    const next = seatsInRectangle(drag.anchor, seat, byLabel, drag.additive ? drag.base : new Set());
+    if (sameIds(pickedRef.current, next)) return;
+    setPicked(next);
+  }
+
+  function beginDrag(event: React.PointerEvent<HTMLButtonElement>, seat: SeatRow) {
+    if (event.button !== 0 || seat.status === "BOOKED") return;
+    stopDrag.current?.();
+    const drag: Drag = {
+      anchor: seat,
+      additive: event.shiftKey || event.metaKey || event.ctrlKey,
+      base: new Set(pickedRef.current),
+      moved: false,
+    };
+    dragRef.current = drag;
+    const move = (pointer: PointerEvent) => {
+      const hit = document.elementFromPoint(pointer.clientX, pointer.clientY);
+      paintDrag(hit?.closest("[data-seat]")?.getAttribute("data-seat") ?? null);
+    };
+    const up = () => {
+      if (dragRef.current === drag && drag.moved) suppressClick.current = true;
+      if (dragRef.current === drag) dragRef.current = null;
+      stopDrag.current = null;
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+    };
+    stopDrag.current = up;
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  }
+
+  useEffect(() => {
+    return () => stopDrag.current?.();
+  }, []);
 
   async function apply(owner: string, status: string) {
     if (picked.size === 0) {
@@ -145,7 +196,9 @@ export function AdminSeatMap({
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="font-display text-xl text-plum">Seat layout</h2>
-          <p className="text-sm text-muted">Stage is at the bottom. Click seats, then choose what to do with them. Booked seats stay put.</p>
+          <p className="text-sm text-muted">
+            Drag across seats to select a block. Click a seat to add or remove it. Hold Shift while dragging to add to the seats already selected. Booked seats stay put.
+          </p>
         </div>
         <p className="text-sm font-medium text-plum">{picked.size} selected</p>
       </div>
@@ -171,7 +224,7 @@ export function AdminSeatMap({
           {selectedLabels.length > 40 ? ` and ${selectedLabels.length - 40} more` : ""}
         </p>
       ) : null}
-      <div className="mt-3 max-h-[72vh] overflow-auto rounded-rasa bg-tint p-3">
+      <div className="mt-3 max-h-[72vh] overflow-auto rounded-rasa bg-tint p-3 select-none">
         {seats.length === 0 ? (
           <p className="text-sm text-muted">Loading the auditorium…</p>
         ) : (
@@ -179,7 +232,7 @@ export function AdminSeatMap({
             <p className="mb-2 text-center font-lab text-xs font-semibold tracking-widest text-plum uppercase">
               Back · furthest from stage
             </p>
-            <SectionBands rows={rearRows} byLabel={byLabel} picked={picked} onToggle={toggle} />
+            <SectionBands rows={rearRows} byLabel={byLabel} picked={picked} onToggle={toggle} onDragStart={beginDrag} />
             <div className="my-3 flex items-center gap-3">
               <div className="h-0.5 flex-1 bg-plum/20" />
               <span className="rounded-full bg-white px-3 py-1 font-lab text-xs font-bold tracking-widest text-plum uppercase">Aisle</span>
@@ -188,7 +241,7 @@ export function AdminSeatMap({
             <p className="mb-2 text-center font-lab text-xs font-semibold tracking-widest text-muted uppercase">
               Front · row A below is closest to stage
             </p>
-            <SectionBands rows={frontRows} byLabel={byLabel} picked={picked} onToggle={toggle} />
+            <SectionBands rows={frontRows} byLabel={byLabel} picked={picked} onToggle={toggle} onDragStart={beginDrag} />
             <div className="mt-3 border-[3px] border-[#c4722a] bg-[#f3ba6c] py-2.5 text-center shadow-[inset_0_0_0_1px_rgba(255,255,255,.4)]">
               <p className="font-display text-lg font-bold tracking-[0.32em] text-[#1a1208] uppercase">Stage</p>
             </div>
@@ -221,11 +274,13 @@ function SectionBands({
   byLabel,
   picked,
   onToggle,
+  onDragStart,
 }: {
   rows: readonly string[];
   byLabel: Map<string, SeatRow>;
   picked: Set<string>;
   onToggle: (seat: SeatRow) => void;
+  onDragStart: (event: React.PointerEvent<HTMLButtonElement>, seat: SeatRow) => void;
 }) {
   return (
     <div className="flex items-start justify-center gap-2">
@@ -247,7 +302,7 @@ function SectionBands({
             </div>
             <div className="space-y-1">
               {rows.map((row) => (
-                <GridRow key={`${block.id}-${row}`} row={row} from={block.from} to={block.to} byLabel={byLabel} picked={picked} onToggle={onToggle} />
+                <GridRow key={`${block.id}-${row}`} row={row} from={block.from} to={block.to} byLabel={byLabel} picked={picked} onToggle={onToggle} onDragStart={onDragStart} />
               ))}
             </div>
           </div>
@@ -264,6 +319,7 @@ function GridRow({
   byLabel,
   picked,
   onToggle,
+  onDragStart,
 }: {
   row: string;
   from: number;
@@ -271,6 +327,7 @@ function GridRow({
   byLabel: Map<string, SeatRow>;
   picked: Set<string>;
   onToggle: (seat: SeatRow) => void;
+  onDragStart: (event: React.PointerEvent<HTMLButtonElement>, seat: SeatRow) => void;
 }) {
   const cols = numbers(from, to);
   const present = cols.filter((number) => byLabel.has(`${row}-${number}`));
@@ -303,11 +360,13 @@ function GridRow({
             <button
               key={seat.id}
               type="button"
-              disabled={booked}
+              data-seat={seat.seat.seatLabel}
               title={`${seat.seat.seatLabel} · ${seat.seat.section.sectionName} · ${seat.allocationOwner} · ${seat.status}`}
               aria-pressed={selected}
+              aria-disabled={booked}
+              onPointerDown={(event) => onDragStart(event, seat)}
               onClick={() => onToggle(seat)}
-              className={`${SEAT_CELL} ${selected ? SELECTED : tone(seat)} ${booked ? "cursor-not-allowed" : "cursor-pointer hover:border-plum"}`}
+              className={`${SEAT_CELL} touch-none ${selected ? SELECTED : tone(seat)} ${booked ? "cursor-not-allowed" : "cursor-pointer hover:border-plum"}`}
             >
               {number}
             </button>
@@ -316,6 +375,40 @@ function GridRow({
       </div>
     </div>
   );
+}
+
+type Drag = {
+  anchor: SeatRow;
+  additive: boolean;
+  base: Set<string>;
+  moved: boolean;
+};
+
+function seatsInRectangle(anchor: SeatRow, current: SeatRow, byLabel: Map<string, SeatRow>, base: Set<string>) {
+  const rows = ALL_ROWS as readonly string[];
+  const startRow = rows.indexOf(anchor.seat.rowLabel);
+  const endRow = rows.indexOf(current.seat.rowLabel);
+  const next = new Set(base);
+  if (startRow < 0 || endRow < 0) {
+    if (current.status !== "BOOKED") next.add(current.id);
+    return next;
+  }
+  const rowSlice = new Set(rows.slice(Math.min(startRow, endRow), Math.max(startRow, endRow) + 1));
+  const from = Math.min(anchor.seat.seatNumber, current.seat.seatNumber);
+  const to = Math.max(anchor.seat.seatNumber, current.seat.seatNumber);
+  for (const seat of byLabel.values()) {
+    if (seat.status === "BOOKED") continue;
+    if (!rowSlice.has(seat.seat.rowLabel)) continue;
+    if (seat.seat.seatNumber < from || seat.seat.seatNumber > to) continue;
+    next.add(seat.id);
+  }
+  return next;
+}
+
+function sameIds(left: Set<string>, right: Set<string>) {
+  if (left.size !== right.size) return false;
+  for (const id of left) if (!right.has(id)) return false;
+  return true;
 }
 
 function numbers(from: number, to: number) {

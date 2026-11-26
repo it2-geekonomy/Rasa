@@ -15,6 +15,8 @@ import { SessionsModule } from './modules/sessions/sessions.module';
 import { BookingsModule } from './modules/bookings/bookings.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { TicketsModule } from './modules/tickets/tickets.module';
+import { ArtistsModule } from './modules/artists/artists.module';
+import { UploadsModule } from './modules/uploads/uploads.module';
 
 @Module({
   imports: [
@@ -30,6 +32,8 @@ import { TicketsModule } from './modules/tickets/tickets.module';
     SeatingModule,
     EventsModule,
     SessionsModule,
+    ArtistsModule,
+    UploadsModule,
     TicketsModule,
     PaymentsModule,
     BookingsModule,
