@@ -33,10 +33,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en">
-      <body className="flex min-h-dvh flex-col pb-[84px] font-body text-ink antialiased md:pb-0">
+      <body className="flex min-h-dvh flex-col pb-[calc(64px+env(safe-area-inset-bottom))] font-body text-ink antialiased md:pb-0">
         <Providers>
           <SiteHeader />
-          <main className="flex-1">{children}</main>
+          <main className="min-w-0 flex-1">{children}</main>
           <SiteFooter />
         </Providers>
       </body>

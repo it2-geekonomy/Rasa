@@ -25,7 +25,7 @@ export function BottomNav({ onMore, moreOpen }: Props) {
 
   return (
     <nav
-      className="bnav fixed bottom-[calc(10px+env(safe-area-inset-bottom))] left-2.5 right-2.5 z-40 hidden max-md:flex justify-between rounded-full bg-plum-d p-1.5 shadow-[0_8px_24px_rgba(36,20,38,.35)]"
+      className="bnav fixed bottom-[calc(6px+env(safe-area-inset-bottom))] left-2.5 right-2.5 z-40 hidden max-md:flex min-h-[50px] items-stretch justify-between gap-0.5 rounded-full bg-plum-d p-0.5 shadow-[0_6px_20px_rgba(36,20,38,.32)]"
       aria-label="Quick"
     >
       {items.map((item) => {
@@ -34,7 +34,7 @@ export function BottomNav({ onMore, moreOpen }: Props) {
           <Link
             key={item.g}
             href={item.href}
-            className={`flex flex-1 flex-col items-center justify-center gap-0.5 rounded-full py-0 text-[0.72rem] font-semibold no-underline ${
+            className={`flex min-h-10 flex-1 flex-col items-center justify-center gap-0.5 rounded-full py-0.5 text-[0.62rem] font-semibold leading-tight no-underline ${
               on ? "bg-white text-plum" : "text-[#d9bfe0]"
             }`}
           >
@@ -45,7 +45,7 @@ export function BottomNav({ onMore, moreOpen }: Props) {
       })}
       <button
         type="button"
-        className={`flex flex-1 flex-col items-center justify-center gap-0.5 rounded-full text-[0.72rem] font-semibold text-[#d9bfe0] ${
+        className={`flex min-h-10 flex-1 flex-col items-center justify-center gap-0.5 rounded-full py-0.5 text-[0.62rem] font-semibold leading-tight text-[#d9bfe0] ${
           moreOpen ? "bg-white text-plum" : ""
         }`}
         aria-haspopup="dialog"
@@ -58,7 +58,7 @@ export function BottomNav({ onMore, moreOpen }: Props) {
   );
 }
 
-const svgCls = "size-[22px] fill-none stroke-current stroke-2";
+const svgCls = "size-[20px] fill-none stroke-current stroke-2";
 
 const homeIcon = (
   <svg viewBox="0 0 24 24" className={svgCls}>

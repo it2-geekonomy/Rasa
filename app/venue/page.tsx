@@ -2,6 +2,7 @@ import { PageHero } from "@/components/rasa/PageHero";
 import { rasaTitle } from "@/lib/rasa/metadata";
 
 export const metadata = rasaTitle("Festival Venue");
+import { PageBody } from "@/components/rasa/motion/PageBody";
 import { RasaImage } from "@/components/rasa/RasaImage";
 import { btn, card, grid2, grid3, note, wrapTight } from "@/lib/rasa/ui";
 
@@ -9,7 +10,7 @@ export default function VenuePage() {
   return (
     <>
       <PageHero title="Festival Venue" lead="Prestige Centre for Performing Arts (PCPA), Bengaluru. 8 to 10 January 2027." />
-      <div className={wrapTight}>
+      <PageBody className={wrapTight}>
         <div className={grid2}>
           <div className={card}>
             <h3>Address</h3>
@@ -54,7 +55,7 @@ export default function VenuePage() {
         <div className="mt-2.5 grid aspect-[16/6] place-items-center rounded-rasa border-2 border-dashed border-[#c9b0cd] bg-[repeating-linear-gradient(45deg,#faf6fb,#faf6fb_10px,#f2e8f3_10px,#f2e8f3_20px)] text-[0.85rem] text-[#7d5f82]">
           Venue photos to come
         </div>
-      </div>
+      </PageBody>
     </>
   );
 }

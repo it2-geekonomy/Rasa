@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ACAT, ARTISTS, SOON } from "@/lib/rasa/catalog";
-import { card, lnk } from "@/lib/rasa/ui";
+import { card, gridAnimItem, lnk } from "@/lib/rasa/ui";
 import { RasaImage } from "./RasaImage";
 import { ContactRow } from "./ContactRow";
+import { ScrollStagger } from "@/components/rasa/motion/ScrollStagger";
 
 const PRI = [
   "mallika",
@@ -65,10 +66,11 @@ export function ArtistsGrid() {
           </button>
         ))}
       </div>
-      <div className="grid grid-cols-4 gap-[18px] max-md:grid-cols-2 max-[520px]:grid-cols-1">
+      <ScrollStagger className="grid grid-cols-4 items-stretch gap-[18px] max-md:grid-cols-2 max-[520px]:grid-cols-1">
         {items.map((x) =>
           x.type === "full" ? (
-            <Link key={x.k} href={`/artists/${x.artist.id}`} className="block no-underline hover:[&_h4]:underline">
+            <div key={x.k} data-scroll-item className={gridAnimItem}>
+            <Link href={`/artists/${x.artist.id}`} className="block h-full no-underline hover:[&_h4]:underline">
               {x.artist.img.length ? (
                 <RasaImage
                   img={x.artist.img[0]}
@@ -86,8 +88,10 @@ export function ArtistsGrid() {
               <h4 className="mt-2.5 font-body text-[1.05rem] font-bold text-plum">{x.artist.n}</h4>
               <p className="text-[0.95rem] text-muted">{x.artist.r}</p>
             </Link>
+            </div>
           ) : (
-            <div key={x.k} className={card}>
+            <div key={x.k} data-scroll-item className={gridAnimItem}>
+            <div className={`${card} h-full`}>
               {x.soon[5] ? (
                 <SoonLogoTile img={x.soon[5]} alt={`${x.soon[0]}, The Contemporary Art Gallery`} />
               ) : (
@@ -101,9 +105,10 @@ export function ArtistsGrid() {
                 <ContactRow contact={{ ig: x.soon[3], ig2: x.soon[4] || undefined }} />
               ) : null}
             </div>
+            </div>
           ),
         )}
-      </div>
+      </ScrollStagger>
     </>
   );
 }

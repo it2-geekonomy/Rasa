@@ -4,9 +4,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { DAYS, EV, dayOf, ARTISTS } from "@/lib/rasa/catalog";
 import { fmtMinutes } from "@/lib/rasa/time";
-import { card, lnk } from "@/lib/rasa/ui";
+import { card, gridAnimItem, lnk } from "@/lib/rasa/ui";
 import { RasaImage } from "./RasaImage";
 import { usePlan } from "@/contexts/plan-context";
+import { ScrollStagger } from "@/components/rasa/motion/ScrollStagger";
 
 export function WorkshopsGrid() {
   const [wsday, setWsday] = useState("all");
@@ -36,11 +37,12 @@ export function WorkshopsGrid() {
           </button>
         ))}
       </div>
-      <div className="grid grid-cols-3 gap-[18px] max-md:grid-cols-1">
+      <ScrollStagger className="grid grid-cols-3 items-stretch gap-[18px] max-md:grid-cols-1">
         {list.map((e) => {
           const on = plan.includes(e.id);
           return (
-            <div key={e.id} className={`${card} flex flex-col gap-1.5`}>
+            <div key={e.id} data-scroll-item className={gridAnimItem}>
+            <div className={`${card} flex h-full min-h-0 flex-col gap-1.5`}>
               {e.pic ? (
                 <RasaImage
                   img={e.pic}
@@ -73,7 +75,7 @@ export function WorkshopsGrid() {
                   })}
                 </p>
               ) : null}
-              <div className="mt-2 flex flex-wrap gap-2">
+              <div className="mt-auto flex flex-wrap gap-2 pt-2">
                 <button
                   type="button"
                   className="min-h-11 rounded-full border-2 border-plum bg-white px-4 py-2 font-bold text-plum"
@@ -90,9 +92,10 @@ export function WorkshopsGrid() {
                 </Link>
               </div>
             </div>
+            </div>
           );
         })}
-      </div>
+      </ScrollStagger>
     </>
   );
 }

@@ -1,10 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useState } from "react";
+import { duration, easeOut } from "@/lib/rasa/motion";
 import type { FestivalEvent } from "@/lib/rasa/types";
 import { ARTISTS, TLAB } from "@/lib/rasa/catalog";
 import { fmtMinutes } from "@/lib/rasa/time";
+import { isAuditoriumTicketEvent } from "@/lib/rasa/booking-events";
 import { lnk } from "@/lib/rasa/ui";
 import { RasaImage } from "./RasaImage";
 import { usePlan } from "@/contexts/plan-context";
@@ -24,13 +27,22 @@ function typeBorder(ty: string) {
   return "border-l-plum";
 }
 
-type Props = { event: FestivalEvent; defaultOpen?: boolean };
+type Props = {
+  event: FestivalEvent;
+  defaultOpen?: boolean;
+  /** Auditorium performances: open seat map (festival flow). */
+  onPickSeats?: (eventId: string) => void;
+  ticketSeatCount?: number;
+};
 
-export function EventCard({ event: e, defaultOpen }: Props) {
+export function EventCard({ event: e, defaultOpen, onPickSeats, ticketSeatCount = 0 }: Props) {
   const [open, setOpen] = useState(defaultOpen ?? false);
+  const reduced = useReducedMotion();
   const { plan, togglePlan } = usePlan();
   const { toast } = useToast();
   const onPlan = plan.includes(e.id);
+  const ticketSeats = isAuditoriumTicketEvent(e);
+  const inTicketCart = ticketSeatCount > 0;
   const artists = (e.a || [])
     .map((id) => ARTISTS.find((a) => a.id === id))
     .filter(Boolean);
@@ -50,9 +62,9 @@ export function EventCard({ event: e, defaultOpen }: Props) {
   return (
     <article
       id={`ev-${e.id}`}
-      className={`mb-2.5 grid grid-cols-[96px_1fr_48px] items-start gap-3.5 rounded-rasa border border-line border-l-[6px] p-4 pl-4 max-md:grid-cols-[78px_1fr_48px] max-md:gap-2.5 max-md:p-3 max-md:pl-3 ${typeBorder(e.ty)} ${venueClass(e.v, e.t)}`}
+      className={`mb-2.5 grid grid-cols-[96px_1fr_48px] items-start gap-3.5 rounded-rasa border border-line border-l-[6px] p-4 pl-4 max-md:grid-cols-[4.5rem_1fr_2.75rem] max-md:gap-2 max-md:rounded-xl max-md:p-3 max-md:pl-2.5 ${typeBorder(e.ty)} ${venueClass(e.v, e.t)}`}
     >
-      <div className="font-lab text-[1.05rem] font-semibold leading-snug tracking-wide text-plum">
+      <div className="font-lab text-[1.05rem] font-semibold leading-snug tracking-wide text-plum max-md:text-[0.92rem]">
         {e.tl || fmtMinutes(e.s)}
         {e.tl ? (
           e.ts ? (
@@ -87,7 +99,25 @@ export function EventCard({ event: e, defaultOpen }: Props) {
             ) : null}
           </span>
         </button>
-        {open ? (
+        {ticketSeats ? (
+          <button
+            type="button"
+            className="mt-2.5 inline-flex min-h-11 items-center rounded-full border-2 border-plum bg-white px-4 py-2 text-sm font-bold text-plum hover:bg-tint"
+            onClick={() => onPickSeats?.(e.id)}
+          >
+            {inTicketCart ? `Edit ${ticketSeatCount} seat${ticketSeatCount === 1 ? "" : "s"}` : "Pick seats on map"}
+          </button>
+        ) : null}
+        <AnimatePresence initial={false}>
+          {open ? (
+            <motion.div
+              key="more"
+              initial={reduced ? false : { height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={reduced ? undefined : { height: 0, opacity: 0 }}
+              transition={{ duration: duration.fast, ease: easeOut }}
+              className="overflow-hidden"
+            >
           <div className="mt-2.5 border-t border-dashed border-line pt-2.5 text-[0.95rem] text-muted">
             <div dangerouslySetInnerHTML={{ __html: moreDefault }} />
             <p className="mt-1.5">
@@ -128,14 +158,24 @@ export function EventCard({ event: e, defaultOpen }: Props) {
               </>
             ) : null}
           </div>
-        ) : null}
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
       </div>
       <button
         type="button"
         className="star tick"
-        aria-pressed={onPlan}
-        aria-label={`${onPlan ? "Remove from" : "Add to"} my plan: ${e.t}`}
+        aria-pressed={ticketSeats ? inTicketCart : onPlan}
+        aria-label={
+          ticketSeats
+            ? `${inTicketCart ? "Change seats for" : "Pick seats for"}: ${e.t}`
+            : `${onPlan ? "Remove from" : "Add to"} my plan: ${e.t}`
+        }
         onClick={() => {
+          if (ticketSeats) {
+            onPickSeats?.(e.id);
+            return;
+          }
           togglePlan(e.id);
           toast(onPlan ? `Removed: ${e.t}` : `Added: ${e.t}`);
         }}

@@ -64,15 +64,13 @@
     scroll-padding-top: 120px;
     -webkit-text-size-adjust: 100%;
   }
-  * {
-    scrollbar-width: none;
-  }
-  *::-webkit-scrollbar {
-    display: none;
-  }
   body {
     @apply flex min-h-dvh flex-col bg-white text-base leading-normal text-ink;
     text-wrap: pretty;
+    scrollbar-width: none;
+  }
+  body::-webkit-scrollbar {
+    display: none;
   }
   a {
     @apply text-inherit;

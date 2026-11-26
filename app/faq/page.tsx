@@ -3,13 +3,14 @@ import { rasaTitle } from "@/lib/rasa/metadata";
 
 export const metadata = rasaTitle("FAQ");
 import { FAQ, POLICY } from "@/lib/rasa/catalog";
+import { PageBody } from "@/components/rasa/motion/PageBody";
 import { wrapTight } from "@/lib/rasa/ui";
 
 export default function FaqPage() {
   return (
     <>
       <PageHero title="FAQ and policies" />
-      <div className={`${wrapTight} max-w-[1240px]`}>
+      <PageBody className={`${wrapTight} max-w-[1240px]`}>
         {FAQ.map(([q, a]) => (
           <details key={q} className="border-t border-line py-1.5">
             <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 py-3.5 font-bold text-plum [&::-webkit-details-marker]:hidden after:text-2xl after:content-['+'] open:after:content-['−']">
@@ -37,7 +38,7 @@ export default function FaqPage() {
             ) : null}
           </details>
         ))}
-      </div>
+      </PageBody>
     </>
   );
 }

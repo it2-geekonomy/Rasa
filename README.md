@@ -33,6 +33,7 @@ Open [http://localhost:3000](http://localhost:3000).
 - **Fonts**: `public/fonts/` (linked in `app/globals.css`)
 - **PDF**: `public/pdf/` (e.g. sponsorship proposal)
 - **State**: “Your plan” in `localStorage` via `contexts/plan-context.tsx`
+- **Motion**: Framer Motion (page transitions, scroll reveals, sheets) + GSAP on the home hero (`lib/rasa/motion.ts`, `components/rasa/motion/`)
 
 ## Content edits
 

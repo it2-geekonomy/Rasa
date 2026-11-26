@@ -5,6 +5,7 @@ export const metadata = rasaTitle("Make a difference");
 import { CopyButton } from "@/components/rasa/CopyButton";
 import { RasaImage } from "@/components/rasa/RasaImage";
 import { ContactRow } from "@/components/rasa/ContactRow";
+import { PageBody } from "@/components/rasa/motion/PageBody";
 import { btn, btnLine, card, grid2, lead, wrapTight } from "@/lib/rasa/ui";
 
 export default function PartnersPage() {
@@ -14,7 +15,7 @@ export default function PartnersPage() {
         <PartnerLogos />
         <p className="mt-2.5 max-w-[720px] text-[1.05rem] text-[#eadcee]">RASA raises funds for these two causes.</p>
       </PageHero>
-      <div className={wrapTight}>
+      <PageBody className={wrapTight}>
         <div className={grid2}>
           <div className={card}>
             <h3>Medical Care for Those in Need</h3>
@@ -83,7 +84,7 @@ export default function PartnersPage() {
             />
           </div>
         </div>
-      </div>
+      </PageBody>
     </>
   );
 }

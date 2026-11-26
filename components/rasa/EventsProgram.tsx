@@ -8,7 +8,10 @@ import { wrapTight } from "@/lib/rasa/ui";
 import { PageHero } from "./PageHero";
 import { EventCard } from "./EventCard";
 import { PlanSidebar } from "./PlanSidebar";
+import { BookingSeatSheet } from "@/components/rasa/booking/BookingSeatSheet";
+import { useBookingCart } from "@/contexts/booking-cart-context";
 import { usePlan } from "@/contexts/plan-context";
+import { PageBody } from "@/components/rasa/motion/PageBody";
 
 type Props = { day: DayId; focusId?: string };
 
@@ -17,6 +20,8 @@ export function EventsProgram({ day: initialDay, focusId }: Props) {
   const [type, setType] = useState("all");
   const planAsideRef = useRef<HTMLElement>(null);
   const router = useRouter();
+  const { lineForEvent } = useBookingCart();
+  const [seatEventId, setSeatEventId] = useState<string | null>(null);
 
   useEffect(() => {
     setDay(initialDay);
@@ -50,9 +55,9 @@ export function EventsProgram({ day: initialDay, focusId }: Props) {
     <>
       <PageHero
         title="RASA Festival January 2027"
-        lead="Three days at PCPA. Tap a session for details, tick it to add it to your plan."
+        lead="Three days at PCPA. Tap a session for details. Tick to save your plan — auditorium shows open the seat map, then land in your ticket cart."
       />
-      <div className={wrapTight}>
+      <PageBody className={wrapTight}>
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <div className="flex w-full gap-2 max-md:w-full" role="group" aria-label="Day">
             {DAYS.map((x) => (
@@ -106,7 +111,13 @@ export function EventsProgram({ day: initialDay, focusId }: Props) {
             </p>
             {list.length ? (
               list.map((e) => (
-                <EventCard key={e.id} event={e} defaultOpen={focusId === e.id} />
+                <EventCard
+                  key={e.id}
+                  event={e}
+                  defaultOpen={focusId === e.id}
+                  onPickSeats={(id) => setSeatEventId(id)}
+                  ticketSeatCount={lineForEvent(e.id)?.seats.length ?? 0}
+                />
               ))
             ) : (
               <p className="text-[0.9rem] text-muted">
@@ -118,9 +129,11 @@ export function EventsProgram({ day: initialDay, focusId }: Props) {
             ref={planAsideRef}
             mobileOpen={mobilePlanOpen}
             onMobileClose={closeMobilePlan}
+            onEditTicketSeats={(id) => setSeatEventId(id)}
           />
         </div>
-      </div>
+      </PageBody>
+      <BookingSeatSheet eventId={seatEventId} onClose={() => setSeatEventId(null)} />
     </>
   );
 }

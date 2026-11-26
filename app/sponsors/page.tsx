@@ -3,13 +3,14 @@ import { rasaTitle } from "@/lib/rasa/metadata";
 
 export const metadata = rasaTitle("Sponsors");
 import { PageHero } from "@/components/rasa/PageHero";
+import { PageBody } from "@/components/rasa/motion/PageBody";
 import { btn, btnLine, lead, wrapTight } from "@/lib/rasa/ui";
 
 export default function SponsorsPage() {
   return (
     <>
       <PageHero title="Sponsors" lead="Added as they come on board." />
-      <div className={wrapTight}>
+      <PageBody className={wrapTight}>
         <h2 className="font-display text-[clamp(1.5rem,3vw,2rem)]">Sponsor RASA</h2>
         <p className={lead}>Read the sponsorship proposal to see how your brand can be part of RASA.</p>
         <SponsorsActions />
@@ -38,7 +39,7 @@ export default function SponsorsPage() {
             madhu@ihdua.org
           </a>
         </div>
-      </div>
+      </PageBody>
     </>
   );
 }

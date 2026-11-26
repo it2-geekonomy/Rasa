@@ -3,13 +3,14 @@ import { PageHero } from "@/components/rasa/PageHero";
 import { rasaTitle } from "@/lib/rasa/metadata";
 
 export const metadata = rasaTitle("Why RASA");
+import { PageBody } from "@/components/rasa/motion/PageBody";
 import { btn, card, grid2, grid3, lead, wrapTight } from "@/lib/rasa/ui";
 
 export default function AboutPage() {
   return (
     <>
       <PageHero title="Why RASA" lead="Bhaava is the artist's feeling. Rasa is what it becomes in you." />
-      <div className={wrapTight}>
+      <PageBody className={wrapTight}>
         <div className="max-w-[80ch] rounded-2xl bg-tint p-7 text-[1.15rem]">
           <p className="mb-2.5">
             <b className="text-burg">Bhaava</b> is the emotional state or expression portrayed by the artist through their performance.
@@ -55,7 +56,7 @@ export default function AboutPage() {
         <Link href="/team" className={btn}>
           Meet the team
         </Link>
-      </div>
+      </PageBody>
     </>
   );
 }

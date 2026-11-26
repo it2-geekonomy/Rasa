@@ -3,13 +3,14 @@ import { PageHero } from "@/components/rasa/PageHero";
 import { rasaTitle } from "@/lib/rasa/metadata";
 
 export const metadata = rasaTitle("Art Exhibitions");
+import { PageBody } from "@/components/rasa/motion/PageBody";
 import { card, grid2, lnk, wrapTight } from "@/lib/rasa/ui";
 
 export default function ExhibitionsPage() {
   return (
     <>
       <PageHero title="Art Exhibitions" lead="Art on show across the festival grounds. Entry to the art shows is free." />
-      <div className={wrapTight}>
+      <PageBody className={wrapTight}>
         <div className={grid2}>
           <div className={card}>
             <div className="font-lab text-sm font-semibold uppercase tracking-wider text-burg">Fri 8 Jan, Welcome Area</div>
@@ -38,7 +39,7 @@ export default function ExhibitionsPage() {
             </p>
           </div>
         </div>
-      </div>
+      </PageBody>
     </>
   );
 }

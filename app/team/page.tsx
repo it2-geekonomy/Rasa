@@ -4,6 +4,7 @@ import { rasaTitle } from "@/lib/rasa/metadata";
 
 export const metadata = rasaTitle("Team");
 import { RasaImage } from "@/components/rasa/RasaImage";
+import { PageBody } from "@/components/rasa/motion/PageBody";
 import { card, grid3, lnk, wrapTight } from "@/lib/rasa/ui";
 
 const TEAM = [
@@ -19,7 +20,7 @@ export default function TeamPage() {
   return (
     <>
       <PageHero title="Team" lead="The people organising RASA." />
-      <div className={wrapTight}>
+      <PageBody className={wrapTight}>
         <div className={grid3}>
           {TEAM.map((m) => (
             <div key={m.name} className={card}>
@@ -39,7 +40,7 @@ export default function TeamPage() {
           <AnjaliCard />
           <AjkCard />
         </div>
-      </div>
+      </PageBody>
     </>
   );
 }

@@ -1,19 +1,24 @@
+import { Suspense } from "react";
 import { PageHero } from "@/components/rasa/PageHero";
+import { BookingExperience } from "@/components/rasa/booking/BookingExperience";
+import { PageBody } from "@/components/rasa/motion/PageBody";
 import { rasaTitle } from "@/lib/rasa/metadata";
 
 export const metadata = rasaTitle("Tickets");
-import { card, wrapTight } from "@/lib/rasa/ui";
 
 export default function BookingPage() {
   return (
     <>
-      <PageHero title="Tickets" lead="Tickets coming soon." />
-      <div className={wrapTight}>
-        <div className={card}>
-          <h3>Tickets coming soon</h3>
-          <p>Ticket details will be shared here once they are confirmed.</p>
-        </div>
-      </div>
+      <PageHero
+        tight
+        title="Tickets"
+        lead="Choose an auditorium show, pick your seats on the venue map, then review your cart. Prices shown are indicative for this preview."
+      />
+      <PageBody>
+        <Suspense fallback={<p className="text-muted">Loading tickets…</p>}>
+          <BookingExperience />
+        </Suspense>
+      </PageBody>
     </>
   );
 }

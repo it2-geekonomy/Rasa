@@ -1,5 +1,6 @@
 "use client";
 
+import { AnimatePresence, motion } from "framer-motion";
 import {
   createContext,
   useCallback,
@@ -8,6 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { duration, easeOut } from "@/lib/rasa/motion";
 
 type ToastContextValue = { toast: (msg: string) => void };
 
@@ -26,16 +28,21 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div
-        role="status"
-        className={`fixed bottom-[calc(150px+env(safe-area-inset-bottom))] left-1/2 z-60 max-w-[90vw] -translate-x-1/2 rounded-full bg-ink px-5 py-3 text-center text-white transition max-md:bottom-[calc(88px+env(safe-area-inset-bottom))] ${
-          message
-            ? "pointer-events-auto translate-y-0 opacity-100"
-            : "pointer-events-none translate-y-5 opacity-0"
-        }`}
-      >
-        {message}
-      </div>
+      <AnimatePresence>
+        {message ? (
+          <motion.div
+            key={message}
+            role="status"
+            initial={{ opacity: 0, y: 16, x: "-50%" }}
+            animate={{ opacity: 1, y: 0, x: "-50%" }}
+            exit={{ opacity: 0, y: 10, x: "-50%" }}
+            transition={{ duration: duration.fast, ease: easeOut }}
+            className="pointer-events-none fixed bottom-[calc(150px+env(safe-area-inset-bottom))] left-1/2 z-60 max-w-[90vw] rounded-full bg-ink px-5 py-3 text-center text-white max-md:bottom-[calc(88px+env(safe-area-inset-bottom))]"
+          >
+            {message}
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </ToastContext.Provider>
   );
 }
