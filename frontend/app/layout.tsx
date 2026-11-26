@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { SiteHeader } from "@/components/rasa/SiteHeader";
-import { SiteFooter } from "@/components/rasa/SiteFooter";
 import { Providers } from "@/components/rasa/Providers";
+import { SiteFrame } from "@/components/rasa/SiteFrame";
 
 export const metadata: Metadata = {
   title: "RASA, Roots to Rhythm",
@@ -33,11 +32,9 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en">
-      <body className="flex min-h-dvh flex-col pb-[calc(64px+env(safe-area-inset-bottom))] font-body text-ink antialiased md:pb-0">
+      <body className="flex min-h-dvh flex-col font-body text-ink antialiased">
         <Providers>
-          <SiteHeader />
-          <main className="min-w-0 flex-1">{children}</main>
-          <SiteFooter />
+          <SiteFrame>{children}</SiteFrame>
         </Providers>
       </body>
     </html>

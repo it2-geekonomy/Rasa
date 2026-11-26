@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { PrismaClient, Prisma, SeatType, VenueType } from '@prisma/client';
+import { PrismaClient, Prisma, SeatType, VenueType, AllocationOwner, EventSeatStatus } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -100,7 +100,7 @@ function loadAuditoriumSeats(): LayoutSeat[] {
 async function seedAdmin() {
   const email = 'admin@rasafest.org';
   const passwordHash = await bcrypt.hash('Admin@123', 10);
-  await prisma.adminUser.upsert({
+  const admin = await prisma.adminUser.upsert({
     where: { email },
     update: {},
     create: {
@@ -110,6 +110,7 @@ async function seedAdmin() {
     },
   });
   console.log(`Admin ready: ${email}`);
+  return admin.id;
 }
 
 async function seedVenues() {
@@ -252,8 +253,81 @@ async function reportAuditorium() {
   }
 }
 
+async function seedSampleShow(auditoriumId: string, adminId: string) {
+  const slug = 'three-forces-agam-band';
+  const event = await prisma.event.upsert({
+    where: { slug },
+    update: {
+      title: 'Three Forces, One Stage, then Agam Band',
+      category: 'Performance',
+      eventType: 'PERFORMANCE',
+      bookingMode: 'SEAT_BASED',
+      status: 'PUBLISHED',
+      shortDescription:
+        'Friday 8 January, 6:30 PM to 10:00 PM in the Auditorium. One ticket includes both shows.',
+      description:
+        'Three Forces, One Stage, 6:30 to 7:30 PM: Harish Sivaramakrishnan, Sumanth Manjunath and Banjo Rancho. Then Agam Band, 7:30 PM onwards. One ticket includes both shows. The spreadsheet has no ticket price yet, so every seat stays blocked until an admin opens it.',
+    },
+    create: {
+      title: 'Three Forces, One Stage, then Agam Band',
+      slug,
+      category: 'Performance',
+      eventType: 'PERFORMANCE',
+      bookingMode: 'SEAT_BASED',
+      status: 'PUBLISHED',
+      shortDescription:
+        'Friday 8 January, 6:30 PM to 10:00 PM in the Auditorium. One ticket includes both shows.',
+      description:
+        'Three Forces, One Stage, 6:30 to 7:30 PM: Harish Sivaramakrishnan, Sumanth Manjunath and Banjo Rancho. Then Agam Band, 7:30 PM onwards. One ticket includes both shows. The spreadsheet has no ticket price yet, so every seat stays blocked until an admin opens it.',
+      createdBy: adminId,
+    },
+  });
+
+  const startAt = new Date('2027-01-08T13:00:00.000Z');
+  const endAt = new Date('2027-01-08T16:30:00.000Z');
+  const existing = await prisma.eventSession.findFirst({
+    where: { eventId: event.id, startAt },
+  });
+  const session =
+    existing ??
+    (await prisma.eventSession.create({
+      data: {
+        eventId: event.id,
+        venueId: auditoriumId,
+        sessionName: 'Friday evening',
+        startAt,
+        endAt,
+        price: 0,
+        status: 'SCHEDULED',
+      },
+    }));
+
+  const already = await prisma.eventSeat.count({ where: { eventSessionId: session.id } });
+  if (already > 0) {
+    console.log(`Sample show already has ${already} seats`);
+    return;
+  }
+
+  const seats = await prisma.seat.findMany({
+    where: { isActive: true, section: { venueId: auditoriumId } },
+    select: { id: true },
+  });
+  const now = new Date();
+  await prisma.eventSeat.createMany({
+    data: seats.map((seat) => ({
+      eventSessionId: session.id,
+      seatId: seat.id,
+      allocationOwner: AllocationOwner.RASA,
+      status: EventSeatStatus.BLOCKED,
+      price: 0,
+      updatedAt: now,
+    })),
+  });
+  console.log(`Sample show seats created: ${seats.length}`);
+}
+
 async function main() {
-  await seedAdmin();
+  const adminId = await seedAdmin();
   const venues = await seedVenues();
   const auditoriumId = venues.get('Auditorium');
   if (!auditoriumId) {
@@ -265,6 +339,7 @@ async function main() {
   }
   await seedAuditorium(auditoriumId, seats);
   await reportAuditorium();
+  await seedSampleShow(auditoriumId, adminId);
 }
 
 main()
