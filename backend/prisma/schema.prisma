@@ -242,6 +242,7 @@ model Booking {
   currency          String        @default("INR") @db.VarChar(3)
   bookingStatus     BookingStatus @default(PENDING) @map("booking_status")
   paymentStatus     PaymentStatus @default(CREATED) @map("payment_status")
+  attendees         Json?
   bookedAt          DateTime?     @map("booked_at") @db.Timestamptz(3)
   createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt         DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
