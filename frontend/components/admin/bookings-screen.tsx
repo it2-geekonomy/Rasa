@@ -26,14 +26,29 @@ export function BookingsScreen() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    let cancel = false;
     const query = new URLSearchParams({ limit: "50" });
     if (search.trim()) query.set("search", search.trim());
-    const handle = window.setTimeout(() => {
+    const load = () => {
       api<{ data: BookingRow[] }>(`/bookings?${query}`, { token })
-        .then((result) => setRows(result.data))
-        .catch((caught) => setError(caught instanceof Error ? caught.message : "Could not load bookings"));
-    }, 250);
-    return () => window.clearTimeout(handle);
+        .then((result) => {
+          if (!cancel) setRows(result.data);
+        })
+        .catch((caught) => {
+          if (!cancel) setError(caught instanceof Error ? caught.message : "Could not load bookings");
+        });
+    };
+    if (!search.trim()) {
+      load();
+      return () => {
+        cancel = true;
+      };
+    }
+    const handle = window.setTimeout(load, 250);
+    return () => {
+      cancel = true;
+      window.clearTimeout(handle);
+    };
   }, [search, token]);
 
   return (

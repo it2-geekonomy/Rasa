@@ -30,11 +30,10 @@ export class SessionsService {
 
   async create(dto: CreateSessionDto) {
     const event = await this.requireEvent(dto.eventId);
-    await this.requireVenue(dto.venueId);
-    if (event.bookingMode === 'CAPACITY_BASED' && dto.capacity == null) {
-      throw new BadRequestException('Capacity-based sessions need a capacity');
-    }
+    const venue = await this.requireVenue(dto.venueId);
+    this.assertVenueBooking(event.bookingMode, venue, dto.capacity);
     this.assertTimes(dto.startAt, dto.endAt, dto.bookingOpenAt, dto.bookingCloseAt);
+    const capacity = event.bookingMode === 'SEAT_BASED' ? null : dto.capacity;
     try {
       return await this.prisma.$transaction(
         async (tx) => {
@@ -45,7 +44,7 @@ export class SessionsService {
               sessionName: dto.sessionName,
               startAt: new Date(dto.startAt),
               endAt: new Date(dto.endAt),
-              capacity: dto.capacity,
+              capacity,
               price: dto.price ?? 0,
               bookingOpenAt: dto.bookingOpenAt ? new Date(dto.bookingOpenAt) : undefined,
               bookingCloseAt: dto.bookingCloseAt ? new Date(dto.bookingCloseAt) : undefined,
@@ -108,21 +107,25 @@ export class SessionsService {
     if (!existing) {
       throw new NotFoundException('Session not found');
     }
+    if (dto.capacity != null && existing.event.bookingMode === 'SEAT_BASED') {
+      throw new BadRequestException('The Auditorium uses seat blocks, not a slot count');
+    }
     if (dto.capacity != null && existing.event.bookingMode === 'CAPACITY_BASED') {
       const snapshot = await this.inventory.capacity(id);
       const used = snapshot.confirmed + snapshot.reserved;
       if (dto.capacity < used) {
         throw new BadRequestException(
-          `Capacity cannot be lower than the ${used} places already taken`,
+        `The slot count cannot be lower than the ${used} slots already taken`,
         );
       }
     }
-    if (dto.eventId) {
-      await this.requireEvent(dto.eventId);
-    }
-    if (dto.venueId) {
-      await this.requireVenue(dto.venueId);
-    }
+    const venueId = dto.venueId ?? existing.venueId;
+    const eventId = dto.eventId ?? existing.eventId;
+    const [event, venue] = await Promise.all([
+      this.requireEvent(eventId),
+      this.requireVenue(venueId),
+    ]);
+    this.assertVenueBooking(event.bookingMode, venue, dto.capacity ?? existing.capacity);
     if (
       (dto.eventId && dto.eventId !== existing.eventId) ||
       (dto.venueId && dto.venueId !== existing.venueId)
@@ -192,6 +195,29 @@ export class SessionsService {
     }
   }
 
+  private assertVenueBooking(
+    bookingMode: string,
+    venue: { name: string; venueType: string },
+    capacity?: number | Prisma.Decimal | null,
+  ) {
+    if (venue.venueType === 'RESERVED_SEATING') {
+      if (bookingMode !== 'SEAT_BASED') {
+        throw new BadRequestException(
+          `${venue.name} uses seat blocks. Set this event to seat-based booking.`,
+        );
+      }
+      return;
+    }
+    if (bookingMode === 'SEAT_BASED') {
+      throw new BadRequestException(
+        `Seat blocks are only for the Auditorium. ${venue.name} uses a number of slots.`,
+      );
+    }
+    if (bookingMode === 'CAPACITY_BASED' && (capacity == null || Number(capacity) < 1)) {
+      throw new BadRequestException(`Enter how many slots this ${venue.name} session has.`);
+    }
+  }
+
   private async requireEvent(id: string) {
     const event = await this.prisma.event.findUnique({
       where: { id },
@@ -204,9 +230,13 @@ export class SessionsService {
   }
 
   private async requireVenue(id: string) {
-    const venue = await this.prisma.venue.findUnique({ where: { id }, select: { id: true } });
+    const venue = await this.prisma.venue.findUnique({
+      where: { id },
+      select: { id: true, name: true, venueType: true },
+    });
     if (!venue) {
       throw new NotFoundException('Venue not found');
     }
+    return venue;
   }
 }
