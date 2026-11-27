@@ -1,6 +1,15 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { PrismaClient, Prisma, SeatType, VenueType, AllocationOwner, EventSeatStatus } from '@prisma/client';
+import {
+  PrismaClient,
+  Prisma,
+  SeatType,
+  VenueType,
+  AllocationOwner,
+  EventSeatStatus,
+  EventType,
+  BookingMode,
+} from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -520,6 +529,283 @@ async function seedAuditoriumShows(
   }
 }
 
+const WORKSHOPS: Array<{
+  slug: string;
+  title: string;
+  sessionName: string;
+  venue: string;
+  startAt: string;
+  endAt: string;
+  price: number;
+  slots: number | null;
+  eventType: EventType;
+  category: string;
+  shortDescription: string;
+  description: string;
+  artistSlugs: string[];
+}> = [
+  {
+    slug: 'kolu-kalaripayattu',
+    title: 'Kolu: Kalaripayattu and Animal Poses',
+    sessionName: 'Saturday 10:00 AM',
+    venue: 'Banquet Hall',
+    startAt: '2027-01-09T04:30:00.000Z',
+    endAt: '2027-01-09T07:30:00.000Z',
+    price: 899,
+    slots: null,
+    eventType: 'WORKSHOP',
+    category: 'Workshop',
+    shortDescription: 'By Mandira (Atha Beyond). Saturday 9 January, 10:00 AM to 1:00 PM, Banquet Hall.',
+    description:
+      'A three hour hands-on session in Kalaripayattu, one of the oldest martial arts in the world, with Mandira of Atha Beyond. Includes the animal poses (Kolu). Any number of participants.',
+    artistSlugs: ['atha'],
+  },
+  {
+    slug: 'salsa-workshop',
+    title: 'Salsa Workshop',
+    sessionName: 'Saturday 10:00 AM',
+    venue: 'Rehearsal Studio',
+    startAt: '2027-01-09T04:30:00.000Z',
+    endAt: '2027-01-09T05:30:00.000Z',
+    price: 999,
+    slots: null,
+    eventType: 'WORKSHOP',
+    category: 'Workshop',
+    shortDescription: 'By Lourd Vijay (LVDS). Saturday 9 January, 10:00 AM to 11:00 AM, Rehearsal Studio.',
+    description:
+      'A one hour So Salsa session led by Lourd Vijay of LVDS. Any number of participants. Take Salsa and Jive together at a lower price.',
+    artistSlugs: ['lourd'],
+  },
+  {
+    slug: 'jive-workshop',
+    title: 'Jive Workshop',
+    sessionName: 'Saturday 11:00 AM',
+    venue: 'Rehearsal Studio',
+    startAt: '2027-01-09T05:30:00.000Z',
+    endAt: '2027-01-09T06:30:00.000Z',
+    price: 999,
+    slots: null,
+    eventType: 'WORKSHOP',
+    category: 'Workshop',
+    shortDescription: 'By Lourd Vijay (LVDS). Saturday 9 January, 11:00 AM to 12:00 PM, Rehearsal Studio.',
+    description:
+      'A one hour Jive session led by Lourd Vijay of LVDS. Any number of participants. Take Salsa and Jive together at a lower price.',
+    artistSlugs: ['lourd'],
+  },
+  {
+    slug: 'sound-healing-session-1',
+    title: 'Sound Healing Workshop, session 1',
+    sessionName: 'Session 1',
+    venue: 'Rehearsal Studio',
+    startAt: '2027-01-09T06:30:00.000Z',
+    endAt: '2027-01-09T07:30:00.000Z',
+    price: 999,
+    slots: 13,
+    eventType: 'WELLNESS',
+    category: 'Wellness',
+    shortDescription: 'By Siddharth Venkat. Saturday 9 January, 12:00 PM to 1:00 PM, Rehearsal Studio. 13 slots.',
+    description:
+      'An immersive experience using therapeutic sounds and vibrations to promote relaxation, inner balance and holistic well-being. Siddharth Venkat works with traditional and tribal instruments in sound baths and sound journeys.',
+    artistSlugs: ['siddharth'],
+  },
+  {
+    slug: 'sound-healing-session-2',
+    title: 'Sound Healing Workshop, session 2',
+    sessionName: 'Session 2',
+    venue: 'Rehearsal Studio',
+    startAt: '2027-01-09T07:30:00.000Z',
+    endAt: '2027-01-09T08:30:00.000Z',
+    price: 999,
+    slots: 12,
+    eventType: 'WELLNESS',
+    category: 'Wellness',
+    shortDescription: 'By Siddharth Venkat. Saturday 9 January, 1:00 PM to 2:00 PM, Rehearsal Studio. 12 slots.',
+    description:
+      'An immersive experience using therapeutic sounds and vibrations to promote relaxation, inner balance and holistic well-being. The second of two sessions on Saturday.',
+    artistSlugs: ['siddharth'],
+  },
+  {
+    slug: 'art-of-drumming',
+    title: 'The Art of Drumming',
+    sessionName: 'Saturday 2:00 PM',
+    venue: 'Rehearsal Studio',
+    startAt: '2027-01-09T08:30:00.000Z',
+    endAt: '2027-01-09T10:00:00.000Z',
+    price: 599,
+    slots: 30,
+    eventType: 'WORKSHOP',
+    category: 'Workshop',
+    shortDescription: 'By Banjo Rancho. Saturday 9 January, 2:00 PM to 3:30 PM, Rehearsal Studio. 30 slots.',
+    description:
+      'Exploring rhythm, creativity and possibilities of the drum set. Open to everyone. No previous experience is necessary.',
+    artistSlugs: ['banjo'],
+  },
+  {
+    slug: 'yoga-raaga',
+    title: 'Yoga Raaga',
+    sessionName: 'Saturday 2:00 PM',
+    venue: 'Banquet Hall',
+    startAt: '2027-01-09T08:30:00.000Z',
+    endAt: '2027-01-09T10:30:00.000Z',
+    price: 999,
+    slots: null,
+    eventType: 'WELLNESS',
+    category: 'Wellness',
+    shortDescription: 'By Dr. Vinaya Nair and Sumanth Manjunath. Saturday 9 January, 2:00 PM to 4:00 PM, Banquet Hall.',
+    description: 'Yoga Raaga: Ancient Raagas for the Inner Harmony. Any number of participants.',
+    artistSlugs: ['vinaya', 'sumanth'],
+  },
+  {
+    slug: 'dance-fitness',
+    title: 'Dance Fitness',
+    sessionName: 'Sunday 7:15 AM',
+    venue: 'Amphitheatre',
+    startAt: '2027-01-10T01:45:00.000Z',
+    endAt: '2027-01-10T03:00:00.000Z',
+    price: 0,
+    slots: null,
+    eventType: 'WELLNESS',
+    category: 'Wellness',
+    shortDescription: 'Sunday 10 January, 7:15 AM to 8:30 AM, Amphitheatre. The teacher and price will be announced.',
+    description: 'A dance fitness session to start the Sunday morning. The teacher and price will be announced.',
+    artistSlugs: [],
+  },
+  {
+    slug: 'meipadam-workshop',
+    title: 'Meipadam Workshop',
+    sessionName: 'Sunday 10:00 AM',
+    venue: 'Rehearsal Studio',
+    startAt: '2027-01-10T04:30:00.000Z',
+    endAt: '2027-01-10T06:00:00.000Z',
+    price: 499,
+    slots: null,
+    eventType: 'WORKSHOP',
+    category: 'Workshop',
+    shortDescription: 'By Vijayalakshmi Somashekarappa. Sunday 10 January, 10:00 AM to 11:30 AM, Rehearsal Studio.',
+    description:
+      'Meipadam, an Indian martial art whose name means body art in Tamil, led by Vijayalakshmi Somashekarappa, certified Meipadam and Karlakattai coach. Any number of participants.',
+    artistSlugs: ['vijay'],
+  },
+  {
+    slug: 'bharatanatyam-dikshitar-kriti',
+    title: 'Bharatanatyam Workshop: Dikshitar Kriti',
+    sessionName: 'Sunday 11:30 AM',
+    venue: 'Rehearsal Studio',
+    startAt: '2027-01-10T06:00:00.000Z',
+    endAt: '2027-01-10T09:00:00.000Z',
+    price: 2500,
+    slots: null,
+    eventType: 'WORKSHOP',
+    category: 'Workshop',
+    shortDescription: 'By Guru Smt. Anuradha Sridhar. Sunday 10 January, 11:30 AM to 2:30 PM, Rehearsal Studio.',
+    description:
+      'A three hour Bharatanatyam workshop on a Dikshitar kriti, led by Guru Smt. Anuradha Sridhar. Prerequisite: Senior exam passed.',
+    artistSlugs: ['anuradha'],
+  },
+  {
+    slug: 'carving-rhythm-linocut',
+    title: 'Carving Rhythm – Linocut Printmaking Workshop',
+    sessionName: 'Sunday 2:30 PM',
+    venue: 'Rehearsal Studio',
+    startAt: '2027-01-10T09:00:00.000Z',
+    endAt: '2027-01-10T11:30:00.000Z',
+    price: 1200,
+    slots: 10,
+    eventType: 'WORKSHOP',
+    category: 'Workshop',
+    shortDescription: 'By Artist Bhagya Ajaikumar. Sunday 10 January, 2:30 PM to 5:00 PM, Rehearsal Studio. 10 slots.',
+    description:
+      'Discover the art of linocut printmaking in this hands-on creative workshop. Drawing inspiration from classical Indian dance mudras, rhythmic percussion patterns and traditional temple architecture, participants will sketch, carve and print their own unique designs. Age 18 and over. Duration 2.5 hours. No prior printmaking experience required.',
+    artistSlugs: ['bhagya'],
+  },
+  {
+    slug: 'fusion-culinary-exploration',
+    title: 'Fusion Culinary Exploration',
+    sessionName: 'Sunday 4:00 PM',
+    venue: 'Banquet Hall',
+    startAt: '2027-01-10T10:30:00.000Z',
+    endAt: '2027-01-10T12:30:00.000Z',
+    price: 0,
+    slots: null,
+    eventType: 'OTHER',
+    category: 'Food',
+    shortDescription: 'By Culinary Designer Shruthi Agarwal. Sunday 10 January, 4:00 PM to 6:00 PM, Banquet Hall.',
+    description:
+      'Experience an exploration of Nine Rasas and the emotions of Bharatanatyam through a sensory and culinary installation, conceived by Shruti Agarwal, accompanied by Bharatanatyam artists.',
+    artistSlugs: ['shruthi'],
+  },
+];
+
+async function seedWorkshops(
+  venues: Map<string, string>,
+  adminId: string,
+  artistsBySlug: Map<string, string>,
+) {
+  for (const workshop of WORKSHOPS) {
+    const venueId = venues.get(workshop.venue);
+    if (!venueId) {
+      throw new Error(`Venue not found: ${workshop.venue}`);
+    }
+    const bookingMode: BookingMode = workshop.slots == null ? 'FREE_ENTRY' : 'CAPACITY_BASED';
+    const event = await prisma.event.upsert({
+      where: { slug: workshop.slug },
+      update: {
+        title: workshop.title,
+        category: workshop.category,
+        eventType: workshop.eventType,
+        bookingMode,
+        status: 'PUBLISHED',
+        shortDescription: workshop.shortDescription,
+        description: workshop.description,
+      },
+      create: {
+        title: workshop.title,
+        slug: workshop.slug,
+        category: workshop.category,
+        eventType: workshop.eventType,
+        bookingMode,
+        status: 'PUBLISHED',
+        shortDescription: workshop.shortDescription,
+        description: workshop.description,
+        createdBy: adminId,
+      },
+    });
+
+    for (let index = 0; index < workshop.artistSlugs.length; index += 1) {
+      const artistId = artistsBySlug.get(workshop.artistSlugs[index]);
+      if (!artistId) continue;
+      await prisma.eventArtist.upsert({
+        where: { eventId_artistId: { eventId: event.id, artistId } },
+        update: { sortOrder: index },
+        create: { eventId: event.id, artistId, sortOrder: index },
+      });
+    }
+
+    const startAt = new Date(workshop.startAt);
+    const existing = await prisma.eventSession.findFirst({
+      where: { eventId: event.id, startAt },
+    });
+    const data = {
+      venueId,
+      sessionName: workshop.sessionName,
+      endAt: new Date(workshop.endAt),
+      capacity: workshop.slots,
+      price: workshop.price,
+      status: 'SCHEDULED' as const,
+    };
+    if (existing) {
+      await prisma.eventSession.update({ where: { id: existing.id }, data });
+    } else {
+      await prisma.eventSession.create({
+        data: { eventId: event.id, startAt, ...data },
+      });
+    }
+    console.log(
+      `${workshop.title}: ${workshop.venue}, ₹${workshop.price}, ${workshop.slots == null ? 'no slot cap' : `${workshop.slots} slots`}`,
+    );
+  }
+}
+
 async function main() {
   const adminId = await seedAdmin();
   const venues = await seedVenues();
@@ -535,6 +821,7 @@ async function main() {
   await reportAuditorium();
   const artistsBySlug = await seedArtists();
   await seedAuditoriumShows(auditoriumId, adminId, artistsBySlug);
+  await seedWorkshops(venues, adminId, artistsBySlug);
 }
 
 main()

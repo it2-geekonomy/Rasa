@@ -21,6 +21,7 @@ type ShowSession = {
 type Show = {
   id: string;
   title: string;
+  bookingMode: string;
   shortDescription: string | null;
   sessions: ShowSession[];
 };
@@ -125,6 +126,7 @@ export function BookingLive() {
         if (cancel) return;
         const next: Offer[] = [];
         for (const show of rows) {
+          if (show.bookingMode !== "SEAT_BASED") continue;
           for (const session of show.sessions) {
             next.push({
               eventId: show.id,

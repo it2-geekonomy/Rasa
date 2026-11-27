@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DAYS, EV, TYPES, dayOf } from "@/lib/rasa/catalog";
-import { PROGRAMME_TICKET_SLUG } from "@/lib/rasa/booking-events";
+import { PROGRAMME_TICKET_SLUG, PROGRAMME_WORKSHOP_SLUG } from "@/lib/rasa/booking-events";
 import type { DayId } from "@/lib/rasa/types";
 import { wrapTight } from "@/lib/rasa/ui";
 import { publicApi } from "@/lib/public-api";
@@ -11,6 +11,7 @@ import { PageHero } from "./PageHero";
 import { EventCard } from "./EventCard";
 import { PlanSidebar } from "./PlanSidebar";
 import { BookingSeatSheet } from "@/components/rasa/booking/BookingSeatSheet";
+import { WorkshopBookingSheet } from "@/components/rasa/booking/WorkshopBookingSheet";
 import { usePlan } from "@/contexts/plan-context";
 import { PageBody } from "@/components/rasa/motion/PageBody";
 
@@ -21,8 +22,9 @@ export function EventsProgram({ day: initialDay, focusId }: Props) {
   const [type, setType] = useState("all");
   const planAsideRef = useRef<HTMLElement>(null);
   const router = useRouter();
-  const [sessionsBySlug, setSessionsBySlug] = useState<Map<string, string>>(new Map());
+  const [sessionsBySlug, setSessionsBySlug] = useState<Map<string, { id: string; price: number }>>(new Map());
   const [ticketEventId, setTicketEventId] = useState<string | null>(null);
+  const [workshopEventId, setWorkshopEventId] = useState<string | null>(null);
 
   useEffect(() => {
     setDay(initialDay);
@@ -30,13 +32,13 @@ export function EventsProgram({ day: initialDay, focusId }: Props) {
 
   useEffect(() => {
     let cancel = false;
-    publicApi<Array<{ slug: string; sessions: Array<{ id: string }> }>>("/events/published")
+    publicApi<Array<{ slug: string; sessions: Array<{ id: string; price: string | number }> }>>("/events/published")
       .then((rows) => {
         if (cancel) return;
-        const next = new Map<string, string>();
+        const next = new Map<string, { id: string; price: number }>();
         for (const row of rows) {
           const session = row.sessions[0];
-          if (session) next.set(row.slug, session.id);
+          if (session) next.set(row.slug, { id: session.id, price: Number(session.price) });
         }
         setSessionsBySlug(next);
       })
@@ -137,7 +139,9 @@ export function EventsProgram({ day: initialDay, focusId }: Props) {
                   onPickTickets={
                     sessionIdFor(e.id, sessionsBySlug)
                       ? () => setTicketEventId(e.id)
-                      : undefined
+                      : workshopSessionFor(e.id, sessionsBySlug)
+                        ? () => setWorkshopEventId(e.id)
+                        : undefined
                   }
                 />
               ))
@@ -159,13 +163,25 @@ export function EventsProgram({ day: initialDay, focusId }: Props) {
         sessionId={ticketEventId ? sessionIdFor(ticketEventId, sessionsBySlug) ?? null : null}
         onClose={() => setTicketEventId(null)}
       />
+      <WorkshopBookingSheet
+        eventId={workshopEventId}
+        sessionId={workshopEventId ? workshopSessionFor(workshopEventId, sessionsBySlug)?.id ?? null : null}
+        unitPrice={workshopEventId ? workshopSessionFor(workshopEventId, sessionsBySlug)?.price ?? 0 : 0}
+        onClose={() => setWorkshopEventId(null)}
+      />
     </>
   );
 }
 
-function sessionIdFor(eventId: string, sessionsBySlug: Map<string, string>) {
+function sessionIdFor(eventId: string, sessionsBySlug: Map<string, { id: string; price: number }>) {
   const slug = PROGRAMME_TICKET_SLUG[eventId];
-  return slug ? sessionsBySlug.get(slug) : undefined;
+  return slug ? sessionsBySlug.get(slug)?.id : undefined;
+}
+
+function workshopSessionFor(eventId: string, sessionsBySlug: Map<string, { id: string; price: number }>) {
+  const slug = PROGRAMME_WORKSHOP_SLUG[eventId];
+  const found = slug ? sessionsBySlug.get(slug) : undefined;
+  return found && found.price > 0 ? found : undefined;
 }
 
 function VenueKey() {
