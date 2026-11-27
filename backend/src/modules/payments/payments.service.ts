@@ -10,10 +10,11 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma, BookingStatus } from '@prisma/client';
-import Razorpay from 'razorpay';
+import Razorpay = require('razorpay');
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { pageArgs, pageMeta } from '../../common/utils/pagination';
 import { ListPaymentsQueryDto, VerifyPaymentDto } from './dto/payment.dto';
+import { TicketMailer } from '../tickets/ticket-mailer.service';
 import { TicketsService } from '../tickets/tickets.service';
 import { checkoutSignature, signaturesMatch, webhookSignature } from './razorpay.util';
 
@@ -47,6 +48,7 @@ export class PaymentsService {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     private readonly tickets: TicketsService,
+    private readonly mailer: TicketMailer,
   ) {}
 
   async createCheckout(bookingId: string): Promise<CheckoutPayload> {
@@ -74,13 +76,13 @@ export class PaymentsService {
       });
       orderId = order.id;
     } catch (error) {
-      this.logger.error(
-        `Razorpay order failed for ${booking.bookingReference}: ${
-          error instanceof Error ? error.message : 'unknown error'
-        }`,
-      );
+      const detail = razorpayError(error);
+      this.logger.error(`Razorpay order failed for ${booking.bookingReference}: ${detail}`);
+      const rejectedKeys = detail === 'Authentication failed';
       throw new BadGatewayException(
-        `Could not start checkout for ${booking.bookingReference}. Retry payment for this booking.`,
+        rejectedKeys
+          ? `Razorpay rejected the API keys. Booking ${booking.bookingReference} stays pending.`
+          : `Could not start checkout for ${booking.bookingReference}: ${detail}`,
       );
     }
 
@@ -119,6 +121,9 @@ export class PaymentsService {
         'Payment was received after the reservation expired. The seats were not confirmed.',
       );
     }
+    if (result.outcome === 'confirmed' && result.booking) {
+      void this.mailer.deliver(result.booking.id);
+    }
     return result.booking;
   }
 
@@ -151,6 +156,9 @@ export class PaymentsService {
         paymentId,
         amountPaise: payment?.amount,
       });
+      if (result.outcome === 'confirmed' && result.booking) {
+        void this.mailer.deliver(result.booking.id);
+      }
       if (result.outcome === 'ignored') {
         return { received: true, ignored: true };
       }
@@ -368,8 +376,8 @@ export class PaymentsService {
   }
 
   private credentials(reference?: string) {
-    const keyId = this.config.get<string>('razorpay.keyId') ?? '';
-    const keySecret = this.config.get<string>('razorpay.keySecret') ?? '';
+    const keyId = (this.config.get<string>('razorpay.keyId') ?? '').trim();
+    const keySecret = (this.config.get<string>('razorpay.keySecret') ?? '').trim();
     if (!keyId || !keySecret) {
       const suffix = reference ? ` Booking ${reference} stays pending.` : '';
       throw new ServiceUnavailableException(`Razorpay is not configured.${suffix}`);
@@ -384,6 +392,15 @@ export class PaymentsService {
   private loadBooking(tx: Tx, id: string) {
     return tx.booking.findUniqueOrThrow({ where: { id }, include: bookingInclude });
   }
+}
+
+function razorpayError(error: unknown) {
+  if (error instanceof Error && error.message) return error.message;
+  if (error && typeof error === 'object') {
+    const body = error as { error?: { description?: string; code?: string } };
+    return body.error?.description || body.error?.code || 'unknown error';
+  }
+  return 'unknown error';
 }
 
 export const bookingInclude = {

@@ -63,15 +63,30 @@ const LEGEND_SWATCH: Record<SeatAllocation, string> = {
   console: "bg-orange-200",
 };
 
+export type LiveSeat = {
+  eventSeatId: string;
+  bookable: boolean;
+  status: string;
+  seatType: string;
+};
+
 type Props = {
   selected: Set<string>;
   onToggle: (id: string) => void;
   lockedIds?: Set<string>;
   /** Programme sheet: map fills height; hide duplicate summary under map. */
   variant?: "default" | "sheet";
+  /** Live inventory keyed by row-seat, for example A-12. */
+  live?: Map<string, LiveSeat>;
 };
 
-export function AuditoriumSeatMap({ selected, onToggle, lockedIds, variant = "default" }: Props) {
+export function AuditoriumSeatMap({
+  selected,
+  onToggle,
+  lockedIds,
+  variant = "default",
+  live,
+}: Props) {
   const locked = lockedIds ?? new Set<string>();
 
   const consoleSpan = useMemo(() => {
@@ -85,7 +100,7 @@ export function AuditoriumSeatMap({ selected, onToggle, lockedIds, variant = "de
         variant === "sheet" ? "h-full min-h-0 flex-1 gap-1" : "space-y-3 max-lg:gap-1.5 max-lg:space-y-1.5"
       }`}
     >
-      <Legend compact={variant === "sheet"} />
+      {live ? <LiveLegend compact={variant === "sheet"} /> : <Legend compact={variant === "sheet"} />}
 
       <SeatMapViewport variant={variant}>
         <div className="flex w-max min-w-full flex-col items-stretch">
@@ -100,6 +115,7 @@ export function AuditoriumSeatMap({ selected, onToggle, lockedIds, variant = "de
             locked={locked}
             onToggle={onToggle}
             consoleRow={consoleSpan}
+            live={live}
           />
 
           <AisleBand />
@@ -113,19 +129,60 @@ export function AuditoriumSeatMap({ selected, onToggle, lockedIds, variant = "de
             selected={selected}
             locked={locked}
             onToggle={onToggle}
+            live={live}
           />
 
           <Stage />
         </div>
       </SeatMapViewport>
 
-      {variant === "sheet" ? null : (
+      {variant === "sheet" || live ? null : (
         <div className="max-lg:hidden">
           <SelectionSummary selected={selected} />
         </div>
       )}
     </div>
   );
+}
+
+function LiveLegend({ compact }: { compact?: boolean }) {
+  const items = [
+    { label: "Open", swatch: "border-2 border-[#cdb9cf] bg-white" },
+    { label: "Held", swatch: "border-2 border-[#e8b84a] bg-[#fff6d8]" },
+    { label: "Booked", swatch: "border-2 border-burg bg-burg/80" },
+    { label: "Not on sale", swatch: "border-2 border-zinc-300 bg-zinc-200" },
+    { label: "Wheelchair", swatch: "border-2 border-amber-400 bg-amber-50" },
+  ];
+  return (
+    <TableLegend compact={compact}>
+      {items.map((item) => (
+        <span
+          key={item.label}
+          role="listitem"
+          className={`inline-flex shrink-0 items-center gap-1 rounded-full bg-tint/80 ${
+            compact ? "px-2 py-0.5" : "gap-1.5 rounded-md px-2 py-1"
+          }`}
+        >
+          <span className={`inline-block shrink-0 rounded-sm ${compact ? "size-3" : "size-4"} ${item.swatch}`} aria-hidden />
+          <span className="font-medium">{item.label}</span>
+        </span>
+      ))}
+      <span className={`inline-flex shrink-0 items-center gap-1.5 font-semibold text-plum ${compact ? "text-[0.65rem]" : "text-xs"}`}>
+        <span className={`inline-block rounded-sm ${compact ? "size-3.5" : "size-5 rounded-md"} ${SELECTED.split(" ").slice(0, 3).join(" ")}`} aria-hidden />
+        Selected
+      </span>
+    </TableLegend>
+  );
+}
+
+function liveTone(offer: LiveSeat | undefined, selected: boolean) {
+  if (selected) return SELECTED;
+  if (!offer) return ALLOC_BASE.missing;
+  if (offer.seatType === "WHEELCHAIR" && offer.bookable) return ALLOC_BASE.wheelchair;
+  if (offer.bookable) return ALLOC_BASE.available;
+  if (offer.status === "HELD") return "border-2 border-[#e8b84a] bg-[#fff6d8] text-ink cursor-not-allowed";
+  if (offer.status === "BOOKED") return "border-2 border-burg bg-burg/80 text-white cursor-not-allowed";
+  return "border-2 border-zinc-300 bg-zinc-200 text-zinc-600 cursor-not-allowed";
 }
 
 function Legend({ compact }: { compact?: boolean }) {
@@ -197,6 +254,7 @@ function SectionBlocks({
   locked,
   onToggle,
   consoleRow,
+  live,
 }: {
   variant?: "default" | "sheet";
   rear: boolean;
@@ -204,6 +262,7 @@ function SectionBlocks({
   locked: Set<string>;
   onToggle: (id: string) => void;
   consoleRow?: string;
+  live?: Map<string, LiveSeat>;
 }) {
   const rows = rear ? [...REAR_ROWS].reverse() : [...FRONT_ROWS].reverse();
   const widthClass =
@@ -230,6 +289,7 @@ function SectionBlocks({
               locked={locked}
               onToggle={onToggle}
               consoleRow={rear && b.id === "center" ? consoleRow : undefined}
+              live={live}
             />
           </div>
         </div>
@@ -276,6 +336,7 @@ function BlockGrid({
   locked,
   onToggle,
   consoleRow,
+  live,
 }: {
   block: SeatBlock;
   rear: boolean;
@@ -284,6 +345,7 @@ function BlockGrid({
   locked: Set<string>;
   onToggle: (id: string) => void;
   consoleRow?: string;
+  live?: Map<string, LiveSeat>;
 }) {
   const seats = useMemo(() => seatsForBlock(AUDITORIUM_SEATS, block, rear), [block, rear]);
 
@@ -300,6 +362,7 @@ function BlockGrid({
             selected={selected}
             locked={locked}
             onToggle={onToggle}
+            live={live}
           />
         ),
       )}
@@ -327,12 +390,14 @@ function SeatRow({
   selected,
   locked,
   onToggle,
+  live,
 }: {
   row: string;
   seats: { row: string; col: number; allocation: SeatAllocation }[];
   selected: Set<string>;
   locked: Set<string>;
   onToggle: (id: string) => void;
+  live?: Map<string, LiveSeat>;
 }) {
   return (
     <div className="flex items-center gap-0.5 sm:gap-1">
@@ -342,11 +407,15 @@ function SeatRow({
       <div className="flex gap-0.5 sm:gap-1">
         {[...seats].sort((a, b) => a.col - b.col).map((s) => {
           const id = seatId(s.row, s.col);
+          const offer = live?.get(id);
           const isSelected = selected.has(id);
           const isLocked = locked.has(id) && !isSelected;
-          const canPick = selectableAllocation(s.allocation) && !isLocked;
-          const label = `Row ${s.row}, seat ${s.col} — ${ALLOCATION_LABEL[s.allocation]}`;
-          const showNum = selectableAllocation(s.allocation);
+          const canPick = live ? Boolean(offer?.bookable) && !isLocked : selectableAllocation(s.allocation) && !isLocked;
+          const label = live
+            ? `Row ${s.row}, seat ${s.col}${offer ? ` — ${offer.status}` : ""}`
+            : `Row ${s.row}, seat ${s.col} — ${ALLOCATION_LABEL[s.allocation]}`;
+          const showNum = live ? Boolean(offer) : selectableAllocation(s.allocation);
+          const tone = live ? liveTone(offer, isSelected) : isSelected ? SELECTED : ALLOC_BASE[s.allocation];
 
           return (
             <button
@@ -359,9 +428,7 @@ function SeatRow({
               onClick={() => {
                 if (canPick || isSelected) onToggle(id);
               }}
-              className={`flex shrink-0 items-center justify-center rounded-md font-semibold tabular-nums transition aria-pressed:[&_span]:text-white ${SEAT_CELL} ${
-                isSelected ? SELECTED : ALLOC_BASE[s.allocation]
-              } ${isLocked ? "opacity-45" : ""} ${canPick || isSelected ? "cursor-pointer active:scale-95" : ""}`}
+              className={`flex shrink-0 items-center justify-center rounded-md font-semibold tabular-nums transition aria-pressed:[&_span]:text-white ${SEAT_CELL} ${tone} ${isLocked ? "opacity-45" : ""} ${canPick || isSelected ? "cursor-pointer active:scale-95" : ""}`}
             >
               {showNum || isSelected ? (
                 <span className={SEAT_NUM}>{s.col}</span>

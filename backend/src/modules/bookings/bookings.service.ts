@@ -12,6 +12,7 @@ import { InventoryService } from '../sessions/inventory.service';
 import { CreateBookingDto } from './dto/booking.dto';
 import { ListBookingsQueryDto } from '../payments/dto/payment.dto';
 import { bookingInclude, PaymentsService } from '../payments/payments.service';
+import { qrDataUrl, TicketMailer } from '../tickets/ticket-mailer.service';
 
 type AttendeeRecord = {
   name: string;
@@ -27,6 +28,7 @@ export class BookingsService {
     private readonly prisma: PrismaService,
     private readonly inventory: InventoryService,
     private readonly payments: PaymentsService,
+    private readonly mailer: TicketMailer,
     private readonly config: ConfigService,
   ) {}
 
@@ -48,6 +50,7 @@ export class BookingsService {
     });
 
     if (new Prisma.Decimal(booking.totalAmount).isZero()) {
+      void this.mailer.deliver(booking.id);
       return { booking, checkout: null };
     }
     const checkout = await this.payments.createCheckout(booking.id);
@@ -109,12 +112,33 @@ export class BookingsService {
     return booking;
   }
 
+  async lookup(reference: string, email: string) {
+    const booking = await this.prisma.booking.findFirst({
+      where: { bookingReference: { equals: reference.trim(), mode: 'insensitive' } },
+      select: { id: true, customerEmail: true },
+    });
+    if (!booking || booking.customerEmail !== email.toLowerCase()) {
+      throw new NotFoundException('Booking not found');
+    }
+    return this.status(booking.id, email);
+  }
+
   async status(id: string, email: string) {
     const booking = await this.findOne(id);
     if (booking.customerEmail !== email.toLowerCase()) {
       throw new NotFoundException('Booking not found');
     }
-    return booking;
+    const tickets = await Promise.all(
+      booking.tickets.map(async (ticket) => {
+        const { qrToken, ...rest } = ticket;
+        return {
+          ...rest,
+          seatLabel: ticket.bookingSeat?.eventSeat.seat.seatLabel ?? null,
+          qrDataUrl: qrToken ? await qrDataUrl(qrToken) : null,
+        };
+      }),
+    );
+    return { ...booking, tickets };
   }
 
   private async createSeatBooking(

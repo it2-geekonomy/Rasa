@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 import { CreateEventDto, ListEventsQueryDto, UpdateEventDto } from './dto/event.dto';
 import { EventsService } from './events.service';
 
@@ -26,6 +27,13 @@ export class EventsController {
   @ApiOperation({ summary: 'Create an event' })
   create(@Body() dto: CreateEventDto, @CurrentUser() user: AuthUser) {
     return this.eventsService.create(dto, user.id);
+  }
+
+  @Public()
+  @Get('published')
+  @ApiOperation({ summary: 'Published auditorium shows for the public site' })
+  findPublished() {
+    return this.eventsService.findPublishedAuditorium();
   }
 
   @Get()

@@ -88,3 +88,10 @@ export class BookingStatusQueryDto {
   @IsEmail()
   email: string;
 }
+
+export class BookingLookupQueryDto extends BookingStatusQueryDto {
+  @ApiProperty({ example: 'RASA1A2B3C4D5E' })
+  @IsString()
+  @MaxLength(50)
+  reference: string;
+}

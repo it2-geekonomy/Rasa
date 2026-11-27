@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { duration, easeOut } from "@/lib/rasa/motion";
 import type { FestivalEvent } from "@/lib/rasa/types";
 import { ARTISTS, TLAB } from "@/lib/rasa/catalog";
@@ -35,7 +36,8 @@ type Props = {
   ticketSeatCount?: number;
 };
 
-export function EventCard({ event: e, defaultOpen, onPickSeats, ticketSeatCount = 0 }: Props) {
+export function EventCard({ event: e, defaultOpen, ticketSeatCount = 0 }: Props) {
+  const router = useRouter();
   const [open, setOpen] = useState(defaultOpen ?? false);
   const reduced = useReducedMotion();
   const { plan, togglePlan } = usePlan();
@@ -103,9 +105,9 @@ export function EventCard({ event: e, defaultOpen, onPickSeats, ticketSeatCount 
           <button
             type="button"
             className="mt-2.5 inline-flex min-h-11 items-center rounded-full border-2 border-plum bg-white px-4 py-2 text-sm font-bold text-plum hover:bg-tint"
-            onClick={() => onPickSeats?.(e.id)}
+            onClick={() => router.push("/booking")}
           >
-            {inTicketCart ? `Edit ${ticketSeatCount} seat${ticketSeatCount === 1 ? "" : "s"}` : "Pick seats on map"}
+            Get tickets
           </button>
         ) : null}
         <AnimatePresence initial={false}>
@@ -173,7 +175,7 @@ export function EventCard({ event: e, defaultOpen, onPickSeats, ticketSeatCount 
         }
         onClick={() => {
           if (ticketSeats) {
-            onPickSeats?.(e.id);
+            router.push("/booking");
             return;
           }
           togglePlan(e.id);
