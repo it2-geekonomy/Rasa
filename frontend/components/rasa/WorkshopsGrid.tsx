@@ -47,10 +47,10 @@ export function WorkshopsGrid() {
                 <RasaImage
                   img={e.pic}
                   alt={e.palt || e.t}
-                  className="!aspect-[3/2]"
-                  style={{ objectPosition: e.pp || "50% 40%" }}
+                  className="h-auto aspect-[16/9]!"
+                  style={{ aspectRatio: "16 / 9", objectPosition: e.pp || "50% 40%" }}
                   width={800}
-                  height={533}
+                  height={450}
                 />
               ) : null}
               <div className="font-lab text-sm font-semibold uppercase tracking-wider text-burg">

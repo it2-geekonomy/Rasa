@@ -16,7 +16,7 @@ const WIDE_IMGS = new Set([
   "banjo-live",
   "ws-action",
   "ws-stage",
-  "ws-group",
+  "Art of Drumming-01",
   "venkat-stage",
   "venkat-stage2",
   "quinten-b",
@@ -105,10 +105,18 @@ export function ArtistProfile({ id }: Props) {
                 key={k}
                 img={k}
                 alt={`${a.altn || a.n}, photo ${i + 2}`}
-                className={`!aspect-[4/5] ${isWide(a, k) ? "!aspect-[3/2]" : ""}`}
-                style={{ objectPosition: "50% 30%" }}
+                className={
+                  k === "Art of Drumming-01"
+                    ? "h-auto aspect-[16/9]!"
+                    : `!aspect-[4/5] ${isWide(a, k) ? "!aspect-[3/2]" : ""}`
+                }
+                style={
+                  k === "Art of Drumming-01"
+                    ? { aspectRatio: "16 / 9", objectPosition: "50% 45%" }
+                    : { objectPosition: "50% 30%" }
+                }
                 width={500}
-                height={625}
+                height={k === "Art of Drumming-01" ? 281 : 625}
               />
             ))}
           </div>

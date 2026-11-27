@@ -11,5 +11,16 @@ export default () => ({
     keySecret: process.env.RAZORPAY_KEY_SECRET ?? '',
     webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET ?? '',
   },
+  r2: {
+    accessKeyId: process.env.R2_ACCESS_KEY_ID ?? '',
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY ?? '',
+    bucketName: process.env.R2_BUCKET_NAME ?? '',
+    endpoint: process.env.R2_ENDPOINT ?? '',
+    publicUrl: (process.env.R2_PUBLIC_URL ?? '').replace(/\/+$/, ''),
+    region: process.env.R2_REGION ?? 'auto',
+  },
   corsOrigin: process.env.CORS_ORIGIN ?? 'http://localhost:3000',
+  holds: {
+    ttlMinutes: parseInt(process.env.HOLD_TTL_MINUTES ?? '10', 10),
+  },
 });
