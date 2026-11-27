@@ -38,7 +38,7 @@ export function ScrollStagger({ children, className }: Props) {
       });
       tween.kill();
     };
-  }, [reduced, children]);
+  }, [reduced]);
 
   return (
     <div ref={ref} className={className}>
