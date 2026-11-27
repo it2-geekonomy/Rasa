@@ -58,7 +58,7 @@ const ALLOC_BASE: Record<SeatAllocation, string> = {
 };
 
 const SELECTED =
-  "border-2 border-white bg-[#d12a45] text-white shadow-[0_0_10px_rgba(255,90,120,.85)]";
+  "border-2 border-white bg-[#168a45] text-white shadow-[0_0_10px_rgba(22,138,69,.75)]";
 
 const LEGEND_SHORT: Record<SeatAllocation, string> = {
   available: "Open",
@@ -529,7 +529,7 @@ function LiveLegend({ compact }: { compact?: boolean }) {
         role="listitem"
         className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-tint px-2.5 py-1 text-xs font-semibold text-plum"
       >
-        <span className="inline-block size-3.5 shrink-0 rounded-sm border-2 border-[#d12a45] bg-[#d12a45] sm:size-4" aria-hidden />
+        <span className="inline-block size-3.5 shrink-0 rounded-sm border-2 border-[#168a45] bg-[#168a45] sm:size-4" aria-hidden />
         Selected
       </span>
     </TableLegend>
@@ -643,7 +643,7 @@ function Legend({ compact }: { compact?: boolean }) {
         className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-tint px-2.5 py-1 text-xs font-semibold text-plum"
       >
         <span
-          className="inline-block size-3.5 shrink-0 rounded-sm border-2 border-[#d12a45] bg-[#d12a45] sm:size-4"
+          className="inline-block size-3.5 shrink-0 rounded-sm border-2 border-[#168a45] bg-[#168a45] sm:size-4"
           aria-hidden
         />
         Selected
@@ -805,7 +805,7 @@ function MiniMap({
 }
 
 function miniFill(id: string, allocation: SeatAllocation, selected: Set<string>, live?: Map<string, LiveSeat>) {
-  if (selected.has(id)) return "#ef4444";
+  if (selected.has(id)) return "#168a45";
   if (!live) return selectableAllocation(allocation) ? "rgba(255,255,255,0.88)" : "rgba(255,255,255,0.28)";
   const offer = live.get(id);
   if (offer?.bookable) return "rgba(255,255,255,0.88)";

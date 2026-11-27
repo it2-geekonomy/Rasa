@@ -16,10 +16,7 @@ export function bookingPathForEvent(eventId: string) {
 export const PROGRAMME_TICKET_SLUG: Record<string, string> = {
   f5: "three-forces-agam-band",
   s8: "kathak-and-bharatanatyam",
-  s9: "kathak-and-bharatanatyam",
   s14: "dance-alchemy-and-nimishambha",
-  s10: "dance-alchemy-and-nimishambha",
   s12: "fusion-express",
   u10: "warriors-path-and-mahabharata",
-  u11: "warriors-path-and-mahabharata",
 };

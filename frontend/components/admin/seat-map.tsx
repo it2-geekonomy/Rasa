@@ -32,7 +32,7 @@ const BLOCKS = [
   { id: "right", label: "Seats 28–39", from: 28, to: 39 },
 ] as const;
 
-const SELECTED = "border-burg bg-burg text-white shadow-[0_2px_6px_rgba(147,25,41,.35)]";
+const SELECTED = "border-emerald-700 bg-emerald-600 text-white shadow-[0_2px_6px_rgba(5,150,105,.35)]";
 
 const SEAT_CELL =
   "flex h-7 w-7 shrink-0 items-center justify-center rounded-md border-2 font-lab text-[11px] font-bold leading-none tabular-nums";
