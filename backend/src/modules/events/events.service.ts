@@ -196,18 +196,18 @@ export class EventsService {
 
   async findPublishedAuditorium() {
     const events = await this.prisma.event.findMany({
-      where: { status: EventStatus.PUBLISHED, bookingMode: BookingMode.SEAT_BASED },
+      where: { status: EventStatus.PUBLISHED },
       orderBy: { createdAt: 'asc' },
       select: {
         id: true,
         title: true,
         slug: true,
+        bookingMode: true,
         shortDescription: true,
         category: true,
         sessions: {
           where: {
             status: { not: 'CANCELLED' },
-            venue: { venueType: VenueType.RESERVED_SEATING },
           },
           orderBy: { startAt: 'asc' },
           select: {
@@ -215,6 +215,7 @@ export class EventsService {
             sessionName: true,
             startAt: true,
             endAt: true,
+            capacity: true,
             price: true,
             venue: { select: { name: true } },
           },

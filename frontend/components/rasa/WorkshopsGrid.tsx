@@ -140,18 +140,10 @@ export function WorkshopsGrid() {
                       className="min-h-11 rounded-full border-2 border-burg bg-burg px-4 py-2 font-bold text-white"
                       onClick={() => setBookingEventId(e.id)}
                     >
-                      Book now
+                      Book workshop
                     </button>
                   );
                 })()}
-                <button
-                  type="button"
-                  className="min-h-11 rounded-full border-2 border-plum bg-white px-4 py-2 font-bold text-plum"
-                  aria-pressed={on}
-                  onClick={() => togglePlan(e.id)}
-                >
-                  {on ? "In your plan" : "Add to plan"}
-                </button>
                 <Link
                   href={`/events/${e.d}?focus=${e.id}`}
                   className="inline-flex min-h-11 items-center rounded-full border-2 border-plum bg-white px-4 py-2 font-bold text-plum no-underline"

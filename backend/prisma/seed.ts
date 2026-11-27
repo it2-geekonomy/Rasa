@@ -746,7 +746,8 @@ async function seedWorkshops(
     if (!venueId) {
       throw new Error(`Venue not found: ${workshop.venue}`);
     }
-    const bookingMode: BookingMode = workshop.slots == null ? 'FREE_ENTRY' : 'CAPACITY_BASED';
+    const bookingMode: BookingMode =
+      workshop.price > 0 || workshop.slots != null ? 'CAPACITY_BASED' : 'FREE_ENTRY';
     const event = await prisma.event.upsert({
       where: { slug: workshop.slug },
       update: {

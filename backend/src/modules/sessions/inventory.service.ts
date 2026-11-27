@@ -361,7 +361,7 @@ export class InventoryService {
     if (snapshot.bookingMode === 'SEAT_BASED') {
       throw new BadRequestException('This session uses seat holds');
     }
-    if (snapshot.bookingMode === 'FREE_ENTRY' && snapshot.capacity == null) {
+    if (snapshot.capacity == null) {
       return snapshot;
     }
     if (snapshot.remaining == null || quantity > snapshot.remaining) {
