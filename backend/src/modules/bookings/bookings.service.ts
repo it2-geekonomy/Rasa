@@ -76,6 +76,7 @@ export class BookingsService {
     const where: Prisma.BookingWhereInput = {
       ...(query.eventSessionId ? { eventSessionId: query.eventSessionId } : {}),
       ...(query.bookingStatus ? { bookingStatus: query.bookingStatus } : {}),
+      ...(query.bookingMode ? { session: { event: { bookingMode: query.bookingMode } } } : {}),
       ...(query.email ? { customerEmail: query.email.toLowerCase() } : {}),
       ...(search
         ? {

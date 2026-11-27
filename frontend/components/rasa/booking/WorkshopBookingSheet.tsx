@@ -33,10 +33,17 @@ type BookingResult = {
   } | null;
 };
 
+type ComboOption = {
+  sessionId: string;
+  price: number;
+  label: string;
+};
+
 type Props = {
   eventId: string | null;
   sessionId: string | null;
   unitPrice: number;
+  combo?: ComboOption | null;
   onClose: () => void;
 };
 
@@ -49,12 +56,13 @@ function money(value: number) {
   }).format(value);
 }
 
-export function WorkshopBookingSheet({ eventId, sessionId, unitPrice, onClose }: Props) {
+export function WorkshopBookingSheet({ eventId, sessionId, unitPrice, combo, onClose }: Props) {
   const reduced = useReducedMotion();
   const ev = eventId ? byEventId(eventId) : undefined;
   const open = Boolean(eventId && sessionId && ev);
 
   const [step, setStep] = useState<"form" | "done">("form");
+  const [useCombo, setUseCombo] = useState(false);
   const [availability, setAvailability] = useState<CapacityAvailability | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [name, setName] = useState("");
@@ -65,8 +73,15 @@ export function WorkshopBookingSheet({ eventId, sessionId, unitPrice, onClose }:
   const [result, setResult] = useState<BookingResult | null>(null);
   const [pass, setPass] = useState<PassBooking | null>(null);
 
+  const activeSessionId = useCombo && combo ? combo.sessionId : sessionId;
+  const activePrice = useCombo && combo ? combo.price : unitPrice;
+
   useEffect(() => {
-    if (!sessionId) return;
+    setUseCombo(false);
+  }, [eventId, sessionId]);
+
+  useEffect(() => {
+    if (!activeSessionId) return;
     let cancel = false;
     setStep("form");
     setQuantity(1);
@@ -74,7 +89,7 @@ export function WorkshopBookingSheet({ eventId, sessionId, unitPrice, onClose }:
     setPass(null);
     setError(null);
     setBusy(true);
-    publicApi<CapacityAvailability>(`/sessions/${sessionId}/availability`)
+    publicApi<CapacityAvailability>(`/sessions/${activeSessionId}/availability`)
       .then((data) => {
         if (!cancel) setAvailability(data);
       })
@@ -87,7 +102,7 @@ export function WorkshopBookingSheet({ eventId, sessionId, unitPrice, onClose }:
     return () => {
       cancel = true;
     };
-  }, [sessionId]);
+  }, [activeSessionId]);
 
   useEffect(() => {
     if (!open) return;
@@ -120,7 +135,7 @@ export function WorkshopBookingSheet({ eventId, sessionId, unitPrice, onClose }:
 
   async function confirm(event: FormEvent) {
     event.preventDefault();
-    if (!sessionId) return;
+    if (!activeSessionId) return;
     setError(null);
     setBusy(true);
     try {
@@ -130,7 +145,7 @@ export function WorkshopBookingSheet({ eventId, sessionId, unitPrice, onClose }:
       const created = await publicApi<BookingResult>("/bookings", {
         method: "POST",
         body: {
-          eventSessionId: sessionId,
+          eventSessionId: activeSessionId,
           customerName: trimmedName,
           customerEmail: trimmedEmail,
           customerPhone: trimmedPhone,
@@ -163,8 +178,8 @@ export function WorkshopBookingSheet({ eventId, sessionId, unitPrice, onClose }:
 
   const remaining = availability?.remaining ?? null;
   const soldOut = remaining !== null && remaining <= 0;
-  const maxQty = remaining !== null ? Math.min(10, Math.max(remaining, 1)) : 10;
-  const total = unitPrice * quantity;
+  const maxQty = remaining !== null ? Math.min(50, Math.max(remaining, 1)) : 50;
+  const total = activePrice * quantity;
 
   return (
     <AnimatePresence>
@@ -201,7 +216,7 @@ export function WorkshopBookingSheet({ eventId, sessionId, unitPrice, onClose }:
                     {ev.t}
                   </h2>
                   <p className="mt-0.5 text-sm text-muted">
-                    {ev.v} · {money(unitPrice)} per person
+                    {ev.v} · {money(activePrice)} per person
                   </p>
                 </div>
                 <button
@@ -227,6 +242,38 @@ export function WorkshopBookingSheet({ eventId, sessionId, unitPrice, onClose }:
                   </div>
                 ) : (
                   <form id="workshop-booking-form" onSubmit={confirm} className="grid gap-4">
+                    {combo ? (
+                      <div className="grid gap-2">
+                        <p className="text-sm font-semibold text-plum">Choose ticket</p>
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                          <button
+                            type="button"
+                            onClick={() => setUseCombo(false)}
+                            className={`rounded-xl border-2 p-3 text-left transition-colors ${
+                              !useCombo ? "border-burg bg-tint" : "border-line bg-white hover:border-plum"
+                            }`}
+                          >
+                            <span className="block text-sm font-bold text-plum">{ev.t}</span>
+                            <span className="mt-0.5 block font-display text-base text-burg">
+                              {money(unitPrice)} / person
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setUseCombo(true)}
+                            className={`rounded-xl border-2 p-3 text-left transition-colors ${
+                              useCombo ? "border-burg bg-tint" : "border-line bg-white hover:border-plum"
+                            }`}
+                          >
+                            <span className="block text-sm font-bold text-plum">{combo.label}</span>
+                            <span className="mt-0.5 block font-display text-base text-burg">
+                              {money(combo.price)} / person
+                            </span>
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
+
                     {availability?.capacity != null ? (
                       <p className="rounded-xl bg-tint px-3.5 py-2 text-sm font-medium text-plum">
                         {remaining} of {availability.capacity} slots available
@@ -359,7 +406,6 @@ async function openCheckout(
         await publicApi("/payments/verify", {
           method: "POST",
           body: {
-            bookingId: created.booking.id,
             razorpayOrderId: response.razorpay_order_id,
             razorpayPaymentId: response.razorpay_payment_id,
             razorpaySignature: response.razorpay_signature,

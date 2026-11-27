@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { BookingStatus, PaymentStatus } from '@prisma/client';
+import { BookingMode, BookingStatus, PaymentStatus } from '@prisma/client';
 import { IsEmail, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 
@@ -27,6 +27,11 @@ export class ListBookingsQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsEnum(BookingStatus)
   bookingStatus?: BookingStatus;
+
+  @ApiPropertyOptional({ enum: BookingMode })
+  @IsOptional()
+  @IsEnum(BookingMode)
+  bookingMode?: BookingMode;
 
   @ApiPropertyOptional()
   @IsOptional()

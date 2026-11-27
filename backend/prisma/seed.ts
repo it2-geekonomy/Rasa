@@ -593,6 +593,22 @@ const WORKSHOPS: Array<{
     artistSlugs: ['lourd'],
   },
   {
+    slug: 'salsa-jive-combo',
+    title: 'Salsa & Jive Combo (2 hours)',
+    sessionName: 'Saturday 10:00 AM – 12:00 PM',
+    venue: 'Rehearsal Studio',
+    startAt: '2027-01-09T04:30:00.000Z',
+    endAt: '2027-01-09T06:30:00.000Z',
+    price: 1499,
+    slots: null,
+    eventType: 'WORKSHOP',
+    category: 'Workshop',
+    shortDescription: 'By Lourd Vijay (LVDS). Saturday 9 January, 10:00 AM to 12:00 PM, Rehearsal Studio. Both Salsa and Jive workshops.',
+    description:
+      'Combined 2-hour ticket for both the Salsa Workshop (10:00–11:00 AM) and Jive Workshop (11:00 AM–12:00 PM) led by Lourd Vijay of LVDS.',
+    artistSlugs: ['lourd'],
+  },
+  {
     slug: 'sound-healing-session-1',
     title: 'Sound Healing Workshop, session 1',
     sessionName: 'Session 1',

@@ -167,6 +167,15 @@ export function EventsProgram({ day: initialDay, focusId }: Props) {
         eventId={workshopEventId}
         sessionId={workshopEventId ? workshopSessionFor(workshopEventId, sessionsBySlug)?.id ?? null : null}
         unitPrice={workshopEventId ? workshopSessionFor(workshopEventId, sessionsBySlug)?.price ?? 0 : 0}
+        combo={
+          (workshopEventId === "s1" || workshopEventId === "s1b") && sessionsBySlug.get("salsa-jive-combo")
+            ? {
+                sessionId: sessionsBySlug.get("salsa-jive-combo")!.id,
+                price: sessionsBySlug.get("salsa-jive-combo")!.price,
+                label: "Salsa & Jive together (2 hours)",
+              }
+            : null
+        }
         onClose={() => setWorkshopEventId(null)}
       />
     </>

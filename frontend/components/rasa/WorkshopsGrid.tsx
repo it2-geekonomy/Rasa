@@ -202,6 +202,15 @@ export function WorkshopsGrid() {
         eventId={bookingEventId}
         sessionId={bookingEventId ? liveBySlug.get(PROGRAMME_WORKSHOP_SLUG[bookingEventId])?.sessionId ?? null : null}
         unitPrice={bookingEventId ? liveBySlug.get(PROGRAMME_WORKSHOP_SLUG[bookingEventId])?.price ?? 0 : 0}
+        combo={
+          (bookingEventId === "s1" || bookingEventId === "s1b") && liveBySlug.get("salsa-jive-combo")
+            ? {
+                sessionId: liveBySlug.get("salsa-jive-combo")!.sessionId,
+                price: liveBySlug.get("salsa-jive-combo")!.price,
+                label: "Salsa & Jive together (2 hours)",
+              }
+            : null
+        }
         onClose={() => setBookingEventId(null)}
       />
     </>
