@@ -3,13 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DAYS, EV, TYPES, dayOf } from "@/lib/rasa/catalog";
+import { PROGRAMME_TICKET_SLUG } from "@/lib/rasa/booking-events";
 import type { DayId } from "@/lib/rasa/types";
 import { wrapTight } from "@/lib/rasa/ui";
+import { publicApi } from "@/lib/public-api";
 import { PageHero } from "./PageHero";
 import { EventCard } from "./EventCard";
 import { PlanSidebar } from "./PlanSidebar";
-import { BookingSeatSheet } from "@/components/rasa/booking/BookingSeatSheet";
-import { useBookingCart } from "@/contexts/booking-cart-context";
 import { usePlan } from "@/contexts/plan-context";
 import { PageBody } from "@/components/rasa/motion/PageBody";
 
@@ -20,12 +20,29 @@ export function EventsProgram({ day: initialDay, focusId }: Props) {
   const [type, setType] = useState("all");
   const planAsideRef = useRef<HTMLElement>(null);
   const router = useRouter();
-  const { lineForEvent } = useBookingCart();
-  const [seatEventId, setSeatEventId] = useState<string | null>(null);
+  const [sessionsBySlug, setSessionsBySlug] = useState<Map<string, string>>(new Map());
 
   useEffect(() => {
     setDay(initialDay);
   }, [initialDay, setDay]);
+
+  useEffect(() => {
+    let cancel = false;
+    publicApi<Array<{ slug: string; sessions: Array<{ id: string }> }>>("/events/published")
+      .then((rows) => {
+        if (cancel) return;
+        const next = new Map<string, string>();
+        for (const row of rows) {
+          const session = row.sessions[0];
+          if (session) next.set(row.slug, session.id);
+        }
+        setSessionsBySlug(next);
+      })
+      .catch(() => null);
+    return () => {
+      cancel = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (focusId) {
@@ -55,7 +72,7 @@ export function EventsProgram({ day: initialDay, focusId }: Props) {
     <>
       <PageHero
         title="RASA Festival January 2027"
-        lead="Three days at PCPA. Tap a session for details. Tick to save your plan — auditorium shows open the seat map, then land in your ticket cart."
+        lead="Three days at PCPA. Tap a session for details. Tick to save your plan. Auditorium shows on sale open the live seat map."
       />
       <PageBody className={wrapTight}>
         <div className="mb-4 flex flex-wrap items-center gap-3">
@@ -115,8 +132,7 @@ export function EventsProgram({ day: initialDay, focusId }: Props) {
                   key={e.id}
                   event={e}
                   defaultOpen={focusId === e.id}
-                  onPickSeats={(id) => setSeatEventId(id)}
-                  ticketSeatCount={lineForEvent(e.id)?.seats.length ?? 0}
+                  ticketHref={ticketHrefFor(e.id, sessionsBySlug)}
                 />
               ))
             ) : (
@@ -129,13 +145,17 @@ export function EventsProgram({ day: initialDay, focusId }: Props) {
             ref={planAsideRef}
             mobileOpen={mobilePlanOpen}
             onMobileClose={closeMobilePlan}
-            onEditTicketSeats={(id) => setSeatEventId(id)}
           />
         </div>
       </PageBody>
-      <BookingSeatSheet eventId={seatEventId} onClose={() => setSeatEventId(null)} />
     </>
   );
+}
+
+function ticketHrefFor(eventId: string, sessionsBySlug: Map<string, string>) {
+  const slug = PROGRAMME_TICKET_SLUG[eventId];
+  const sessionId = slug ? sessionsBySlug.get(slug) : undefined;
+  return sessionId ? `/booking?session=${sessionId}` : undefined;
 }
 
 function VenueKey() {

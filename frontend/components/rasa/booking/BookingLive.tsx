@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { AuditoriumSeatMap, type LiveSeat } from "@/components/rasa/booking/AuditoriumSeatMap";
 import { TicketPasses, type PassBooking } from "@/components/rasa/booking/TicketPasses";
 import { publicApi } from "@/lib/public-api";
@@ -85,6 +86,9 @@ function money(value: number) {
 }
 
 export function BookingLive() {
+  const searchParams = useSearchParams();
+  const requestedSession = searchParams.get("session");
+  const autoOpened = useRef(false);
   const [step, setStep] = useState<Step>("shows");
   const [offers, setOffers] = useState<Offer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -101,6 +105,7 @@ export function BookingLive() {
   const [phone, setPhone] = useState("");
 
   useEffect(() => {
+    if (requestedSession) return;
     const saved = sessionStorage.getItem("rasa.pass");
     if (!saved) return;
     try {
@@ -111,7 +116,7 @@ export function BookingLive() {
     } catch {
       sessionStorage.removeItem("rasa.pass");
     }
-  }, []);
+  }, [requestedSession]);
 
   useEffect(() => {
     let cancel = false;
@@ -142,6 +147,14 @@ export function BookingLive() {
       cancel = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (autoOpened.current || !requestedSession || offers.length === 0) return;
+    const match = offers.find((item) => item.session.id === requestedSession);
+    if (!match) return;
+    autoOpened.current = true;
+    void openShow(match);
+  }, [requestedSession, offers]);
 
   const live = useMemo(() => {
     const map = new Map<string, LiveSeat>();

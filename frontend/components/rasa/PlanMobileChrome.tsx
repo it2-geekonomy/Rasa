@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { useBookingCart } from "@/contexts/booking-cart-context";
 import { usePlan } from "@/contexts/plan-context";
 import { PlanSidebar } from "./PlanSidebar";
 import { sheetBackdrop, sheetPanel } from "@/lib/rasa/motion";
@@ -12,8 +11,7 @@ import { sheetBackdrop, sheetPanel } from "@/lib/rasa/motion";
 export function PlanMobileChrome() {
   const pathname = usePathname();
   const { plan, mobilePlanOpen, toggleMobilePlan, closeMobilePlan } = usePlan();
-  const { seatCount } = useBookingCart();
-  const badge = seatCount || plan.length;
+  const badge = plan.length;
   const onEvents = pathname.startsWith("/events");
 
   useEffect(() => {
@@ -27,7 +25,7 @@ export function PlanMobileChrome() {
         className="planfab fixed bottom-[calc(62px+env(safe-area-inset-bottom))] right-3 z-[25] hidden max-md:flex min-h-10 items-center gap-1.5 rounded-full bg-burg px-3.5 py-2 text-sm font-bold text-white shadow-[0_4px_14px_rgba(63,20,65,.32)]"
         onClick={toggleMobilePlan}
       >
-        {seatCount ? "Cart" : "Your plan"} <b>{badge}</b>
+        Your plan <b>{badge}</b>
       </button>
       <AnimatePresence>
         {!onEvents && mobilePlanOpen ? (

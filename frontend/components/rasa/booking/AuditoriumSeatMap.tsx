@@ -1,47 +1,64 @@
 "use client";
 
-import { useMemo, type ReactNode } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   AUDITORIUM_SEATS,
   ALLOCATION_LABEL,
   FRONT_ROWS,
   REAR_ROWS,
   seatId,
-  seatsForBlock,
   selectableAllocation,
   type SeatAllocation,
-  type SeatBlock,
 } from "@/lib/rasa/auditorium-seats";
 import { formatInr, TIER_LABEL, TIER_PRICE_INR, tierForAllocation } from "@/lib/rasa/booking-pricing";
-import { SeatMapViewport } from "./SeatMapViewport";
 
-const BLOCKS: { id: SeatBlock; label: string; colStart: number; colEnd: number }[] = [
-  { id: "left", label: "Seats 1–12", colStart: 1, colEnd: 12 },
-  { id: "center", label: "Seats 13–27", colStart: 13, colEnd: 27 },
-  { id: "right", label: "Seats 28–39", colStart: 28, colEnd: 39 },
-];
+/* ------------------------------------------------------------------ */
+/* Layout data                                                         */
+/* ------------------------------------------------------------------ */
+
+type Seat = (typeof AUDITORIUM_SEATS)[number];
+
+const BLOCKS = [
+  { id: "left", colStart: 1, colEnd: 12 },
+  { id: "center", colStart: 13, colEnd: 27 },
+  { id: "right", colStart: 28, colEnd: 39 },
+] as const;
+
+const REAR_LIST: string[] = [...REAR_ROWS].reverse();
+const FRONT_LIST: string[] = [...FRONT_ROWS].reverse();
+const SEAT_AT = new Map<string, Seat>(AUDITORIUM_SEATS.map((s) => [seatId(s.row, s.col), s]));
+const CONSOLE_ROW = AUDITORIUM_SEATS.find((s) => s.allocation === "console")?.row ?? "ZC";
+
+const GAP = 3; // gap between seats in px
+type Dims = { w: number; h: number; stageH: number };
+const DEFAULT_DIMS: Dims = { w: 28, h: 26, stageH: 100 };
+
+function clampNum(n: number, lo: number, hi: number) {
+  return Math.min(hi, Math.max(lo, n));
+}
+
+function range(from: number, to: number) {
+  const out: number[] = [];
+  for (let n = from; n <= to; n++) out.push(n);
+  return out;
+}
+
+/* ------------------------------------------------------------------ */
+/* Styles                                                              */
+/* ------------------------------------------------------------------ */
 
 const ALLOC_BASE: Record<SeatAllocation, string> = {
-  available:
-    "border-2 border-[#cdb9cf] bg-white text-ink hover:border-plum hover:bg-tint hover:shadow-sm",
-  vip: "border-2 border-sky-400 bg-sky-50 text-sky-950 hover:border-plum",
-  wheelchair: "border-2 border-amber-400 bg-amber-50 text-amber-950 hover:border-plum",
-  venue: "border-2 border-emerald-500/90 bg-emerald-100 text-emerald-950 cursor-not-allowed",
-  sur_sandhya: "border-2 border-zinc-400 bg-zinc-200 text-zinc-700 cursor-not-allowed",
-  missing: "border-2 border-dashed border-red-200 bg-red-50/50 cursor-not-allowed opacity-50",
-  console: "border-0 bg-orange-200 cursor-not-allowed",
+  available: "border-2 border-[#cdb9cf] bg-white text-ink hover:border-plum hover:bg-tint",
+  vip: "border-2 border-sky-400 bg-sky-100 text-sky-950",
+  wheelchair: "border-2 border-amber-400 bg-amber-100 text-amber-950",
+  venue: "border-2 border-emerald-500/90 bg-emerald-200 text-emerald-950",
+  sur_sandhya: "border-2 border-zinc-500 bg-zinc-400 text-zinc-800",
+  missing: "border-2 border-dashed border-white/20 bg-transparent",
+  console: "border-0 bg-orange-300",
 };
 
 const SELECTED =
-  "border-2 border-burg bg-burg text-white font-bold shadow-[0_2px_6px_rgba(147,25,41,.35)]";
-
-/** Below lg: readable tiles + zoom; lg+: compact single-view desktop layout. */
-const SEAT_CELL =
-  "size-5 min-h-9 min-w-9 max-lg:border-2 max-lg:p-0 max-lg:font-lab max-lg:text-[10px] max-lg:font-bold max-lg:leading-none max-lg:tracking-tight lg:size-[18px] lg:min-h-0 lg:min-w-0 lg:border-2 lg:text-[8px] xl:size-5 xl:text-[9px] 2xl:size-[22px] 2xl:text-[10px]";
-const SEAT_NUM = "pointer-events-none tabular-nums max-lg:text-[11px] max-lg:font-bold max-lg:leading-none";
-const COL_W = "w-5 lg:w-[18px] xl:w-5 2xl:w-[22px]";
-const ROW_LABEL =
-  "w-6 shrink-0 text-[10px] font-bold text-ink max-lg:font-lab lg:w-7 lg:text-[10px] xl:w-8 2xl:w-9";
+  "border-2 border-white bg-[#d12a45] text-white shadow-[0_0_10px_rgba(255,90,120,.85)]";
 
 const LEGEND_SHORT: Record<SeatAllocation, string> = {
   available: "Open",
@@ -55,12 +72,12 @@ const LEGEND_SHORT: Record<SeatAllocation, string> = {
 
 const LEGEND_SWATCH: Record<SeatAllocation, string> = {
   available: "border-2 border-[#cdb9cf] bg-white",
-  vip: "border-2 border-sky-400 bg-sky-50",
-  wheelchair: "border-2 border-amber-400 bg-amber-50",
-  venue: "border-2 border-emerald-400 bg-emerald-100",
-  sur_sandhya: "border-2 border-zinc-300 bg-zinc-200",
+  vip: "border-2 border-sky-400 bg-sky-100",
+  wheelchair: "border-2 border-amber-400 bg-amber-100",
+  venue: "border-2 border-emerald-400 bg-emerald-200",
+  sur_sandhya: "border-2 border-zinc-500 bg-zinc-400",
   missing: "border-2 border-dashed border-red-200 bg-red-50",
-  console: "bg-orange-200",
+  console: "bg-orange-300",
 };
 
 export type LiveSeat = {
@@ -69,6 +86,10 @@ export type LiveSeat = {
   status: string;
   seatType: string;
 };
+
+/* ------------------------------------------------------------------ */
+/* Main component                                                      */
+/* ------------------------------------------------------------------ */
 
 type Props = {
   selected: Set<string>;
@@ -80,98 +101,399 @@ type Props = {
   live?: Map<string, LiveSeat>;
 };
 
-export function AuditoriumSeatMap({
-  selected,
-  onToggle,
-  lockedIds,
-  variant = "default",
-  live,
-}: Props) {
-  const locked = lockedIds ?? new Set<string>();
+type ScrollMetrics = {
+  sl: number;
+  st: number;
+  cw: number;
+  ch: number;
+  sw: number;
+  sh: number;
+};
 
-  const consoleSpan = useMemo(() => {
-    const c = AUDITORIUM_SEATS.find((s) => s.allocation === "console");
-    return c?.row ?? "ZC";
+type MiniSeatRect = { id: string; x: number; y: number; w: number; h: number; allocation: SeatAllocation };
+type MiniLayout = {
+  sw: number;
+  sh: number;
+  seats: MiniSeatRect[];
+  stage: { x: number; y: number; w: number; h: number } | null;
+};
+
+export function AuditoriumSeatMap({ selected, onToggle, lockedIds, variant = "default", live }: Props) {
+  const locked = useMemo(() => lockedIds ?? new Set<string>(), [lockedIds]);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [metrics, setMetrics] = useState<ScrollMetrics>({ sl: 0, st: 0, cw: 0, ch: 0, sw: 0, sh: 0 });
+  const [miniLayout, setMiniLayout] = useState<MiniLayout | null>(null);
+  const [miniVisible, setMiniVisible] = useState(false);
+  const hideTimerRef = useRef<number | null>(null);
+  const didCenterRef = useRef(false);
+
+  const showMiniBriefly = useCallback(() => {
+    setMiniVisible(true);
+    if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
+    hideTimerRef.current = window.setTimeout(() => setMiniVisible(false), 1200);
   }, []);
+
+  const syncMetrics = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setMetrics({
+      sl: el.scrollLeft,
+      st: el.scrollTop,
+      cw: el.clientWidth,
+      ch: el.clientHeight,
+      sw: el.scrollWidth,
+      sh: el.scrollHeight,
+    });
+  }, []);
+
+  const measureMiniLayout = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const sw = el.scrollWidth;
+    const sh = el.scrollHeight;
+    if (sw <= 0 || sh <= 0) return;
+
+    const elRect = el.getBoundingClientRect();
+    const ox = el.scrollLeft - elRect.left;
+    const oy = el.scrollTop - elRect.top;
+
+    const rowEls = el.querySelectorAll<HTMLElement>("[data-mini-row]");
+    const seats: MiniSeatRect[] = [];
+    let colXs: number[] | null = null;
+    let seatW = DEFAULT_DIMS.w;
+
+    rowEls.forEach((rowEl) => {
+      const row = rowEl.dataset.miniRow;
+      if (!row) return;
+      const rRect = rowEl.getBoundingClientRect();
+      const ry = rRect.top + oy;
+      const rh = rRect.height;
+
+      if (!colXs) {
+        const blockEls = rowEl.querySelectorAll<HTMLElement>("[data-mini-block]");
+        if (blockEls.length === 3) {
+          colXs = [];
+          blockEls.forEach((bEl, idx) => {
+            const bRect = bEl.getBoundingClientRect();
+            const b = BLOCKS[idx];
+            const count = b.colEnd - b.colStart + 1;
+            const step = (bRect.width + GAP) / count;
+            seatW = Math.max(4, step - GAP);
+            for (let i = 0; i < count; i++) {
+              colXs!.push(bRect.left + ox + i * step);
+            }
+          });
+        }
+      }
+
+      if (!colXs) return;
+      for (let col = 1; col <= 39; col++) {
+        const seat = SEAT_AT.get(seatId(row, col));
+        if (!seat || seat.allocation === "missing") continue;
+        seats.push({
+          id: seatId(row, col),
+          x: colXs[col - 1],
+          y: ry,
+          w: seatW,
+          h: rh,
+          allocation: seat.allocation,
+        });
+      }
+    });
+
+    const stageEl = el.querySelector<HTMLElement>("[data-mini-stage]");
+    const sRect = stageEl?.getBoundingClientRect();
+    const stage = sRect ? { x: sRect.left + ox, y: sRect.top + oy, w: sRect.width, h: sRect.height } : null;
+
+    setMiniLayout({ sw, sh, seats, stage });
+  }, []);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    const content = contentRef.current;
+    if (!el) return;
+
+    if (!didCenterRef.current && el.scrollWidth > el.clientWidth) {
+      el.scrollLeft = (el.scrollWidth - el.clientWidth) / 2;
+      didCenterRef.current = true;
+    }
+    syncMetrics();
+    measureMiniLayout();
+
+    const onScroll = () => {
+      syncMetrics();
+      showMiniBriefly();
+    };
+
+    const onResize = () => {
+      syncMetrics();
+      measureMiniLayout();
+    };
+
+    el.addEventListener("scroll", onScroll, { passive: true });
+    const ro = new ResizeObserver(onResize);
+    ro.observe(el);
+    if (content) ro.observe(content);
+
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      ro.disconnect();
+      if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
+    };
+  }, [syncMetrics, measureMiniLayout, showMiniBriefly]);
+
+  const scrollToRatio = useCallback((rx: number, ry: number) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollLeft = Math.max(0, Math.min(el.scrollWidth - el.clientWidth, rx * el.scrollWidth - el.clientWidth / 2));
+    el.scrollTop = Math.max(0, Math.min(el.scrollHeight - el.clientHeight, ry * el.scrollHeight - el.clientHeight / 2));
+  }, []);
+
+  const onSeat = useCallback(
+    (_el: HTMLButtonElement, seat: Seat) => {
+      const id = seatId(seat.row, seat.col);
+      const isSel = selected.has(id);
+      const offer = live?.get(id);
+      const open = live ? Boolean(offer?.bookable) : selectableAllocation(seat.allocation);
+      const canPick = open && !(locked.has(id) && !isSel);
+      if (canPick || isSel) onToggle(id);
+    },
+    [selected, locked, onToggle, live],
+  );
+
+  const sheet = variant === "sheet";
+  const total = selectionTotal(selected);
+  const showMiniMap = metrics.sw > metrics.cw + 4 || metrics.sh > metrics.ch + 4;
 
   return (
     <div
       className={`flex min-h-0 min-w-0 flex-col ${
-        variant === "sheet" ? "h-full min-h-0 flex-1 gap-1" : "space-y-3 max-lg:gap-1.5 max-lg:space-y-1.5"
+        sheet ? "h-full min-h-0 flex-1 gap-2" : "space-y-3 max-lg:gap-2 max-lg:space-y-2"
       }`}
     >
-      {live ? <LiveLegend compact={variant === "sheet"} /> : <Legend compact={variant === "sheet"} />}
+      {live ? <LiveLegend compact={sheet} /> : <Legend compact={sheet} />}
 
-      <SeatMapViewport variant={variant}>
-        <div className="flex w-max min-w-full flex-col items-stretch">
-          <p className="mb-2 text-center font-lab text-[0.65rem] font-semibold uppercase tracking-widest text-plum sm:text-xs">
-            Back · furthest from stage
-          </p>
-
-          <SectionBlocks
-            variant={variant}
-            rear
-            selected={selected}
-            locked={locked}
-            onToggle={onToggle}
-            consoleRow={consoleSpan}
-            live={live}
-          />
-
-          <AisleBand />
-
-          <p className="mb-2 text-center font-lab text-[0.65rem] font-semibold uppercase tracking-widest text-muted sm:text-xs">
-            Front · row A below is closest to stage
-          </p>
-          <SectionBlocks
-            variant={variant}
-            rear={false}
-            selected={selected}
-            locked={locked}
-            onToggle={onToggle}
-            live={live}
-          />
-
-          <Stage />
+      <div className={`relative flex w-full min-w-0 flex-col ${sheet ? "min-h-0 flex-1" : ""}`}>
+        <div
+          ref={scrollRef}
+          className={`w-full select-none overflow-auto overscroll-contain touch-pan-x touch-pan-y rounded-rasa bg-[#150b1b] p-3 shadow-inner [scrollbar-color:rgba(255,255,255,0.45)_rgba(255,255,255,0.08)] [scrollbar-width:thin] [&::-webkit-scrollbar]:block [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar]:w-2.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/40 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-white/10 ${
+            sheet ? "min-h-0 flex-1" : "max-h-[72vh]"
+          }`}
+        >
+          <div ref={contentRef} className="mx-auto flex w-max min-w-full flex-col items-center">
+            <Hall selected={selected} locked={locked} onSeat={onSeat} dims={DEFAULT_DIMS} live={live} />
+          </div>
         </div>
-      </SeatMapViewport>
 
-      {variant === "sheet" || live ? null : (
+        {showMiniMap && miniLayout ? (
+          <MiniMap
+            metrics={metrics}
+            layout={miniLayout}
+            selected={selected}
+            live={live}
+            visible={miniVisible}
+            onJump={(rx, ry) => {
+              showMiniBriefly();
+              scrollToRatio(rx, ry);
+            }}
+          />
+        ) : null}
+      </div>
+
+      {sheet || live ? null : (
         <div className="max-lg:hidden">
           <SelectionSummary selected={selected} />
         </div>
       )}
+      {sheet && selected.size > 0 ? (
+        <p className="sr-only">
+          {selected.size} seat{selected.size === 1 ? "" : "s"} selected, {formatInr(total)}
+        </p>
+      ) : null}
     </div>
   );
 }
 
-function LiveLegend({ compact }: { compact?: boolean }) {
-  const items = [
-    { label: "Open", swatch: "border-2 border-[#cdb9cf] bg-white" },
-    { label: "Held", swatch: "border-2 border-[#e8b84a] bg-[#fff6d8]" },
-    { label: "Booked", swatch: "border-2 border-burg bg-burg/80" },
-    { label: "Not on sale", swatch: "border-2 border-zinc-300 bg-zinc-200" },
-    { label: "Wheelchair", swatch: "border-2 border-amber-400 bg-amber-50" },
-  ];
+/* ------------------------------------------------------------------ */
+/* The hall itself (memoised so panning never re-renders every seat)   */
+/* ------------------------------------------------------------------ */
+
+type HallProps = {
+  dims: Dims;
+  selected: Set<string>;
+  locked: Set<string>;
+  onSeat: (el: HTMLButtonElement, seat: Seat) => void;
+  live?: Map<string, LiveSeat>;
+};
+
+const Hall = memo(function Hall({ selected, locked, onSeat, dims, live }: HallProps) {
   return (
-    <TableLegend compact={compact}>
-      {items.map((item) => (
-        <span
-          key={item.label}
-          role="listitem"
-          className={`inline-flex shrink-0 items-center gap-1 rounded-full bg-tint/80 ${
-            compact ? "px-2 py-0.5" : "gap-1.5 rounded-md px-2 py-1"
-          }`}
-        >
-          <span className={`inline-block shrink-0 rounded-sm ${compact ? "size-3" : "size-4"} ${item.swatch}`} aria-hidden />
-          <span className="font-medium">{item.label}</span>
-        </span>
+    <div className="relative">
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-96 bg-gradient-to-t from-[#ffcf8a]/20 to-transparent"
+        aria-hidden
+      />
+      <div className="relative px-5 pt-4">
+        <BandLabel>Back · furthest from stage</BandLabel>
+        <NumberRow w={dims.w} />
+        {REAR_LIST.map((row) => (
+          <HallRow key={row} row={row} rear selected={selected} locked={locked} onSeat={onSeat} dims={dims} live={live} />
+        ))}
+
+        <div className="my-3 flex items-center gap-3">
+          <div className="h-px flex-1 bg-white/15" />
+          <span className="font-lab text-[11px] font-bold uppercase tracking-[0.3em] text-white/50">Aisle</span>
+          <div className="h-px flex-1 bg-white/15" />
+        </div>
+
+        <BandLabel>Front · closest to stage</BandLabel>
+        <NumberRow w={dims.w} />
+        {FRONT_LIST.map((row) => (
+          <HallRow key={row} row={row} rear={false} selected={selected} locked={locked} onSeat={onSeat} dims={dims} live={live} />
+        ))}
+      </div>
+      <div
+        className="relative mt-2 w-0 min-w-full"
+        style={{ paddingInline: 55 + dims.w * 1.5 }}
+      >
+        <div data-mini-stage className="relative flex w-full justify-center">
+          <StageArt height={dims.stageH} />
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 flex items-center justify-center pt-1 font-serif text-[clamp(0.75rem,1.5vw,1.15rem)] tracking-[0.65em] text-[#fff3d6]/90"
+          >
+            STAGE
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+function BandLabel({ children }: { children: ReactNode }) {
+  return (
+    <p className="mb-1 text-center font-lab text-[11px] font-semibold uppercase tracking-[0.25em] text-white/45">{children}</p>
+  );
+}
+
+function RowLabel({ children }: { children: ReactNode }) {
+  return <span className="w-6 shrink-0 text-center font-lab text-[11px] font-bold text-white/60">{children}</span>;
+}
+
+function NumberRow({ w }: { w: number }) {
+  return (
+    <div className="mb-[3px] flex items-center justify-center gap-2" aria-hidden>
+      <span className="w-6 shrink-0" />
+      {BLOCKS.map((b, i) => (
+        <div key={b.id} className="flex items-center gap-2">
+          {i > 0 ? <span className="w-3" /> : null}
+          <div className="flex gap-[3px]">
+            {range(b.colStart, b.colEnd).map((n) => (
+              <span key={n} className="flex shrink-0 justify-center font-lab text-[9px] font-bold tabular-nums text-white/40" style={{ width: w }}>
+                {n}
+              </span>
+            ))}
+          </div>
+        </div>
       ))}
-      <span className={`inline-flex shrink-0 items-center gap-1.5 font-semibold text-plum ${compact ? "text-[0.65rem]" : "text-xs"}`}>
-        <span className={`inline-block rounded-sm ${compact ? "size-3.5" : "size-5 rounded-md"} ${SELECTED.split(" ").slice(0, 3).join(" ")}`} aria-hidden />
-        Selected
-      </span>
-    </TableLegend>
+      <span className="w-6 shrink-0" />
+    </div>
+  );
+}
+
+function HallRow({
+  row,
+  rear,
+  selected,
+  locked,
+  onSeat,
+  dims,
+  live,
+}: {
+  dims: Dims;
+  row: string;
+  rear: boolean;
+  selected: Set<string>;
+  locked: Set<string>;
+  onSeat: (el: HTMLButtonElement, seat: Seat) => void;
+  live?: Map<string, LiveSeat>;
+}) {
+  return (
+    <div data-mini-row={row} className="mb-[3px] flex items-center justify-center gap-2">
+      <RowLabel>{row}</RowLabel>
+      {BLOCKS.map((b, i) => (
+        <div key={b.id} className="flex items-center gap-2">
+          {i > 0 ? (
+            <span
+              className="w-3 shrink-0 self-stretch rounded-sm border-x border-dashed border-white/15 bg-white/[0.04]"
+              aria-hidden
+            />
+          ) : null}
+          <div data-mini-block={b.id} className="flex gap-[3px]">
+            {rear && b.id === "center" && row === CONSOLE_ROW ? (
+              <div
+                className="flex items-center justify-center rounded-md border-2 border-orange-400 bg-orange-200 font-lab text-[10px] font-bold uppercase tracking-[0.3em] text-orange-950"
+                style={{ height: dims.h, width: (b.colEnd - b.colStart + 1) * dims.w + (b.colEnd - b.colStart) * GAP }}
+              >
+                Console
+              </div>
+            ) : (
+              range(b.colStart, b.colEnd).map((col) => {
+                const seat = SEAT_AT.get(seatId(row, col));
+                if (!seat) return <span key={col} className="shrink-0" style={{ width: dims.w, height: dims.h }} />;
+                return (
+                  <SeatCell key={col} seat={seat} selected={selected} locked={locked} onSeat={onSeat} dims={dims} live={live} />
+                );
+              })
+            )}
+          </div>
+        </div>
+      ))}
+      <RowLabel>{row}</RowLabel>
+    </div>
+  );
+}
+
+function SeatCell({
+  seat,
+  selected,
+  locked,
+  onSeat,
+  dims,
+  live,
+}: {
+  dims: Dims;
+  seat: Seat;
+  selected: Set<string>;
+  locked: Set<string>;
+  onSeat: (el: HTMLButtonElement, seat: Seat) => void;
+  live?: Map<string, LiveSeat>;
+}) {
+  const id = seatId(seat.row, seat.col);
+  const offer = live?.get(id);
+  const isSelected = selected.has(id);
+  const isLocked = locked.has(id) && !isSelected;
+  const canPick = (live ? Boolean(offer?.bookable) : selectableAllocation(seat.allocation)) && !isLocked;
+  const label = live
+    ? `Row ${seat.row}, seat ${seat.col}${offer ? `, ${offer.status}` : ""}`
+    : `Row ${seat.row}, seat ${seat.col} — ${ALLOCATION_LABEL[seat.allocation]}`;
+  const showNum = (live ? Boolean(offer) : selectableAllocation(seat.allocation)) || isSelected;
+  const tone = live ? liveTone(offer, isSelected) : isSelected ? SELECTED : ALLOC_BASE[seat.allocation];
+
+  return (
+    <button
+      type="button"
+      title={label}
+      aria-label={label}
+      aria-pressed={isSelected}
+      aria-disabled={!canPick && !isSelected}
+      onClick={(event) => onSeat(event.currentTarget, seat)}
+      style={{ width: dims.w, height: dims.h, fontSize: clampNum(dims.h - 4, 8, 12) }}
+      className={`flex shrink-0 items-center justify-center rounded-b-[3px] rounded-t-[8px] font-lab font-bold leading-none tabular-nums transition-colors motion-reduce:transition-none ${tone} ${isLocked ? "opacity-40" : ""} ${canPick || isSelected ? "cursor-pointer" : "cursor-not-allowed"}`}
+    >
+      <span className={`pointer-events-none ${showNum ? "" : "invisible"}`}>{seat.col}</span>
+    </button>
   );
 }
 
@@ -180,31 +502,152 @@ function liveTone(offer: LiveSeat | undefined, selected: boolean) {
   if (!offer) return ALLOC_BASE.missing;
   if (offer.seatType === "WHEELCHAIR" && offer.bookable) return ALLOC_BASE.wheelchair;
   if (offer.bookable) return ALLOC_BASE.available;
-  if (offer.status === "HELD") return "border-2 border-[#e8b84a] bg-[#fff6d8] text-ink cursor-not-allowed";
-  if (offer.status === "BOOKED") return "border-2 border-burg bg-burg/80 text-white cursor-not-allowed";
-  return "border-2 border-zinc-300 bg-zinc-200 text-zinc-600 cursor-not-allowed";
+  if (offer.status === "HELD") return "border-2 border-[#e8b84a] bg-[#fff6d8] text-ink";
+  if (offer.status === "BOOKED") return "border-2 border-burg bg-burg text-white";
+  return "border-2 border-zinc-500 bg-zinc-600 text-zinc-200";
 }
 
-function Legend({ compact }: { compact?: boolean }) {
-  const items: SeatAllocation[] = [
-    "available",
-    "vip",
-    "wheelchair",
-    "venue",
-    "sur_sandhya",
-    "missing",
+function LiveLegend({ compact }: { compact?: boolean }) {
+  const items = [
+    { label: "Open", swatch: "border-2 border-[#cdb9cf] bg-white" },
+    { label: "Held", swatch: "border-2 border-[#e8b84a] bg-[#fff6d8]" },
+    { label: "Booked", swatch: "border-2 border-burg bg-burg" },
+    { label: "Not on sale", swatch: "border-2 border-zinc-500 bg-zinc-600" },
+    { label: "Wheelchair", swatch: "border-2 border-amber-400 bg-amber-100" },
   ];
+  return (
+    <TableLegend compact={compact}>
+      {items.map((item) => (
+        <span
+          key={item.label}
+          role="listitem"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-tint/80 px-2.5 py-1 text-xs"
+        >
+          <span className={`inline-block size-3.5 shrink-0 rounded-sm sm:size-4 ${item.swatch}`} aria-hidden />
+          <span className="font-medium">{item.label}</span>
+        </span>
+      ))}
+      <span
+        role="listitem"
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-tint px-2.5 py-1 text-xs font-semibold text-plum"
+      >
+        <span className="inline-block size-3.5 shrink-0 rounded-sm border-2 border-[#d12a45] bg-[#d12a45] sm:size-4" aria-hidden />
+        Selected
+      </span>
+    </TableLegend>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Stage                                                               */
+/* ------------------------------------------------------------------ */
+
+const FOOTLIGHTS = Array.from({ length: 27 }, (_, i) => {
+  const t = 0.03 + (i / 26) * 0.94;
+  const u = 1 - t;
+  return {
+    x: u * u * 975 + 2 * u * t * 500 + t * t * 25,
+    y: u * u * 128 + 2 * u * t * 188 + t * t * 128 + 9,
+  };
+});
+
+/** A proper proscenium stage: curtains, back wall, planked floor, spotlights, footlights, curved lip. */
+function StageArt({ height }: { height: number }) {
+  return (
+    <svg
+      viewBox="0 0 1000 185"
+      preserveAspectRatio="none"
+      className="block w-full"
+      style={{ height }}
+      role="img"
+      aria-label="Stage, front of the auditorium. Row A is closest."
+    >
+      <defs>
+        <linearGradient id="rs-fold" x1="0" x2="26" y1="0" y2="0" gradientUnits="userSpaceOnUse" spreadMethod="repeat">
+          <stop offset="0" stopColor="#4a0c18" />
+          <stop offset="0.5" stopColor="#a3243b" />
+          <stop offset="1" stopColor="#4a0c18" />
+        </linearGradient>
+        <linearGradient id="rs-wall" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stopColor="#2e1535" />
+          <stop offset="1" stopColor="#120717" />
+        </linearGradient>
+        <linearGradient id="rs-floor" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stopColor="#8a5226" />
+          <stop offset="1" stopColor="#d79a58" />
+        </linearGradient>
+        <linearGradient id="rs-beam" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stopColor="#fff0c2" stopOpacity="0.7" />
+          <stop offset="1" stopColor="#fff0c2" stopOpacity="0" />
+        </linearGradient>
+        <clipPath id="rs-floor-clip">
+          <path d="M70 58 L930 58 L975 128 Q500 188 25 128 Z" />
+        </clipPath>
+      </defs>
+
+      <rect x="40" y="14" width="920" height="46" fill="url(#rs-wall)" />
+
+      <g clipPath="url(#rs-floor-clip)">
+        <rect x="0" y="58" width="1000" height="130" fill="url(#rs-floor)" />
+        {Array.from({ length: 13 }, (_, i) => (
+          <line
+            key={i}
+            x1={70 + (i * 860) / 12}
+            y1="58"
+            x2={-120 + (i * 1240) / 12}
+            y2="200"
+            stroke="#5b3416"
+            strokeOpacity="0.35"
+            strokeWidth="1.2"
+          />
+        ))}
+        {[250, 500, 750].map((x) => (
+          <ellipse key={x} cx={x} cy="112" rx="95" ry="17" fill="#fff0c2" fillOpacity="0.28" />
+        ))}
+      </g>
+
+      {[250, 500, 750].map((x) => (
+        <polygon key={x} points={`${x - 12},16 ${x + 12},16 ${x + 100},120 ${x - 100},120`} fill="url(#rs-beam)" />
+      ))}
+
+      <path d="M0 16 L170 16 Q152 92 96 142 Q56 176 0 182 Z" fill="url(#rs-fold)" />
+      <path d="M1000 16 L830 16 Q848 92 904 142 Q944 176 1000 182 Z" fill="url(#rs-fold)" />
+
+      <rect x="0" y="0" width="1000" height="18" fill="#6b1424" />
+      <rect x="0" y="18" width="1000" height="3" fill="#d9a441" />
+
+      <path d="M975 128 Q500 188 25 128" fill="none" stroke="#e9b25a" strokeWidth="5" />
+      <path d="M975 135 Q500 195 25 135" fill="none" stroke="#4a2a10" strokeWidth="4" />
+
+      {FOOTLIGHTS.map((p, i) => (
+        <g key={i}>
+          <circle cx={p.x} cy={p.y} r="8" fill="#ffd77a" fillOpacity="0.22" />
+          <circle cx={p.x} cy={p.y} r="3.2" fill="#fff1c4" />
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Legend and summary                                                  */
+/* ------------------------------------------------------------------ */
+
+function Legend({ compact }: { compact?: boolean }) {
+  const items: SeatAllocation[] = ["available", "vip", "wheelchair", "venue", "sur_sandhya", "missing"];
   return (
     <TableLegend compact={compact}>
       {items.map((a) => (
         <LegendItem key={a} allocation={a} compact={compact} />
       ))}
       <span
-        className={`inline-flex shrink-0 items-center gap-1.5 font-semibold text-plum ${
-          compact ? "rounded-full bg-tint px-2 py-1 text-[0.65rem]" : "rounded-lg bg-tint px-2.5 py-1.5 text-xs"
-        }`}
+        role="listitem"
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-tint px-2.5 py-1 text-xs font-semibold text-plum"
       >
-        <span className={`inline-block rounded-sm ${compact ? "size-3.5" : "size-5 rounded-md"} ${SELECTED.split(" ").slice(0, 3).join(" ")}`} aria-hidden />
+        <span
+          className="inline-block size-3.5 shrink-0 rounded-sm border-2 border-[#d12a45] bg-[#d12a45] sm:size-4"
+          aria-hidden
+        />
         Selected
       </span>
     </TableLegend>
@@ -214,10 +657,10 @@ function Legend({ compact }: { compact?: boolean }) {
 function TableLegend({ children, compact }: { children: ReactNode; compact?: boolean }) {
   return (
     <div
-      className={`flex gap-1.5 overflow-x-auto overscroll-x-contain text-ink [scrollbar-width:thin] [&::-webkit-scrollbar]:block [&::-webkit-scrollbar]:h-1.5 ${
+      className={`flex flex-wrap items-center gap-1.5 text-ink sm:gap-2 ${
         compact
-          ? "shrink-0 py-0.5 text-[0.65rem] max-lg:-mx-0.5"
-          : "rounded-rasa border border-line bg-white p-2.5 text-xs shadow-sm"
+          ? "shrink-0 py-1 text-xs"
+          : "rounded-rasa border border-line bg-white p-2.5 text-xs shadow-sm sm:p-3"
       }`}
       role="list"
       aria-label="Seat legend"
@@ -231,267 +674,49 @@ function LegendItem({ allocation, compact }: { allocation: SeatAllocation; compa
   return (
     <span
       role="listitem"
-      className={`inline-flex shrink-0 items-center gap-1 rounded-full bg-tint/80 ${
-        compact ? "px-2 py-0.5" : "gap-1.5 rounded-md px-2 py-1 max-lg:py-0.5"
+      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full bg-tint/80 px-2.5 py-1 text-xs ${
+        compact ? "" : "sm:rounded-md"
       }`}
     >
       <span
-        className={`inline-block shrink-0 rounded-sm ${compact ? "size-3" : "size-4 lg:size-5 lg:rounded-md"} ${LEGEND_SWATCH[allocation]}`}
+        className={`inline-block size-3.5 shrink-0 rounded-sm sm:size-4 ${LEGEND_SWATCH[allocation]}`}
         aria-hidden
       />
-      <span className={`font-medium ${compact ? "text-[0.65rem]" : "max-lg:text-[0.65rem]"}`}>
-        <span className="lg:hidden">{LEGEND_SHORT[allocation]}</span>
-        <span className="hidden lg:inline">{ALLOCATION_LABEL[allocation]}</span>
+      <span className="font-medium">
+        <span className="sm:hidden">{LEGEND_SHORT[allocation]}</span>
+        <span className="hidden sm:inline">{ALLOCATION_LABEL[allocation]}</span>
       </span>
     </span>
   );
 }
 
-function SectionBlocks({
-  variant,
-  rear,
-  selected,
-  locked,
-  onToggle,
-  consoleRow,
-  live,
-}: {
-  variant?: "default" | "sheet";
-  rear: boolean;
-  selected: Set<string>;
-  locked: Set<string>;
-  onToggle: (id: string) => void;
-  consoleRow?: string;
-  live?: Map<string, LiveSeat>;
-}) {
-  const rows = rear ? [...REAR_ROWS].reverse() : [...FRONT_ROWS].reverse();
-  const widthClass =
-    variant === "sheet"
-      ? "w-max max-w-none"
-      : "w-max max-w-none lg:w-full lg:max-w-full";
-  return (
-    <div
-      className={`flex shrink-0 items-start justify-center gap-0.5 max-lg:gap-px sm:gap-1 lg:gap-1.5 xl:gap-2.5 2xl:gap-3 ${widthClass}`}
-    >
-      {BLOCKS.map((b, i) => (
-        <div key={b.id} className="flex shrink-0 items-start gap-0.5 sm:gap-1">
-          {i > 0 ? <StairGutter /> : null}
-          <div className="shrink-0 rounded-md border border-line bg-white px-1 pb-1 pt-1 shadow-sm sm:rounded-lg sm:px-1.5 lg:px-1 xl:px-1.5">
-            <p className="mb-0.5 text-center font-lab text-[0.55rem] font-bold leading-tight text-plum sm:text-[0.65rem] lg:uppercase lg:tracking-widest">
-              {b.label}
-            </p>
-            <ColumnHeader from={b.colStart} to={b.colEnd} />
-            <BlockGrid
-              block={b.id}
-              rear={rear}
-              rows={rows}
-              selected={selected}
-              locked={locked}
-              onToggle={onToggle}
-              consoleRow={rear && b.id === "center" ? consoleRow : undefined}
-              live={live}
-            />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function ColumnHeader({ from, to }: { from: number; to: number }) {
-  const nums: number[] = [];
-  for (let c = from; c <= to; c++) nums.push(c);
-  return (
-    <div className="mb-0.5 flex items-center gap-0.5 pl-6 sm:pl-7 lg:pl-8 xl:pl-9 2xl:pl-10">
-      {nums.map((n) => (
-        <span
-          key={n}
-          className={`flex shrink-0 justify-center font-lab text-[0.65rem] font-bold tabular-nums text-plum max-lg:text-[10px] ${COL_W}`}
-        >
-          {n}
-        </span>
-      ))}
-    </div>
-  );
-}
-
-function StairGutter() {
-  return (
-    <div
-      className="mt-10 flex w-3 shrink-0 flex-col items-center justify-center gap-1 self-stretch rounded-sm border border-dashed border-plum/25 bg-plum/5 px-0.5 sm:mt-12 sm:w-4 lg:mt-8"
-      title="Stairs"
-    >
-      <span className="rotate-180 text-[0.45rem] font-bold uppercase tracking-[0.2em] text-plum/60 [writing-mode:vertical-rl] sm:text-[0.5rem]">
-        Stairs
-      </span>
-    </div>
-  );
-}
-
-function BlockGrid({
-  block,
-  rear,
-  rows,
-  selected,
-  locked,
-  onToggle,
-  consoleRow,
-  live,
-}: {
-  block: SeatBlock;
-  rear: boolean;
-  rows: string[];
-  selected: Set<string>;
-  locked: Set<string>;
-  onToggle: (id: string) => void;
-  consoleRow?: string;
-  live?: Map<string, LiveSeat>;
-}) {
-  const seats = useMemo(() => seatsForBlock(AUDITORIUM_SEATS, block, rear), [block, rear]);
-
-  return (
-    <div className="space-y-1">
-      {rows.map((row) =>
-        rear && block === "center" && row === consoleRow ? (
-          <ConsoleRow key={row} colCount={15} />
-        ) : (
-          <SeatRow
-            key={row}
-            row={row}
-            seats={seats.filter((s) => s.row === row)}
-            selected={selected}
-            locked={locked}
-            onToggle={onToggle}
-            live={live}
-          />
-        ),
-      )}
-    </div>
-  );
-}
-
-function ConsoleRow({ colCount }: { colCount: number }) {
-  return (
-    <div className="flex items-center gap-1 py-0.5">
-      <span className={`${ROW_LABEL} shrink-0 text-right font-lab text-xs font-bold text-muted`}>ZC</span>
-      <div
-        className="flex h-6 items-center justify-center rounded-md border-2 border-orange-400 bg-orange-100 font-lab text-[0.55rem] font-bold uppercase tracking-widest text-orange-900 sm:h-7 sm:text-[0.6rem] lg:h-5 lg:text-xs"
-        style={{ minWidth: colCount * 22 }}
-      >
-        Console
-      </div>
-    </div>
-  );
-}
-
-function SeatRow({
-  row,
-  seats,
-  selected,
-  locked,
-  onToggle,
-  live,
-}: {
-  row: string;
-  seats: { row: string; col: number; allocation: SeatAllocation }[];
-  selected: Set<string>;
-  locked: Set<string>;
-  onToggle: (id: string) => void;
-  live?: Map<string, LiveSeat>;
-}) {
-  return (
-    <div className="flex items-center gap-0.5 sm:gap-1">
-      <span className={`${ROW_LABEL} text-right font-lab font-bold tabular-nums text-plum sm:text-xs lg:text-sm`}>
-        {row}
-      </span>
-      <div className="flex gap-0.5 sm:gap-1">
-        {[...seats].sort((a, b) => a.col - b.col).map((s) => {
-          const id = seatId(s.row, s.col);
-          const offer = live?.get(id);
-          const isSelected = selected.has(id);
-          const isLocked = locked.has(id) && !isSelected;
-          const canPick = live ? Boolean(offer?.bookable) && !isLocked : selectableAllocation(s.allocation) && !isLocked;
-          const label = live
-            ? `Row ${s.row}, seat ${s.col}${offer ? ` — ${offer.status}` : ""}`
-            : `Row ${s.row}, seat ${s.col} — ${ALLOCATION_LABEL[s.allocation]}`;
-          const showNum = live ? Boolean(offer) : selectableAllocation(s.allocation);
-          const tone = live ? liveTone(offer, isSelected) : isSelected ? SELECTED : ALLOC_BASE[s.allocation];
-
-          return (
-            <button
-              key={id}
-              type="button"
-              disabled={!canPick && !isSelected}
-              title={label}
-              aria-label={label}
-              aria-pressed={isSelected}
-              onClick={() => {
-                if (canPick || isSelected) onToggle(id);
-              }}
-              className={`flex shrink-0 items-center justify-center rounded-md font-semibold tabular-nums transition aria-pressed:[&_span]:text-white ${SEAT_CELL} ${tone} ${isLocked ? "opacity-45" : ""} ${canPick || isSelected ? "cursor-pointer active:scale-95" : ""}`}
-            >
-              {showNum || isSelected ? (
-                <span className={SEAT_NUM}>{s.col}</span>
-              ) : (
-                <span className="sr-only">{s.col}</span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function AisleBand() {
-  return (
-    <div className="my-2 flex items-center gap-2 py-1 sm:my-4 sm:gap-3 sm:py-2">
-      <div className="h-0.5 flex-1 bg-plum/20" />
-      <span className="rounded-full bg-tint2 px-3 py-1 font-lab text-xs font-bold uppercase tracking-widest text-plum">
-        Aisle
-      </span>
-      <div className="h-0.5 flex-1 bg-plum/20" />
-    </div>
-  );
-}
-
-function Stage() {
-  return (
-    <div
-      className="mt-0 w-full shrink-0 border-[3px] border-[#c4722a] bg-[#f3ba6c] py-2.5 text-center shadow-[inset_0_0_0_1px_rgba(255,255,255,.4)] max-lg:py-3"
-      role="img"
-      aria-label="Stage — front of the auditorium (bottom of map)"
-    >
-      <p className="font-display text-lg font-bold uppercase tracking-[0.32em] text-[#1a1208] max-lg:text-xl sm:text-xl">
-        Stage
-      </p>
-    </div>
-  );
+function selectionTotal(selected: Set<string>) {
+  let total = 0;
+  selected.forEach((id) => {
+    const seat = SEAT_AT.get(id);
+    const tier = seat ? tierForAllocation(seat.allocation) : null;
+    if (tier) total += TIER_PRICE_INR[tier];
+  });
+  return total;
 }
 
 function SelectionSummary({ selected }: { selected: Set<string> }) {
   if (!selected.size) {
     return (
       <p className="text-xs leading-relaxed text-muted sm:text-sm">
-        Tap an open seat. On mobile, drag the map with your finger if you need to move around the hall.
+        Tap an open seat to pick it. Pinch or use + / − to zoom.
       </p>
     );
   }
 
-  let total = 0;
   const chips: string[] = [];
   selected.forEach((id) => {
-    const dash = id.lastIndexOf("-");
-    const row = id.slice(0, dash);
-    const col = Number(id.slice(dash + 1));
-    const seat = AUDITORIUM_SEATS.find((s) => s.row === row && s.col === col);
+    const seat = SEAT_AT.get(id);
     if (!seat) return;
     const tier = tierForAllocation(seat.allocation);
     if (!tier) return;
-    total += TIER_PRICE_INR[tier];
-    chips.push(`Row ${row}, seat ${col} · ${TIER_LABEL[tier]}`);
+    chips.push(`Row ${seat.row}, seat ${seat.col} · ${TIER_LABEL[tier]}`);
   });
-
   chips.sort();
 
   return (
@@ -500,7 +725,7 @@ function SelectionSummary({ selected }: { selected: Set<string> }) {
         <span className="font-display text-lg text-plum">
           {selected.size} seat{selected.size === 1 ? "" : "s"} selected
         </span>
-        <span className="font-display text-xl text-burg tabular-nums">{formatInr(total)}</span>
+        <span className="font-display text-xl text-burg tabular-nums">{formatInr(selectionTotal(selected))}</span>
       </div>
       <ul className="mt-2 grid list-none gap-1.5 sm:grid-cols-2">
         {chips.map((c) => (
@@ -512,3 +737,110 @@ function SelectionSummary({ selected }: { selected: Set<string> }) {
     </div>
   );
 }
+
+/* ------------------------------------------------------------------ */
+/* BookMyShow-style floating mini-map                                  */
+/* ------------------------------------------------------------------ */
+
+const MINI_W = 116;
+
+function MiniMap({
+  metrics,
+  layout,
+  selected,
+  live,
+  visible,
+  onJump,
+}: {
+  metrics: ScrollMetrics;
+  layout: MiniLayout;
+  selected: Set<string>;
+  live?: Map<string, LiveSeat>;
+  visible: boolean;
+  onJump: (rx: number, ry: number) => void;
+}) {
+  const boxRef = useRef<HTMLDivElement>(null);
+  const ratio = layout.sw > 0 ? layout.sh / layout.sw : 0.75;
+  const miniH = Math.max(56, Math.round(MINI_W * ratio));
+
+  const jumpFromPointer = (clientX: number, clientY: number) => {
+    const r = boxRef.current?.getBoundingClientRect();
+    if (!r) return;
+    const rx = Math.max(0, Math.min(1, (clientX - r.left) / r.width));
+    const ry = Math.max(0, Math.min(1, (clientY - r.top) / r.height));
+    onJump(rx, ry);
+  };
+
+  return (
+    <div
+      className={`absolute left-2.5 top-2.5 z-20 rounded-lg border border-white/20 bg-black/75 p-1.5 shadow-lg backdrop-blur-xs transition-opacity duration-300 ${
+        visible ? "opacity-100" : "pointer-events-none opacity-0"
+      }`}
+      aria-hidden
+    >
+      <div
+        ref={boxRef}
+        className="relative cursor-pointer touch-none overflow-hidden"
+        style={{ width: MINI_W, height: miniH }}
+        onPointerDown={(e) => {
+          e.preventDefault();
+          e.currentTarget.setPointerCapture(e.pointerId);
+          jumpFromPointer(e.clientX, e.clientY);
+        }}
+        onPointerMove={(e) => {
+          if (e.buttons === 1) jumpFromPointer(e.clientX, e.clientY);
+        }}
+      >
+        <MiniMapGrid layout={layout} selected={selected} live={live} />
+        <div
+          className="pointer-events-none absolute border-2 border-[#ef4444] bg-[#ef4444]/15"
+          style={{
+            left: `${(metrics.sl / metrics.sw) * 100}%`,
+            top: `${(metrics.st / metrics.sh) * 100}%`,
+            width: `${Math.min(100, (metrics.cw / metrics.sw) * 100)}%`,
+            height: `${Math.min(100, (metrics.ch / metrics.sh) * 100)}%`,
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function miniFill(id: string, allocation: SeatAllocation, selected: Set<string>, live?: Map<string, LiveSeat>) {
+  if (selected.has(id)) return "#ef4444";
+  if (!live) return selectableAllocation(allocation) ? "rgba(255,255,255,0.88)" : "rgba(255,255,255,0.28)";
+  const offer = live.get(id);
+  if (offer?.bookable) return "rgba(255,255,255,0.88)";
+  if (offer?.status === "HELD") return "#e8b84a";
+  if (offer?.status === "BOOKED") return "#931929";
+  return "rgba(255,255,255,0.28)";
+}
+
+const MiniMapGrid = memo(function MiniMapGrid({
+  layout,
+  selected,
+  live,
+}: {
+  layout: MiniLayout;
+  selected: Set<string>;
+  live?: Map<string, LiveSeat>;
+}) {
+  return (
+    <svg viewBox={`0 0 ${layout.sw} ${layout.sh}`} preserveAspectRatio="none" className="block size-full">
+      {layout.seats.map((s) => {
+        const fill = miniFill(s.id, s.allocation, selected, live);
+        return <rect key={s.id} x={s.x} y={s.y} width={s.w} height={s.h} rx={4} fill={fill} />;
+      })}
+      {layout.stage ? (
+        <rect
+          x={layout.stage.x}
+          y={layout.stage.y}
+          width={layout.stage.w}
+          height={layout.stage.h}
+          rx={6}
+          fill="rgba(255,240,194,0.55)"
+        />
+      ) : null}
+    </svg>
+  );
+});

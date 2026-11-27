@@ -1,19 +1,14 @@
 "use client";
 
-import Link from "next/link";
 import { forwardRef } from "react";
-import { DAYS, EV, byEventId } from "@/lib/rasa/catalog";
+import { DAYS, EV } from "@/lib/rasa/catalog";
 import { fmtMinutes } from "@/lib/rasa/time";
 import { usePlan } from "@/contexts/plan-context";
 import { useToast } from "@/contexts/toast-context";
-import { useBookingCart, seatLabel } from "@/contexts/booking-cart-context";
-import { formatInr } from "@/lib/rasa/booking-pricing";
-import { btn, btnLine } from "@/lib/rasa/ui";
 
 type Props = {
   mobileOpen?: boolean;
   onMobileClose?: () => void;
-  onEditTicketSeats?: (eventId: string) => void;
 };
 
 function planText(planIds: string[]) {
@@ -58,11 +53,10 @@ function clashes(planIds: string[]) {
 }
 
 export const PlanSidebar = forwardRef<HTMLElement, Props>(function PlanSidebar(
-  { mobileOpen, onMobileClose, onEditTicketSeats },
+  { mobileOpen, onMobileClose },
   ref,
 ) {
   const { plan, clearPlan } = usePlan();
-  const { lines, cartTotal, seatCount, removeLine, clearCart } = useBookingCart();
   const { toast } = useToast();
   const events = plan.map((id) => EV.find((e) => e.id === id)).filter(Boolean);
   const cl = clashes(plan);
@@ -73,73 +67,13 @@ export const PlanSidebar = forwardRef<HTMLElement, Props>(function PlanSidebar(
       className={`sticky top-[132px] rounded-2xl bg-tint p-5 max-md:static max-md:mt-5 ${
         mobileOpen ? "max-md:!block" : "max-md:hidden"
       }`}
-      aria-label="Your plan and ticket cart"
+      aria-label="Your plan"
     >
-      {lines.length ? (
-        <section className="mb-5 border-b border-line pb-5" aria-label="Ticket cart">
-          <h3 className="mb-1 font-display text-xl font-semibold text-plum">Ticket cart</h3>
-          <p className="m-0 text-[0.9rem] text-muted">
-            {seatCount} seat{seatCount === 1 ? "" : "s"} · {formatInr(cartTotal)}
-          </p>
-          <ul className="my-3 grid list-none gap-2">
-            {lines.map((line) => {
-              const ev = byEventId(line.eventId);
-              if (!ev) return null;
-              const sub = line.seats.reduce((n, s) => n + s.price, 0);
-              return (
-                <li key={line.eventId} className="rounded-[10px] border border-plum/15 bg-white px-3 py-2.5 text-[0.92rem]">
-                  <b className="font-lab tracking-wide text-plum">
-                    {DAYS.find((d) => d.id === ev.d)?.short} {ev.tl || fmtMinutes(ev.s)}
-                  </b>
-                  <p className="mt-0.5 font-medium text-ink">{ev.t}</p>
-                  <p className="mt-1 text-[0.85rem] text-muted">
-                    {line.seats.length} seat{line.seats.length === 1 ? "" : "s"} · {formatInr(sub)}
-                  </p>
-                  <ul className="mt-1.5 flex flex-wrap gap-1 text-[0.8rem] text-plum">
-                    {line.seats.map((s) => (
-                      <li key={s.id} className="rounded-full bg-tint px-2 py-0.5">
-                        {seatLabel(s.id)}
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    <button
-                      type="button"
-                      className="text-xs font-bold text-burg hover:underline"
-                      onClick={() => onEditTicketSeats?.(line.eventId)}
-                    >
-                      Change seats
-                    </button>
-                    <button
-                      type="button"
-                      className="text-xs font-bold text-muted hover:text-burg hover:underline"
-                      onClick={() => removeLine(line.eventId)}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-          <div className="flex flex-wrap gap-2">
-            <Link href="/booking?view=cart" className={btn}>
-              Review & pay
-            </Link>
-            <button type="button" className={btnLine} onClick={clearCart}>
-              Clear cart
-            </button>
-          </div>
-        </section>
-      ) : null}
-
       <h3 className="mb-1 font-display text-xl font-semibold text-plum">Your plan</h3>
       <p className="m-0 text-[0.9rem] text-muted">
         {events.length
           ? `${events.length} session${events.length > 1 ? "s" : ""} saved on this device.`
-          : lines.length
-            ? "Tick other sessions to build a personal itinerary alongside your tickets."
-            : "Tick any session to build your own plan."}
+          : "Tick any session to build your own plan."}
       </p>
       {events.length ? (
         <>

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { api, inr, when } from "@/lib/admin/api";
 import { useAdmin } from "./admin-gate";
-import { Notice } from "./ui";
+import { Notice, Panel } from "./ui";
 
 type Ticket = {
   id: string;
@@ -27,7 +27,15 @@ type Booking = {
   bookedAt: string | null;
   session: { sessionName: string | null; event: { title: string } };
   tickets: Ticket[];
-  payments: { id: string; status: string; amount: string; razorpayOrderId: string | null }[];
+  payments: {
+    id: string;
+    status: string;
+    amount: string;
+    currency: string;
+    razorpayOrderId: string | null;
+    razorpayPaymentId: string | null;
+    paidAt: string | null;
+  }[];
 };
 
 export function BookingDetailScreen({ bookingId }: { bookingId: string }) {
@@ -58,6 +66,7 @@ export function BookingDetailScreen({ bookingId }: { bookingId: string }) {
         </p>
       </div>
       {error ? <Notice>{error}</Notice> : null}
+      {booking ? <PaymentDetails booking={booking} /> : null}
       <div className="overflow-x-auto rounded-rasa border border-line bg-white">
         <table className="w-full min-w-[720px] text-left text-sm">
           <thead className="bg-tint2 text-plum">
@@ -91,5 +100,30 @@ export function BookingDetailScreen({ bookingId }: { bookingId: string }) {
         </table>
       </div>
     </>
+  );
+}
+
+function PaymentDetails({ booking }: { booking: Booking }) {
+  const paid = booking.payments.filter((payment) => payment.status === "CAPTURED");
+  const rows = paid.length > 0 ? paid : booking.payments;
+  return (
+    <Panel title="Payment">
+      {rows.length === 0 ? (
+        <p className="text-sm text-muted">No Razorpay payment. This booking was free.</p>
+      ) : (
+        <div className="grid gap-3">
+          {rows.map((payment) => (
+            <div key={payment.id} className="grid gap-1 text-sm">
+              <p className="font-medium text-plum">
+                {payment.status === "CAPTURED" ? "Paid" : payment.status} · {inr(payment.amount)}
+              </p>
+              <p className="text-muted">Order {payment.razorpayOrderId || "—"}</p>
+              <p className="text-muted">Payment {payment.razorpayPaymentId || "—"}</p>
+              <p className="text-muted">{payment.paidAt ? when(payment.paidAt) : "Paid time not recorded"}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </Panel>
   );
 }

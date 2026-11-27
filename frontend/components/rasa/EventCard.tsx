@@ -8,7 +8,6 @@ import { duration, easeOut } from "@/lib/rasa/motion";
 import type { FestivalEvent } from "@/lib/rasa/types";
 import { ARTISTS, TLAB } from "@/lib/rasa/catalog";
 import { fmtMinutes } from "@/lib/rasa/time";
-import { isAuditoriumTicketEvent } from "@/lib/rasa/booking-events";
 import { lnk } from "@/lib/rasa/ui";
 import { RasaImage } from "./RasaImage";
 import { usePlan } from "@/contexts/plan-context";
@@ -31,20 +30,17 @@ function typeBorder(ty: string) {
 type Props = {
   event: FestivalEvent;
   defaultOpen?: boolean;
-  /** Auditorium performances: open seat map (festival flow). */
-  onPickSeats?: (eventId: string) => void;
-  ticketSeatCount?: number;
+  /** Live auditorium session. Absent when that show is not on sale. */
+  ticketHref?: string;
 };
 
-export function EventCard({ event: e, defaultOpen, ticketSeatCount = 0 }: Props) {
+export function EventCard({ event: e, defaultOpen, ticketHref }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(defaultOpen ?? false);
   const reduced = useReducedMotion();
   const { plan, togglePlan } = usePlan();
   const { toast } = useToast();
   const onPlan = plan.includes(e.id);
-  const ticketSeats = isAuditoriumTicketEvent(e);
-  const inTicketCart = ticketSeatCount > 0;
   const artists = (e.a || [])
     .map((id) => ARTISTS.find((a) => a.id === id))
     .filter(Boolean);
@@ -101,11 +97,11 @@ export function EventCard({ event: e, defaultOpen, ticketSeatCount = 0 }: Props)
             ) : null}
           </span>
         </button>
-        {ticketSeats ? (
+        {ticketHref ? (
           <button
             type="button"
             className="mt-2.5 inline-flex min-h-11 items-center rounded-full border-2 border-plum bg-white px-4 py-2 text-sm font-bold text-plum hover:bg-tint"
-            onClick={() => router.push("/booking")}
+            onClick={() => router.push(ticketHref)}
           >
             Get tickets
           </button>
@@ -167,15 +163,15 @@ export function EventCard({ event: e, defaultOpen, ticketSeatCount = 0 }: Props)
       <button
         type="button"
         className="star tick"
-        aria-pressed={ticketSeats ? inTicketCart : onPlan}
+        aria-pressed={ticketHref ? undefined : onPlan}
         aria-label={
-          ticketSeats
-            ? `${inTicketCart ? "Change seats for" : "Pick seats for"}: ${e.t}`
+          ticketHref
+            ? `Get tickets: ${e.t}`
             : `${onPlan ? "Remove from" : "Add to"} my plan: ${e.t}`
         }
         onClick={() => {
-          if (ticketSeats) {
-            router.push("/booking");
+          if (ticketHref) {
+            router.push(ticketHref);
             return;
           }
           togglePlan(e.id);

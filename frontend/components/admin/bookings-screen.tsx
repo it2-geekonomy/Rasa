@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { api, inr, when } from "@/lib/admin/api";
 import { useAdmin } from "./admin-gate";
-import { fieldClass, Notice } from "./ui";
+import { EyeIcon, fieldClass, Notice } from "./ui";
 
 type BookingRow = {
   id: string;
@@ -27,7 +27,7 @@ export function BookingsScreen() {
 
   useEffect(() => {
     let cancel = false;
-    const query = new URLSearchParams({ limit: "50" });
+    const query = new URLSearchParams({ limit: "50", bookingStatus: "CONFIRMED" });
     if (search.trim()) query.set("search", search.trim());
     const load = () => {
       api<{ data: BookingRow[] }>(`/bookings?${query}`, { token })
@@ -67,15 +67,14 @@ export function BookingsScreen() {
               <th className="px-3 py-2 font-medium">Show</th>
               <th className="px-3 py-2 font-medium">Status</th>
               <th className="px-3 py-2 font-medium">Total</th>
+              <th className="px-3 py-2 font-medium">Actions</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((row) => (
-              <tr key={row.id} className="border-t border-line">
+              <tr key={row.id} className="border-t border-line hover:bg-tint/40">
                 <td className="px-3 py-2">
-                  <Link href={`/admin/bookings/${row.id}`} className="font-medium text-plum no-underline">
-                    {row.bookingReference}
-                  </Link>
+                  <p className="font-medium text-plum">{row.bookingReference}</p>
                   <p className="text-xs text-muted">{when(row.createdAt)}</p>
                 </td>
                 <td className="px-3 py-2">
@@ -86,20 +85,27 @@ export function BookingsScreen() {
                   {row.session.event.title}
                   <p className="text-xs text-muted">{row.session.sessionName}</p>
                 </td>
-                <td className="px-3 py-2">
-                  {row.bookingStatus}
-                  <p className="text-xs text-muted">{row.paymentStatus}</p>
-                </td>
+                <td className="px-3 py-2">Paid</td>
                 <td className="px-3 py-2">
                   {inr(row.totalAmount)}
                   <p className="text-xs text-muted">{row.quantity}</p>
+                </td>
+                <td className="px-3 py-2">
+                  <Link
+                    href={`/admin/bookings/${row.id}`}
+                    aria-label={`View booking ${row.bookingReference}`}
+                    title="View"
+                    className="inline-flex size-8 items-center justify-center rounded-rasa text-plum hover:bg-tint"
+                  >
+                    <EyeIcon />
+                  </Link>
                 </td>
               </tr>
             ))}
             {rows.length === 0 ? (
               <tr>
-                <td className="px-3 py-4 text-muted" colSpan={5}>
-                  No bookings yet.
+                <td className="px-3 py-4 text-muted" colSpan={6}>
+                  No paid bookings yet.
                 </td>
               </tr>
             ) : null}
