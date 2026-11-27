@@ -5,6 +5,7 @@ export const IMG={
  "ws-stage":"/images/ws-stage.jpg",
  "Art of Drumming-01":"/images/Art of Drumming-01.jpg",
  "Bharatanatyam-01":"/images/Bharatanatyam-01.jpg",
+ "Fusion Culinary":"/images/Fusion Culinary.jpg",
  "Jive-01":"/images/Jive-01.jpg",
  "Kalaripayatu-01":"/images/Kalaripayatu-01.jpg",
  "Linocut_-03":"/images/Linocut_-03.jpg",

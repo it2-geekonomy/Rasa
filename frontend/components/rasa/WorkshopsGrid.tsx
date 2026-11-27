@@ -1,17 +1,36 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { DAYS, EV, dayOf, ARTISTS } from "@/lib/rasa/catalog";
 import { fmtMinutes } from "@/lib/rasa/time";
 import { card, gridAnimItem, lnk } from "@/lib/rasa/ui";
+import { duration, easeOut } from "@/lib/rasa/motion";
 import { RasaImage } from "./RasaImage";
 import { usePlan } from "@/contexts/plan-context";
 import { ScrollStagger } from "@/components/rasa/motion/ScrollStagger";
 
+type PosterPreview = {
+  img: string;
+  alt: string;
+  title: string;
+};
+
 export function WorkshopsGrid() {
   const [wsday, setWsday] = useState("all");
+  const [preview, setPreview] = useState<PosterPreview | null>(null);
+  const reduced = useReducedMotion();
   const { plan, togglePlan } = usePlan();
+
+  useEffect(() => {
+    if (!preview) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setPreview(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [preview]);
   const list = EV.filter((e) => e.ws && (wsday === "all" || e.d === wsday));
   const dayOpts: [string, string][] = [
     ["all", "All days"],
@@ -44,14 +63,21 @@ export function WorkshopsGrid() {
             <div key={e.id} data-scroll-item className={gridAnimItem}>
             <div className={`${card} flex h-full min-h-0 flex-col gap-1.5`}>
               {e.pic ? (
-                <RasaImage
-                  img={e.pic}
-                  alt={e.palt || e.t}
-                  className="h-auto aspect-[16/9]!"
-                  style={{ aspectRatio: "16 / 9", objectPosition: e.pp || "50% 40%" }}
-                  width={800}
-                  height={450}
-                />
+                <button
+                  type="button"
+                  onClick={() => setPreview({ img: e.pic!, alt: e.palt || e.t, title: e.t })}
+                  className="group block w-full cursor-zoom-in overflow-hidden rounded-rasa p-0 text-left"
+                  aria-label={`View full poster for ${e.t}`}
+                >
+                  <RasaImage
+                    img={e.pic}
+                    alt={e.palt || e.t}
+                    className="h-auto aspect-[16/9]! transition-transform duration-300 group-hover:scale-[1.02]"
+                    style={{ aspectRatio: "16 / 9", objectPosition: e.pp || "50% 40%" }}
+                    width={800}
+                    height={450}
+                  />
+                </button>
               ) : null}
               <div className="font-lab text-sm font-semibold uppercase tracking-wider text-burg">
                 {dayOf(e.d).short} {dayOf(e.d).num}, {fmtMinutes(e.s)} to {fmtMinutes(e.e)}
@@ -96,6 +122,48 @@ export function WorkshopsGrid() {
           );
         })}
       </ScrollStagger>
+      <AnimatePresence>
+        {preview ? (
+          <motion.div
+            key={preview.img}
+            role="dialog"
+            aria-modal="true"
+            aria-label={preview.title}
+            initial={reduced ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={reduced ? undefined : { opacity: 0 }}
+            transition={{ duration: duration.fast, ease: easeOut }}
+            className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 p-4 backdrop-blur-xs"
+            onClick={() => setPreview(null)}
+          >
+            <motion.div
+              initial={reduced ? false : { scale: 0.96, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={reduced ? undefined : { scale: 0.96, opacity: 0 }}
+              transition={{ duration: duration.fast, ease: easeOut }}
+              className="relative flex max-h-[92dvh] max-w-[94vw] flex-col items-center gap-3"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={() => setPreview(null)}
+                aria-label="Close full poster"
+                className="self-end rounded-full bg-white/95 px-3.5 py-1.5 text-sm font-bold text-plum shadow-lg hover:bg-white"
+              >
+                ✕ Close
+              </button>
+              <RasaImage
+                img={preview.img}
+                alt={preview.alt}
+                className="max-h-[82dvh]! w-auto! max-w-[92vw]! rounded-rasa bg-transparent! object-contain! shadow-2xl"
+                width={1600}
+                height={1200}
+              />
+              <p className="text-center font-display text-base font-semibold text-white">{preview.title}</p>
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </>
   );
 }

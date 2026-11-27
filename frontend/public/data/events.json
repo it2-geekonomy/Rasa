@@ -412,12 +412,15 @@
   "ty": "art",
   "ws": 1,
   "t": "Fusion Culinary Exploration",
-  "w": "By Chef Shruthi Agrawal",
+  "w": "By Culinary Designer Shruthi Agarwal",
   "v": "Banquet Hall",
   "a": [
    "shruthi"
   ],
-  "x": "A fusion culinary exploration led by Chef Shruthi Agrawal in the Banquet Hall. Price to be announced."
+  "x": "Experience an exploration of Nine Rasas and the emotions of Bharatanatyam through a sensory and culinary installation.<br><br>We invite you to discover a multi course culinary composition, conceived by Shruti Agarwal - The Culinary Designer, accompanied by the rhythm and movement of Bharatanatyam artists.",
+  "pic": "Fusion Culinary",
+  "pp": "50% 0%",
+  "palt": "Fusion Culinary Exploration by Culinary Designer Shruthi Agarwal"
  },
  {
   "id": "u8",
