@@ -370,7 +370,7 @@ export function BookingLive() {
           <p>
             {picked.map((seat) => seat.label).join(", ")} · {money(total)}
           </p>
-          <p className="text-sm">These seats are held for a few minutes while you finish.</p>
+          <p className="text-sm">These seats are held for 5 minutes while you finish.</p>
           <label className="block text-sm font-semibold text-plum">
             Name
             <input required value={name} onChange={(e) => setName(e.target.value)} className={inputClass} />

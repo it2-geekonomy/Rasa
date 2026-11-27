@@ -285,6 +285,6 @@ export class BookingsService {
   }
 
   private ttlMs() {
-    return (this.config.get<number>('holds.ttlMinutes') ?? 10) * 60 * 1000;
+    return (this.config.get<number>('holds.ttlMinutes') ?? 5) * 60 * 1000;
   }
 }

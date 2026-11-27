@@ -475,7 +475,7 @@ export class InventoryService {
   }
 
   private ttlMs() {
-    const minutes = this.config.get<number>('holds.ttlMinutes') ?? 10;
+    const minutes = this.config.get<number>('holds.ttlMinutes') ?? 5;
     return minutes * 60 * 1000;
   }
 

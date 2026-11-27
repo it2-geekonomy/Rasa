@@ -25,6 +25,6 @@ export default () => ({
     from: process.env.RESEND_FROM_EMAIL ?? '',
   },
   holds: {
-    ttlMinutes: parseInt(process.env.HOLD_TTL_MINUTES ?? '10', 10),
+    ttlMinutes: parseInt(process.env.HOLD_TTL_MINUTES ?? '5', 10),
   },
 });

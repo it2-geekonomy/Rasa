@@ -358,7 +358,7 @@ export class PaymentsService {
     bookingSeats: { eventSeatId: string }[];
   }) {
     if (booking.bookingSeats.length === 0) {
-      const ttlMs = (this.config.get<number>('holds.ttlMinutes') ?? 10) * 60 * 1000;
+      const ttlMs = (this.config.get<number>('holds.ttlMinutes') ?? 5) * 60 * 1000;
       if (booking.createdAt.getTime() + ttlMs <= Date.now()) {
         throw new ConflictException('This reservation has expired');
       }

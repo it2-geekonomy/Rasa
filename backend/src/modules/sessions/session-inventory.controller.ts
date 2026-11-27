@@ -36,7 +36,7 @@ export class SessionInventoryController {
 
   @Public()
   @Post(':id/holds')
-  @ApiOperation({ summary: 'Hold available RASA seats for 10 minutes' })
+  @ApiOperation({ summary: 'Hold available RASA seats for 5 minutes' })
   hold(@Param('id', ParseUUIDPipe) id: string, @Body() dto: HoldSeatsDto) {
     return this.inventory.hold(id, dto);
   }
