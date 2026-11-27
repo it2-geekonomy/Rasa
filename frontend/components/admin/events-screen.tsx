@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { api, type PageMeta } from "@/lib/admin/api";
 import { useAdmin } from "./admin-gate";
-import { EyeIcon, Notice, primaryButtonClass, quietButtonClass } from "./ui";
+import { EyeIcon, formatEnum, Notice, primaryButtonClass, quietButtonClass } from "./ui";
 
 type EventRow = {
   id: string;
@@ -65,7 +65,7 @@ export function EventsScreen() {
                   <p className="font-medium text-plum">{row.title}</p>
                   <p className="text-xs text-muted">{row.category}</p>
                 </td>
-                <td className="px-3 py-2">{row.bookingMode}</td>
+                <td className="px-3 py-2">{formatEnum(row.bookingMode)}</td>
                 <td className="px-3 py-2">{row.status}</td>
                 <td className="px-3 py-2">{row._count.sessions}</td>
                 <td className="px-3 py-2">
