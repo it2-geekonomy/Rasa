@@ -68,9 +68,9 @@
   ],
   "x": "A three hour hands-on session in Kalaripayattu, one of the oldest martial arts in the world, with Mandira of Atha Beyond. Includes the animal poses (Kolu). Any number of participants.",
   "price": "₹899 per person",
-  "pic": "atha-4",
-  "pp": "50% 35%",
-  "palt": "Mandira of Atha Beyond holding a Kalaripayattu shield, ready to strike"
+  "pic": "Kalaripayatu-01",
+  "pp": "50% 45%",
+  "palt": "Kolu: Kalaripayattu and Animal Poses by Mandira (Atha Beyond)"
  },
  {
   "id": "s1",
@@ -88,9 +88,9 @@
   ],
   "x": "A one hour So Salsa session led by Lourd Vijay of LVDS. Any number of participants. Take Salsa and Jive together at a lower price.",
   "price": "₹999 per person. Salsa and Jive together (2 hours): ₹1,499",
-  "pic": "lourd-1",
-  "pp": "50% 55%",
-  "palt": "Dancers following the instructor in a salsa workshop"
+  "pic": "Salsa-01",
+  "pp": "50% 45%",
+  "palt": "Salsa Workshop by Lourd Vijay (LVDS)"
  },
  {
   "id": "s1b",
@@ -106,7 +106,10 @@
    "lourd"
   ],
   "x": "A one hour Jive session led by Lourd Vijay of LVDS. Any number of participants. Take Salsa and Jive together at a lower price.",
-  "price": "₹999 per person. Salsa and Jive together (2 hours): ₹1,499"
+  "price": "₹999 per person. Salsa and Jive together (2 hours): ₹1,499",
+  "pic": "Jive-01",
+  "pp": "50% 45%",
+  "palt": "Jive Workshop by Lourd Vijay (LVDS)"
  },
  {
   "id": "s2a",
@@ -124,9 +127,9 @@
   "x": "An immersive experience using therapeutic sounds and vibrations to promote relaxation, inner balance and holistic well-being. Siddharth Venkat works with traditional and tribal instruments in sound baths and sound journeys.",
   "price": "₹999 per person",
   "seats": "Limited seats: 25 participants per session",
-  "pic": "sid-bath",
+  "pic": "Sound Healing-01",
   "pp": "50% 45%",
-  "palt": "Siddharth Venkat kneeling among singing bowls and drums for a sound bath"
+  "palt": "Sound Healing Workshop by Siddharth Venkat"
  },
  {
   "id": "s2b",
@@ -161,7 +164,7 @@
   "x": "Exploring rhythm, creativity and possibilities of the drum set. An engaging, fun and interactive workshop on the drum set, its history and evolution, and how it is used across musical styles and beyond music, in dance, theatre, film and sound effects. It looks at traditional and contemporary approaches, solo and group playing, composition and improvisation, with practical demonstrations and hands-on work on rhythmic patterns, stick techniques, coordination and practice methods. Open to everyone. No previous experience is necessary.",
   "price": "₹599 per person",
   "seats": "Limited seats: 30 participants",
-  "pic": "ws-group",
+  "pic": "Art of Drumming-01",
   "pp": "50% 45%",
   "palt": "Banjo Rancho with a group of workshop participants holding drums and percussion"
  },
@@ -181,9 +184,9 @@
   ],
   "x": "Yoga Raaga: Ancient Raagas for the Inner Harmony. Any number of participants.",
   "price": "₹999 per person",
-  "pic": "vin-read",
-  "pp": "50% 40%",
-  "palt": "Dr. Vinaya Nair speaking at a podium about the Carnatic framework of raga, tala and shruti"
+  "pic": "Yoga Raaga-01",
+  "pp": "50% 45%",
+  "palt": "Yoga Raaga by Dr. Vinaya Nair and Sumanth Manjunath"
  },
  {
   "id": "s8",
@@ -356,9 +359,9 @@
   "a": [
    "vijay"
   ],
-  "pic": "vijay",
-  "pp": "50% 30%",
-  "palt": "Vijayalakshmi S in a warrior fitness pose on rocks",
+  "pic": "Meipadam-02-01",
+  "pp": "50% 45%",
+  "palt": "Meipadam Workshop by Vijayalakshmi Somashekarappa",
   "x": "Meipadam, an Indian martial art whose name means \"body art\" in Tamil, led by Vijayalakshmi Somashekarappa, certified Meipadam and Karlakattai coach. Any number of participants.",
   "price": "₹499 per person"
  },
@@ -376,7 +379,10 @@
    "anuradha"
   ],
   "x": "A three hour Bharatanatyam workshop on a Dikshitar kriti, led by Guru Smt. Anuradha Sridhar. Prerequisite: Senior exam passed.",
-  "price": "₹2,500 per person"
+  "price": "₹2,500 per person",
+  "pic": "Bharatanatyam-01",
+  "pp": "50% 45%",
+  "palt": "Bharatanatyam Workshop: Dikshitar Kriti by Guru Smt. Anuradha Sridhar"
  },
  {
   "id": "u6",
@@ -394,9 +400,9 @@
   "x": "Discover the art of linocut printmaking in this hands-on creative workshop. Drawing inspiration from classical Indian dance mudras, rhythmic percussion patterns and traditional temple architecture, participants will sketch, carve and print their own unique designs. Learn basic carving techniques, explore textures and patterns, and create beautiful handmade prints on cotton rag paper to take home. No prior printmaking experience required.<br>Age: 18+<br>Duration: 2.5 hours<br>Prerequisites: None",
   "price": "₹1,200 per person",
   "seats": "Limited seats: 20 participants",
-  "pic": "lino-2",
-  "pp": "50% 55%",
-  "palt": "Artist Bhagya Ajaikumar pressing a linocut block onto paper at a table"
+  "pic": "Linocut_-03",
+  "pp": "50% 45%",
+  "palt": "Carving Rhythm – Linocut Printmaking Workshop by Artist Bhagya Ajaikumar"
  },
  {
   "id": "u7",
