@@ -75,7 +75,7 @@ export function BookingSeatSheet({ eventId, onClose }: Props) {
       {open && ev ? (
         <motion.div
           key={eventId}
-          className="fixed inset-0 z-[60] flex items-end justify-center bg-[rgba(36,20,38,.55)] sm:items-center sm:p-4"
+          className="fixed inset-0 z-[60] flex bg-white"
           role="dialog"
           aria-labelledby="seat-sheet-title"
           initial="hidden"
@@ -87,7 +87,7 @@ export function BookingSeatSheet({ eventId, onClose }: Props) {
           }}
         >
           <motion.div
-            className="flex h-[min(100dvh,900px)] max-h-[100dvh] w-full max-w-[min(100vw,72rem)] min-w-0 flex-col overflow-hidden rounded-t-[20px] bg-white sm:h-auto sm:max-h-[min(92vh,900px)] sm:max-w-[min(96vw,72rem)] sm:rounded-rasa"
+            className="flex h-[100dvh] max-h-[100dvh] w-full min-w-0 flex-col overflow-hidden bg-white"
             onClick={(e) => e.stopPropagation()}
             initial="hidden"
             animate="visible"
@@ -117,7 +117,7 @@ export function BookingSeatSheet({ eventId, onClose }: Props) {
               </div>
             </div>
 
-            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden px-2 py-2 sm:overflow-y-auto sm:px-5 sm:py-4">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden px-2 py-2 sm:px-5 sm:py-4">
               <AuditoriumSeatMap
                 variant="sheet"
                 selected={draft}
