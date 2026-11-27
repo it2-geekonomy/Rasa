@@ -10,6 +10,7 @@ import { publicApi } from "@/lib/public-api";
 import { PageHero } from "./PageHero";
 import { EventCard } from "./EventCard";
 import { PlanSidebar } from "./PlanSidebar";
+import { BookingSeatSheet } from "@/components/rasa/booking/BookingSeatSheet";
 import { usePlan } from "@/contexts/plan-context";
 import { PageBody } from "@/components/rasa/motion/PageBody";
 
@@ -21,6 +22,7 @@ export function EventsProgram({ day: initialDay, focusId }: Props) {
   const planAsideRef = useRef<HTMLElement>(null);
   const router = useRouter();
   const [sessionsBySlug, setSessionsBySlug] = useState<Map<string, string>>(new Map());
+  const [ticketEventId, setTicketEventId] = useState<string | null>(null);
 
   useEffect(() => {
     setDay(initialDay);
@@ -132,7 +134,11 @@ export function EventsProgram({ day: initialDay, focusId }: Props) {
                   key={e.id}
                   event={e}
                   defaultOpen={focusId === e.id}
-                  ticketHref={ticketHrefFor(e.id, sessionsBySlug)}
+                  onPickTickets={
+                    sessionIdFor(e.id, sessionsBySlug)
+                      ? () => setTicketEventId(e.id)
+                      : undefined
+                  }
                 />
               ))
             ) : (
@@ -148,14 +154,18 @@ export function EventsProgram({ day: initialDay, focusId }: Props) {
           />
         </div>
       </PageBody>
+      <BookingSeatSheet
+        eventId={ticketEventId}
+        sessionId={ticketEventId ? sessionIdFor(ticketEventId, sessionsBySlug) ?? null : null}
+        onClose={() => setTicketEventId(null)}
+      />
     </>
   );
 }
 
-function ticketHrefFor(eventId: string, sessionsBySlug: Map<string, string>) {
+function sessionIdFor(eventId: string, sessionsBySlug: Map<string, string>) {
   const slug = PROGRAMME_TICKET_SLUG[eventId];
-  const sessionId = slug ? sessionsBySlug.get(slug) : undefined;
-  return sessionId ? `/booking?session=${sessionId}` : undefined;
+  return slug ? sessionsBySlug.get(slug) : undefined;
 }
 
 function VenueKey() {

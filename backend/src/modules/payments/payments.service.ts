@@ -430,6 +430,15 @@ export const bookingInclude = {
   tickets: {
     orderBy: { ticketNumber: 'asc' as const },
     include: {
+      session: {
+        select: {
+          sessionName: true,
+          startAt: true,
+          endAt: true,
+          event: { select: { title: true } },
+          venue: { select: { name: true } },
+        },
+      },
       bookingSeat: {
         select: {
           eventSeat: {

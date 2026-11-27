@@ -134,6 +134,7 @@ export class BookingsService {
         return {
           ...rest,
           seatLabel: ticket.bookingSeat?.eventSeat.seat.seatLabel ?? null,
+          showTitle: ticket.session?.event.title ?? null,
           qrDataUrl: qrToken ? await qrDataUrl(qrToken) : null,
         };
       }),
@@ -153,7 +154,6 @@ export class BookingsService {
     const checkoutToken = randomBytes(32).toString('hex');
     const claimed = await tx.eventSeat.updateMany({
       where: {
-        eventSessionId: dto.eventSessionId,
         holdToken: dto.holdToken,
         status: 'HELD',
         holdExpiresAt: { gt: now },
@@ -170,6 +170,13 @@ export class BookingsService {
     const held = await tx.eventSeat.findMany({
       where: { eventSessionId: dto.eventSessionId, holdToken: checkoutToken },
       include: { seat: { select: { seatLabel: true } } },
+    });
+    if (held.length === 0) {
+      throw new BadRequestException('The seat hold is missing or has expired');
+    }
+    const covered = await tx.eventSeat.findMany({
+      where: { holdToken: checkoutToken, eventSessionId: { not: dto.eventSessionId } },
+      select: { id: true },
     });
     if (dto.attendees && dto.attendees.length !== held.length) {
       throw new BadRequestException('Provide one attendee for each held seat');
@@ -195,11 +202,18 @@ export class BookingsService {
       attendees,
     });
     await tx.bookingSeat.createMany({
-      data: held.map((seat) => ({
-        bookingId: booking.id,
-        eventSeatId: seat.id,
-        price: seat.price,
-      })),
+      data: [
+        ...held.map((seat) => ({
+          bookingId: booking.id,
+          eventSeatId: seat.id,
+          price: seat.price,
+        })),
+        ...covered.map((seat) => ({
+          bookingId: booking.id,
+          eventSeatId: seat.id,
+          price: 0,
+        })),
+      ],
     });
     if (subtotal.isZero()) {
       return this.payments.confirmFree(tx, booking.id);

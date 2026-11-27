@@ -6,6 +6,7 @@ export type PassTicket = {
   ticketNumber: string;
   attendeeName: string;
   seatLabel: string | null;
+  showTitle?: string | null;
   qrDataUrl: string | null;
 };
 
@@ -55,6 +56,7 @@ export function TicketPasses({ pass, onBookAnother }: Props) {
         {pass.tickets.map((ticket) => (
           <article key={ticket.ticketNumber} className="rounded-rasa border border-line p-4">
             <p className={`${lab} text-burg`}>{ticket.ticketNumber}</p>
+            {ticket.showTitle ? <p className="mt-1 font-semibold text-plum">{ticket.showTitle}</p> : null}
             <p className="mt-1 font-semibold text-plum">{ticket.seatLabel ? `Seat ${ticket.seatLabel}` : ticket.attendeeName}</p>
             {ticket.qrDataUrl ? (
               <img src={ticket.qrDataUrl} alt={`QR ticket ${ticket.ticketNumber}`} className="mt-3 h-44 w-44" />
@@ -98,7 +100,7 @@ async function downloadTicket(pass: PassBooking, ticket: PassTicket, slot: strin
   ctx.fillText(pass.bookingReference, 48, 108);
   ctx.fillStyle = "#241426";
   ctx.font = "700 36px sans-serif";
-  wrapText(ctx, pass.session.event.title, 48, 220, 704, 44);
+  wrapText(ctx, ticket.showTitle || pass.session.event.title, 48, 220, 704, 44);
   ctx.font = "500 24px sans-serif";
   ctx.fillStyle = "#5b1f5d";
   ctx.fillText(pass.session.venue.name, 48, 340);

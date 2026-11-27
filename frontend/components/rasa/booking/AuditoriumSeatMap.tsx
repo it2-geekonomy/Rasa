@@ -500,7 +500,6 @@ function SeatCell({
 function liveTone(offer: LiveSeat | undefined, selected: boolean) {
   if (selected) return SELECTED;
   if (!offer) return ALLOC_BASE.missing;
-  if (offer.seatType === "WHEELCHAIR" && offer.bookable) return ALLOC_BASE.wheelchair;
   if (offer.bookable) return ALLOC_BASE.available;
   if (offer.status === "HELD") return "border-2 border-[#e8b84a] bg-[#fff6d8] text-ink";
   if (offer.status === "BOOKED") return "border-2 border-burg bg-burg text-white";
@@ -509,11 +508,10 @@ function liveTone(offer: LiveSeat | undefined, selected: boolean) {
 
 function LiveLegend({ compact }: { compact?: boolean }) {
   const items = [
-    { label: "Open", swatch: "border-2 border-[#cdb9cf] bg-white" },
+    { label: "Available", swatch: "border-2 border-[#cdb9cf] bg-white" },
+    { label: "Blocked", swatch: "border-2 border-zinc-500 bg-zinc-600" },
     { label: "Held", swatch: "border-2 border-[#e8b84a] bg-[#fff6d8]" },
     { label: "Booked", swatch: "border-2 border-burg bg-burg" },
-    { label: "Not on sale", swatch: "border-2 border-zinc-500 bg-zinc-600" },
-    { label: "Wheelchair", swatch: "border-2 border-amber-400 bg-amber-100" },
   ];
   return (
     <TableLegend compact={compact}>

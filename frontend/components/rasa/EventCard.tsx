@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { duration, easeOut } from "@/lib/rasa/motion";
 import type { FestivalEvent } from "@/lib/rasa/types";
 import { ARTISTS, TLAB } from "@/lib/rasa/catalog";
@@ -30,12 +29,11 @@ function typeBorder(ty: string) {
 type Props = {
   event: FestivalEvent;
   defaultOpen?: boolean;
-  /** Live auditorium session. Absent when that show is not on sale. */
-  ticketHref?: string;
+  /** Opens the seat card for a show that is on sale. */
+  onPickTickets?: () => void;
 };
 
-export function EventCard({ event: e, defaultOpen, ticketHref }: Props) {
-  const router = useRouter();
+export function EventCard({ event: e, defaultOpen, onPickTickets }: Props) {
   const [open, setOpen] = useState(defaultOpen ?? false);
   const reduced = useReducedMotion();
   const { plan, togglePlan } = usePlan();
@@ -97,11 +95,11 @@ export function EventCard({ event: e, defaultOpen, ticketHref }: Props) {
             ) : null}
           </span>
         </button>
-        {ticketHref ? (
+        {onPickTickets ? (
           <button
             type="button"
             className="mt-2.5 inline-flex min-h-11 items-center rounded-full border-2 border-plum bg-white px-4 py-2 text-sm font-bold text-plum hover:bg-tint"
-            onClick={() => router.push(ticketHref)}
+            onClick={onPickTickets}
           >
             Get tickets
           </button>
@@ -163,15 +161,15 @@ export function EventCard({ event: e, defaultOpen, ticketHref }: Props) {
       <button
         type="button"
         className="star tick"
-        aria-pressed={ticketHref ? undefined : onPlan}
+        aria-pressed={onPickTickets ? undefined : onPlan}
         aria-label={
-          ticketHref
+          onPickTickets
             ? `Get tickets: ${e.t}`
             : `${onPlan ? "Remove from" : "Add to"} my plan: ${e.t}`
         }
         onClick={() => {
-          if (ticketHref) {
-            router.push(ticketHref);
+          if (onPickTickets) {
+            onPickTickets();
             return;
           }
           togglePlan(e.id);

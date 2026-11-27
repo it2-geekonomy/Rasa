@@ -8,6 +8,14 @@ const passInclude = {
   tickets: {
     orderBy: { ticketNumber: 'asc' as const },
     include: {
+      session: {
+        select: {
+          startAt: true,
+          endAt: true,
+          event: { select: { title: true } },
+          venue: { select: { name: true } },
+        },
+      },
       bookingSeat: {
         include: {
           eventSeat: {
@@ -120,9 +128,15 @@ function emailHtml(booking: PassBooking, ticketNumbers: string[]) {
   const cards = booking.tickets
     .map((ticket) => {
       const seat = ticket.bookingSeat?.eventSeat.seat.seatLabel;
+      const show = ticket.session?.event.title;
+      const slot = ticket.session
+        ? `${when.format(ticket.session.startAt)} – ${when.format(ticket.session.endAt)}`
+        : '';
       return `
         <div style="border:1px solid #e4d5e6;border-radius:16px;padding:16px;margin:0 0 16px;">
           <p style="margin:0 0 4px;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#931929;">${escapeHtml(ticket.ticketNumber)}</p>
+          ${show ? `<p style="margin:0 0 4px;font-size:16px;color:#3f1441;">${escapeHtml(show)}</p>` : ''}
+          ${slot ? `<p style="margin:0 0 8px;font-size:13px;color:#5b1f5d;">${escapeHtml(slot)}</p>` : ''}
           <p style="margin:0 0 12px;font-size:18px;color:#3f1441;">${seat ? `Seat ${escapeHtml(seat)}` : escapeHtml(ticket.attendeeName)}</p>
           <img src="cid:${escapeHtml(ticket.ticketNumber)}" alt="QR ticket" width="220" height="220" />
         </div>`;
