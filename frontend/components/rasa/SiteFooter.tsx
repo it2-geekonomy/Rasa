@@ -6,7 +6,7 @@ import { ContactRow } from "./ContactRow";
 
 export function SiteFooter() {
   return (
-    <footer className="bg-plum-d px-4 pt-9 pb-7 text-sm leading-relaxed text-[#d9bfe0] max-md:pt-6 max-md:pb-[calc(76px+env(safe-area-inset-bottom))] md:px-6 md:pt-10 md:pb-[calc(28px+env(safe-area-inset-bottom))]">
+    <footer className="bg-plum-d px-4 pt-9 pb-7 text-sm leading-relaxed text-[#d9bfe0] max-lg:pt-6 max-lg:pb-[calc(76px+env(safe-area-inset-bottom))] md:px-6 lg:pt-10 lg:pb-[calc(28px+env(safe-area-inset-bottom))]">
       <div className="mx-auto flex max-w-[1240px] flex-col gap-8 max-md:gap-5 md:flex-row md:items-start md:justify-between">
         <div className="max-w-md space-y-2.5">
           <RasaImage img="logo-white" alt="RASA, Roots to Rhythm" width={900} height={450} className="!h-11 !w-auto" />

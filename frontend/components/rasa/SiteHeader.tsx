@@ -42,23 +42,23 @@ export function SiteHeader() {
             />
           </span>
         </Link>
-        <nav className="ml-auto hidden items-center gap-0.5 md:flex" aria-label="Main">
+        <nav className="ml-auto hidden items-center gap-0.5 lg:flex" aria-label="Main">
           {MAIN_LINKS.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex min-h-11 items-center rounded-full px-3 py-2.5 font-medium text-ink no-underline ${
+              className={`flex min-h-11 items-center whitespace-nowrap rounded-full px-2.5 py-2 text-[0.9rem] font-medium text-ink no-underline xl:px-3 xl:py-2.5 xl:text-base ${
                 item.group === headerGroup ? "bg-tint2 font-bold text-plum" : "hover:bg-tint"
-              } ${item.group === "booking" ? "max-md:!hidden" : ""}`}
+              }`}
             >
               {item.label}
             </Link>
           ))}
-          <Link href="/booking" className={`${btnBook} ml-2 hidden md:inline-flex`}>
+          <Link href="/booking" className={`${btnBook} ml-2 hidden lg:inline-flex`}>
             Book tickets
           </Link>
         </nav>
-        <Link href="/booking" className={`${btnBook} ml-auto shrink-0 md:!hidden`}>
+        <Link href="/booking" className={`${btnBook} ml-auto shrink-0 lg:!hidden`}>
           Tickets
         </Link>
       </div>
@@ -90,4 +90,4 @@ export function SiteHeader() {
 }
 
 const btnBook =
-  "inline-flex min-h-9 shrink-0 items-center justify-center rounded-full bg-burg px-3.5 py-1.5 text-[0.8rem] font-bold text-white no-underline hover:bg-burg-d md:min-h-[46px] md:px-6 md:py-3 md:text-[0.95rem]";
+  "inline-flex min-h-9 shrink-0 items-center justify-center rounded-full bg-burg px-3.5 py-1.5 text-[0.8rem] font-bold text-white no-underline hover:bg-burg-d lg:min-h-[46px] lg:px-6 lg:py-3 lg:text-[0.95rem]";
