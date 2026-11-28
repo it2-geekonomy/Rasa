@@ -401,13 +401,21 @@ async function seedArtists() {
       ...(item.cred ? { credit: item.cred } : {}),
     };
 
+    const existingArtist = await prisma.artist.findUnique({
+      where: { slug: item.id },
+      select: { profileImage: true },
+    });
+    const keepR2Profile = existingArtist?.profileImage?.startsWith('http')
+      ? existingArtist.profileImage
+      : profileImage;
+
     const saved = await prisma.artist.upsert({
       where: { slug: item.id },
       update: {
         name: item.n,
         designation: item.r || null,
         biography,
-        profileImage,
+        profileImage: keepR2Profile,
         socialLinks,
         isActive: true,
       },
@@ -427,8 +435,11 @@ async function seedArtists() {
       where: { artistId: saved.id },
       select: { imageUrl: true },
     });
-    const existingSet = new Set(existingPhotos.map((p) => p.imageUrl));
-    const missing = resolvedUrls.filter((url) => !existingSet.has(url));
+    const fileOf = (url: string) => url.split('/').pop()?.toLowerCase() ?? url.toLowerCase();
+    const existingFiles = new Set(existingPhotos.map((p) => fileOf(p.imageUrl)));
+    if (profileImage) existingFiles.add(fileOf(profileImage));
+    const galleryUrls = [...new Set(resolvedUrls.slice(1))];
+    const missing = galleryUrls.filter((url) => !existingFiles.has(fileOf(url)));
     if (missing.length > 0) {
       await prisma.artistPhoto.createMany({
         data: missing.map((imageUrl) => ({ artistId: saved.id, imageUrl })),
