@@ -435,6 +435,25 @@ async function seedArtists() {
   return bySlug;
 }
 
+const AUDITORIUM_ROW_PRICE: Record<string, number> = {};
+for (const row of ['A', 'B', 'C', 'D', 'E']) AUDITORIUM_ROW_PRICE[row] = 5000;
+for (const row of ['F', 'G', 'H', 'I', 'J']) AUDITORIUM_ROW_PRICE[row] = 3000;
+for (const row of ['K', 'L', 'M', 'N']) AUDITORIUM_ROW_PRICE[row] = 2000;
+for (const row of ['O', 'P', 'Q', 'R']) AUDITORIUM_ROW_PRICE[row] = 1500;
+for (const row of ['S', 'T', 'U', 'V', 'W']) AUDITORIUM_ROW_PRICE[row] = 1000;
+for (const row of ['X', 'Y', 'Z', 'ZA', 'ZB', 'ZC']) AUDITORIUM_ROW_PRICE[row] = 750;
+
+function isWebsiteOpenSeat(row: string, seatNumber: number) {
+  if (row === 'B' && seatNumber >= 18 && seatNumber <= 29) return true;
+  if (row === 'C' && seatNumber >= 7 && seatNumber <= 12) return true;
+  if (row === 'D' && seatNumber >= 28 && seatNumber <= 33) return true;
+  if (row === 'E') return true;
+  if (row === 'P' && (seatNumber <= 12 || seatNumber >= 28)) return true;
+  if (row === 'J' && (seatNumber <= 18 || seatNumber >= 21)) return true;
+  if (row === 'M' || row === 'U' || row === 'Y') return true;
+  return false;
+}
+
 async function seedAuditoriumShows(
   auditoriumId: string,
   adminId: string,
@@ -442,7 +461,7 @@ async function seedAuditoriumShows(
 ) {
   const seats = await prisma.seat.findMany({
     where: { isActive: true, section: { venueId: auditoriumId } },
-    select: { id: true },
+    select: { id: true, rowLabel: true, seatNumber: true },
   });
 
   for (const show of AUDITORIUM_SHOWS) {
@@ -520,8 +539,10 @@ async function seedAuditoriumShows(
         eventSessionId: session.id,
         seatId: seat.id,
         allocationOwner: AllocationOwner.RASA,
-        status: EventSeatStatus.BLOCKED,
-        price: 0,
+        status: isWebsiteOpenSeat(seat.rowLabel, seat.seatNumber)
+          ? EventSeatStatus.AVAILABLE
+          : EventSeatStatus.BLOCKED,
+        price: AUDITORIUM_ROW_PRICE[seat.rowLabel] ?? 0,
         updatedAt: now,
       })),
     });
