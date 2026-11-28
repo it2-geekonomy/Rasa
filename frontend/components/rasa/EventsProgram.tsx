@@ -3,7 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DAYS, EV, TYPES, dayOf } from "@/lib/rasa/catalog";
-import { PROGRAMME_TICKET_SLUG, PROGRAMME_WORKSHOP_SLUG } from "@/lib/rasa/booking-events";
+import {
+  PROGRAMME_REGISTRATION_SLUG,
+  PROGRAMME_TICKET_SLUG,
+  PROGRAMME_WORKSHOP_SLUG,
+} from "@/lib/rasa/booking-events";
 import type { DayId } from "@/lib/rasa/types";
 import { wrapTight } from "@/lib/rasa/ui";
 import { publicApi } from "@/lib/public-api";
@@ -188,6 +192,8 @@ function sessionIdFor(eventId: string, sessionsBySlug: Map<string, { id: string;
 }
 
 function workshopSessionFor(eventId: string, sessionsBySlug: Map<string, { id: string; price: number }>) {
+  const regSlug = PROGRAMME_REGISTRATION_SLUG[eventId];
+  if (regSlug) return sessionsBySlug.get(regSlug);
   const slug = PROGRAMME_WORKSHOP_SLUG[eventId];
   const found = slug ? sessionsBySlug.get(slug) : undefined;
   return found && found.price > 0 ? found : undefined;

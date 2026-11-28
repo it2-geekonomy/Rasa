@@ -364,7 +364,7 @@ export function WorkshopBookingSheet({ eventId, sessionId, unitPrice, combo, onC
                     className={`${btn} min-h-11 text-sm`}
                     disabled={busy || !availability}
                   >
-                    {busy ? "Working…" : `Pay ${money(total)}`}
+                    {busy ? "Working…" : total === 0 ? "Register free" : `Pay ${money(total)}`}
                   </button>
                 </div>
               </div>

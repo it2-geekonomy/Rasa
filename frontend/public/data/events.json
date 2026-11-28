@@ -262,14 +262,18 @@
  {
   "id": "u1",
   "d": "sun",
-  "s": 435,
+  "s": 420,
   "e": 510,
+  "tl": "7:00 AM",
+  "ts": "reporting",
+  "dl": "7:00 AM reporting · 7:30 to 8:30 AM",
   "ty": "well",
   "ws": 1,
-  "t": "Dance Fitness",
-  "w": "Details coming soon",
+  "t": "Dance Fitness Marathon",
+  "w": "Led by three trainers",
   "v": "Amphitheatre",
-  "x": "A dance fitness session to start the Sunday morning. The teacher and price will be announced."
+  "x": "Join us for an energetic 75-minute Dance Fitness session led by three amazing trainers, featuring a power-packed mix of trending Bollywood and regional tracks. 7:00 AM reporting, 7:30 to 8:30 AM Dance Fitness Marathon.",
+  "price": "₹499 per person"
  },
  {
   "id": "u3",
@@ -364,6 +368,7 @@
    "shruthi"
   ],
   "x": "Experience an exploration of Nine Rasas and the emotions of Bharatanatyam through a sensory and culinary installation.<br><br>We invite you to discover a multi course culinary composition, conceived by Shruti Agarwal - The Culinary Designer, accompanied by the rhythm and movement of Bharatanatyam artists.",
+  "price": "₹2,499 per person",
   "pic": "Fusion Culinary",
   "pp": "50% 0%",
   "palt": "Fusion Culinary Exploration by Culinary Designer Shruthi Agarwal"

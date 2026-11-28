@@ -545,6 +545,22 @@ const WORKSHOPS: Array<{
   artistSlugs: string[];
 }> = [
   {
+    slug: 'inauguration-and-dance',
+    title: 'Inauguration and Dance Performances by Upcoming Artists',
+    sessionName: 'Friday 4:30 PM',
+    venue: 'Amphitheatre',
+    startAt: '2027-01-08T11:00:00.000Z',
+    endAt: '2027-01-08T12:30:00.000Z',
+    price: 0,
+    slots: null,
+    eventType: 'PERFORMANCE',
+    category: 'Performance',
+    shortDescription: 'Friday 8 January, 4:30 PM to 6:00 PM, Amphitheatre. Free registration.',
+    description:
+      'The inauguration of RASA, followed by dance performances by upcoming artists. All are welcome.',
+    artistSlugs: [],
+  },
+  {
     slug: 'kolu-kalaripayattu',
     title: 'Kolu: Kalaripayattu and Animal Poses',
     sessionName: 'Saturday 10:00 AM',
@@ -673,17 +689,18 @@ const WORKSHOPS: Array<{
   },
   {
     slug: 'dance-fitness',
-    title: 'Dance Fitness',
-    sessionName: 'Sunday 7:15 AM',
+    title: 'Dance Fitness Marathon',
+    sessionName: 'Sunday 7:00 AM (7:30 – 8:30 AM)',
     venue: 'Amphitheatre',
-    startAt: '2027-01-10T01:45:00.000Z',
+    startAt: '2027-01-10T01:30:00.000Z',
     endAt: '2027-01-10T03:00:00.000Z',
-    price: 0,
+    price: 499,
     slots: null,
     eventType: 'WELLNESS',
     category: 'Wellness',
-    shortDescription: 'Sunday 10 January, 7:15 AM to 8:30 AM, Amphitheatre. The teacher and price will be announced.',
-    description: 'A dance fitness session to start the Sunday morning. The teacher and price will be announced.',
+    shortDescription: 'Sunday 10 January, 7:00 AM reporting (7:30 to 8:30 AM), Amphitheatre. ₹499 per person.',
+    description:
+      'Join us for an energetic 75-minute Dance Fitness session led by three amazing trainers, featuring a power-packed mix of trending Bollywood and regional tracks. 7:00 AM reporting; 7:30 to 8:30 AM Dance Fitness Marathon.',
     artistSlugs: [],
   },
   {
@@ -741,11 +758,11 @@ const WORKSHOPS: Array<{
     venue: 'Banquet Hall',
     startAt: '2027-01-10T10:30:00.000Z',
     endAt: '2027-01-10T12:30:00.000Z',
-    price: 0,
+    price: 2499,
     slots: null,
     eventType: 'OTHER',
     category: 'Food',
-    shortDescription: 'By Culinary Designer Shruthi Agarwal. Sunday 10 January, 4:00 PM to 6:00 PM, Banquet Hall.',
+    shortDescription: 'By Culinary Designer Shruthi Agarwal. Sunday 10 January, 4:00 PM to 6:00 PM, Banquet Hall. ₹2,499 per person.',
     description:
       'Experience an exploration of Nine Rasas and the emotions of Bharatanatyam through a sensory and culinary installation, conceived by Shruti Agarwal, accompanied by Bharatanatyam artists.',
     artistSlugs: ['shruthi'],
@@ -800,11 +817,13 @@ async function seedWorkshops(
 
     const startAt = new Date(workshop.startAt);
     const existing = await prisma.eventSession.findFirst({
-      where: { eventId: event.id, startAt },
+      where: { eventId: event.id },
+      orderBy: { startAt: 'asc' },
     });
     const data = {
       venueId,
       sessionName: workshop.sessionName,
+      startAt,
       endAt: new Date(workshop.endAt),
       capacity: workshop.slots,
       price: workshop.price,
@@ -814,7 +833,7 @@ async function seedWorkshops(
       await prisma.eventSession.update({ where: { id: existing.id }, data });
     } else {
       await prisma.eventSession.create({
-        data: { eventId: event.id, startAt, ...data },
+        data: { eventId: event.id, ...data },
       });
     }
     console.log(

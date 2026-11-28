@@ -36,3 +36,8 @@ export const PROGRAMME_WORKSHOP_SLUG: Record<string, string> = {
   u6: "carving-rhythm-linocut",
   u7: "fusion-culinary-exploration",
 };
+
+/** Free-entry programme items that still take registration. */
+export const PROGRAMME_REGISTRATION_SLUG: Record<string, string> = {
+  f1: "inauguration-and-dance",
+};
