@@ -105,6 +105,87 @@ export class PaymentsService {
     };
   }
 
+  async createCartCheckout(bookingIds: string[]) {
+    if (bookingIds.length === 1) {
+      return this.createCheckout(bookingIds[0]);
+    }
+    const bookings = await this.prisma.booking.findMany({
+      where: { id: { in: bookingIds } },
+      select: {
+        id: true,
+        bookingReference: true,
+        totalAmount: true,
+        bookingStatus: true,
+        paymentStatus: true,
+      },
+    });
+    if (bookings.length !== bookingIds.length) {
+      throw new NotFoundException('One or more bookings were not found');
+    }
+    const total = bookings.reduce(
+      (sum, b) => sum.plus(b.totalAmount),
+      new Prisma.Decimal(0),
+    );
+    const amount = this.toPaise(total);
+    if (amount <= 0) {
+      throw new BadRequestException('Free bookings do not need Razorpay checkout');
+    }
+
+    const { keyId, keySecret } = this.credentials();
+    const client = new Razorpay({ key_id: keyId, key_secret: keySecret });
+    let orderId: string;
+    try {
+      const order = await client.orders.create({
+        amount,
+        currency: 'INR',
+        receipt: bookings[0].bookingReference,
+        notes: {
+          cartBookingIds: bookingIds.join(','),
+        },
+      });
+      orderId = order.id;
+    } catch (error) {
+      const detail = razorpayError(error);
+      this.logger.error(`Razorpay cart order failed: ${detail}`);
+      throw new BadGatewayException(
+        detail.includes('Authentication failed')
+          ? 'Razorpay rejected the API keys. Check RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in backend/.env.'
+          : 'Could not start Razorpay checkout. Your bookings stay pending.',
+      );
+    }
+
+    const primary = await this.prisma.payment.create({
+      data: {
+        bookingId: bookings[0].id,
+        provider: 'RAZORPAY',
+        razorpayOrderId: orderId,
+        amount: bookings[0].totalAmount,
+        currency: 'INR',
+        status: 'CREATED',
+      },
+    });
+    for (let index = 1; index < bookings.length; index += 1) {
+      await this.prisma.payment.create({
+        data: {
+          bookingId: bookings[index].id,
+          provider: 'RAZORPAY_CART',
+          razorpayOrderId: `${orderId}#${index}`,
+          amount: bookings[index].totalAmount,
+          currency: 'INR',
+          status: 'CREATED',
+        },
+      });
+    }
+
+    return {
+      keyId,
+      orderId,
+      amount,
+      currency: 'INR',
+      paymentId: primary.id,
+    };
+  }
+
   async verify(dto: VerifyPaymentDto) {
     const { keySecret } = this.credentials();
     const expected = checkoutSignature(dto.razorpayOrderId, dto.razorpayPaymentId, keySecret);
@@ -123,6 +204,16 @@ export class PaymentsService {
     }
     if (result.outcome === 'confirmed' && result.booking) {
       void this.mailer.deliver(result.booking.id);
+    }
+    const companions = await this.captureCartCompanions(
+      dto.razorpayOrderId,
+      dto.razorpayPaymentId,
+      dto.razorpaySignature,
+    );
+    for (const item of companions) {
+      if (item.outcome === 'confirmed' && item.booking) {
+        void this.mailer.deliver(item.booking.id);
+      }
     }
     return result.booking;
   }
@@ -158,6 +249,12 @@ export class PaymentsService {
       });
       if (result.outcome === 'confirmed' && result.booking) {
         void this.mailer.deliver(result.booking.id);
+      }
+      const companions = await this.captureCartCompanions(orderId, paymentId);
+      for (const item of companions) {
+        if (item.outcome === 'confirmed' && item.booking) {
+          void this.mailer.deliver(item.booking.id);
+        }
       }
       if (result.outcome === 'ignored') {
         return { received: true, ignored: true };
@@ -196,6 +293,27 @@ export class PaymentsService {
       throw new ConflictException('One or more seats are no longer held for this booking');
     }
     return result.booking;
+  }
+
+  private async captureCartCompanions(orderId: string, paymentId: string, signature?: string) {
+    const companions = await this.prisma.payment.findMany({
+      where: { razorpayOrderId: { startsWith: `${orderId}#` } },
+      select: { razorpayOrderId: true },
+      orderBy: { createdAt: 'asc' },
+    });
+    const results = [];
+    for (let index = 0; index < companions.length; index += 1) {
+      const companionOrderId = companions[index].razorpayOrderId;
+      if (!companionOrderId) continue;
+      results.push(
+        await this.capture({
+          orderId: companionOrderId,
+          paymentId: `${paymentId}#${index + 1}`,
+          signature,
+        }),
+      );
+    }
+    return results;
   }
 
   private async capture(input: {
