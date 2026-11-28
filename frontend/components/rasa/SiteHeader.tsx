@@ -23,8 +23,9 @@ export function SiteHeader() {
     );
   }, [reduced]);
   const group = groupForPath(pathname);
+  const headerGroup = group === "artists" ? "festival" : group;
   const sub = subSlug(pathname);
-  const subs = SUB_NAV[group];
+  const subs = SUB_NAV[headerGroup];
 
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-white">
@@ -47,7 +48,7 @@ export function SiteHeader() {
               key={item.href}
               href={item.href}
               className={`flex min-h-11 items-center rounded-full px-3 py-2.5 font-medium text-ink no-underline ${
-                item.group === group ? "bg-tint2 font-bold text-plum" : "hover:bg-tint"
+                item.group === headerGroup ? "bg-tint2 font-bold text-plum" : "hover:bg-tint"
               } ${item.group === "booking" ? "max-md:!hidden" : ""}`}
             >
               {item.label}
