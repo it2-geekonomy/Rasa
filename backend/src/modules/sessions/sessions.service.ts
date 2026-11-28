@@ -213,8 +213,8 @@ export class SessionsService {
         `Seat blocks are only for the Auditorium. ${venue.name} uses a number of slots.`,
       );
     }
-    if (bookingMode === 'CAPACITY_BASED' && (capacity == null || Number(capacity) < 1)) {
-      throw new BadRequestException(`Enter how many slots this ${venue.name} session has.`);
+    if (bookingMode === 'CAPACITY_BASED' && capacity != null && Number(capacity) < 1) {
+      throw new BadRequestException(`Slots for ${venue.name} must be at least 1, or leave blank for unlimited.`);
     }
   }
 

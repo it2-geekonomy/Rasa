@@ -163,8 +163,8 @@ function ensureDay(dayMap: Map<string, DayMetric & { order: number }>, iso: stri
 const QUICK_LINKS = [
   ["/admin/events", "Events", "Create shows or workshops and edit details."],
   ["/admin/sessions", "Sessions", "Manage schedules, pricing, and seat layouts."],
-  ["/admin/bookings", "Bookings", "Track reservations, attendees, and tickets."],
-  ["/admin/checkin", "Check-in", "Scan or verify QR tokens at the venue."],
+  ["/admin/bookings", "Bookings", "Paid customers, attendees, and tickets."],
+  ["/admin/checkin", "Check-in", "Scan a ticket QR with the camera."],
 ] as const;
 
 export function OverviewScreen() {
@@ -292,16 +292,15 @@ export function OverviewScreen() {
       ensureDay(dayMap, s.startAt).sessions += 1;
     }
     for (const bk of data.bookings) {
+      if (bk.bookingStatus !== "CONFIRMED") continue;
       const curr = ensureDay(dayMap, bk.session.startAt || bk.createdAt);
       curr.bookings += 1;
-      if (bk.bookingStatus === "CONFIRMED") {
-        curr.tickets += bk.quantity;
-        curr.revenue += Number(bk.totalAmount) || 0;
-      }
+      curr.tickets += bk.quantity;
+      curr.revenue += Number(bk.totalAmount) || 0;
     }
     const days = [...dayMap.values()].sort((a, b) => a.order - b.order);
 
-    const recentBookings = data.bookings.slice(0, 6);
+    const recentBookings = data.bookings.filter((booking) => booking.bookingStatus === "CONFIRMED").slice(0, 6);
 
     return {
       publishedEvents,
@@ -369,7 +368,7 @@ export function OverviewScreen() {
           value={summary ? summary.confirmedBookings.toLocaleString("en-IN") : "—"}
           detail={
             summary
-              ? `${data!.bookingsTotal} total · ${summary.confirmedTickets} ${summary.confirmedTickets === 1 ? "ticket" : "tickets"}`
+              ? `${summary.confirmedTickets} ${summary.confirmedTickets === 1 ? "ticket" : "tickets"}`
               : "Loading…"
           }
           tone="plum"
@@ -415,13 +414,11 @@ export function OverviewScreen() {
                 {
                   id: "bookings",
                   label: "Bookings",
-                  centerTitle: "Bookings",
-                  centerValue: data!.bookingsTotal.toLocaleString("en-IN"),
-                  emptyText: "No bookings recorded yet.",
+                  centerTitle: "Paid bookings",
+                  centerValue: summary.confirmedBookings.toLocaleString("en-IN"),
+                  emptyText: "No paid bookings yet.",
                   slices: [
-                    { id: "confirmed", label: "Confirmed", value: summary.confirmedBookings, color: "#10b981" },
-                    { id: "pending", label: "Pending", value: summary.pendingBookings, color: "#e8b84a" },
-                    { id: "other", label: "Expired / Cancelled", value: summary.cancelledBookings, color: "#931929" },
+                    { id: "confirmed", label: "Paid", value: summary.confirmedBookings, color: "#10b981" },
                   ],
                 },
                 {
@@ -429,12 +426,9 @@ export function OverviewScreen() {
                   label: "Payments",
                   centerTitle: "Captured",
                   centerValue: inr(summary.capturedRevenue),
-                  emptyText: "No payments recorded yet.",
+                  emptyText: "No paid payments yet.",
                   slices: [
                     { id: "captured", label: "Captured", value: summary.capturedCount, amount: summary.capturedRevenue, color: "#10b981" },
-                    { id: "pending", label: "Pending", value: summary.pendingPayCount, amount: summary.pendingPayAmount, color: "#e8b84a" },
-                    { id: "failed", label: "Failed", value: summary.failedPayCount, amount: summary.failedPayAmount, color: "#931929" },
-                    { id: "refunded", label: "Refunded", value: summary.refundedPayCount, amount: summary.refundedPayAmount, color: "#6366f1" },
                   ],
                 },
               ]}
@@ -446,14 +440,14 @@ export function OverviewScreen() {
 
             <Panel title="Recent bookings">
               <div className="-mt-1 mb-3 flex items-center justify-between gap-2">
-                <p className="text-sm text-muted">Latest customer reservations and checkouts.</p>
+                <p className="text-sm text-muted">Latest customers who paid.</p>
                 <Link href="/admin/bookings" className="text-xs font-medium text-plum no-underline hover:underline">
                   All bookings
                 </Link>
               </div>
               {summary.recentBookings.length === 0 ? (
                 <div className="grid min-h-[140px] place-items-center rounded-rasa border border-dashed border-line bg-tint/40 p-5 text-center text-sm text-muted">
-                  No bookings yet. Reservations and ticket checkouts will show up here.
+                  No paid bookings yet. They show up here after payment.
                 </div>
               ) : (
                 <div className="overflow-x-auto rounded-rasa border border-line">

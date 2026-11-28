@@ -126,7 +126,7 @@
   ],
   "x": "An immersive experience using therapeutic sounds and vibrations to promote relaxation, inner balance and holistic well-being. Siddharth Venkat works with traditional and tribal instruments in sound baths and sound journeys.",
   "price": "₹999 per person",
-  "seats": "Limited seats: 25 participants per session",
+  "seats": "Limited seats: 13 participants",
   "pic": "Sound Healing-01",
   "pp": "50% 45%",
   "palt": "Sound Healing Workshop by Siddharth Venkat"
@@ -146,7 +146,7 @@
   ],
   "x": "An immersive experience using therapeutic sounds and vibrations to promote relaxation, inner balance and holistic well-being. The second of two sessions on Saturday.",
   "price": "₹999 per person",
-  "seats": "Limited seats: 25 participants per session"
+  "seats": "Limited seats: 12 participants"
  },
  {
   "id": "s3",
@@ -192,64 +192,31 @@
   "id": "s8",
   "d": "sat",
   "s": 930,
-  "e": 990,
-  "ty": "perf",
-  "t": "A Kathak Performance",
-  "w": "By Labonee Mohanta",
-  "v": "Auditorium",
-  "a": [
-   "labonee"
-  ],
-  "pair": "One ticket (includes this show and Khechara Academy of Bharatanatyam)",
-  "x": "Internationally touring Kathak dancer Labonee Mohanta will captivate you with lightning-fast spins, intricate footwork, expressive storytelling, and dynamic rhythmic interplay with live musicians. She will also showcase the unique innovation of Kathak Yoga, in which she dances, plays an instrument, and sings, all at the same time!",
-  "img": [
-   "poster-kathak"
-  ],
-  "imgalt": [
-   "Poster: A Kathak Performance by Labonee Mohanta"
-  ]
- },
- {
-  "id": "s9",
-  "d": "sat",
-  "s": 990,
   "e": 1065,
   "ty": "perf",
-  "t": "Khechara Academy of Bharatanatyam",
-  "w": "Anuradha Sridhar",
+  "t": "A Kathak Performance, then Khechara Academy of Bharatanatyam",
+  "w": "One ticket (includes both shows)",
   "v": "Auditorium",
   "a": [
+   "labonee",
    "anuradha"
   ],
-  "pair": "One ticket (includes this show and Kathak Performance)",
-  "x": "A Bharatanatyam performance by Anuradha Sridhar and Khechara Academy of Bharatanatyam, Bengaluru.",
-  "img": [
-   "poster-khechara"
-  ],
-  "imgalt": [
-   "Poster: Khechara Academy of Bharatanatyam"
-  ]
+  "x": "3:30 to 4:30 PM: Internationally touring Kathak dancer Labonee Mohanta will captivate you with lightning-fast spins, intricate footwork, expressive storytelling, and dynamic rhythmic interplay with live musicians. She will also showcase the unique innovation of Kathak Yoga, in which she dances, plays an instrument, and sings, all at the same time! Then 4:30 to 5:45 PM: a Bharatanatyam performance by Anuradha Sridhar and Khechara Academy of Bharatanatyam, Bengaluru. One ticket includes both shows."
  },
  {
   "id": "s14",
   "d": "sat",
   "s": 1065,
-  "e": 1100,
+  "e": 1175,
   "ty": "perf",
-  "t": "Dance Alchemy",
-  "w": "By LVDS, Lourd Vijay Dance Studio",
+  "t": "Dance Alchemy, then Sri Nimishambha School of Dance",
+  "w": "One ticket (includes both shows)",
   "v": "Auditorium",
   "a": [
-   "lourd"
+   "lourd",
+   "nimishambha"
   ],
-  "pair": "One ticket (includes this show and Sri Nimishambha School of Dance)",
-  "x": "Experience Dance Alchemy, a first-of-its-kind celebration of movement, bringing together Western dance styles, Indian classical forms, folk traditions and cultural influences. Curated by globally acclaimed Latin dance exponent Lourd Vijay, this unique production promises an exciting fusion of rhythms and styles.",
-  "img": [
-   "poster-alchemy"
-  ],
-  "imgalt": [
-   "Poster: Dance Alchemy by Lourd Vijay Dance Studio"
-  ]
+  "x": "5:45 to 6:20 PM: Experience Dance Alchemy, a first-of-its-kind celebration of movement, bringing together Western dance styles, Indian classical forms, folk traditions and cultural influences. Curated by globally acclaimed Latin dance exponent Lourd Vijay, this unique production promises an exciting fusion of rhythms and styles. Then 6:20 to 7:35 PM: Sri Nimishambha School of Dance, curated by Apthamitra-fame Guru Vidwan Sridhar Jain, presenting a vibrant showcase of Bharatanatyam, Kathak, Odissi and Indian folk, beautifully interwoven with elements of fusion. One ticket includes both shows."
  },
  {
   "id": "s13",
@@ -261,27 +228,6 @@
   "w": "Open for all",
   "v": "Banquet Hall",
   "x": "An art exhibition by Swasti Gallery, the art gallery of HCG Foundation, in the Banquet Hall. All are welcome. More about the gallery: <a class=\"lnk\" href=\"https://www.hcgfoundation.org/swasti-art-gallery\" target=\"_blank\" rel=\"noopener\">Swasti Art Gallery at HCG Foundation</a> and <a class=\"lnk\" href=\"https://www.instagram.com/swasti_gallery/\" target=\"_blank\" rel=\"noopener\">Swasti Gallery on Instagram</a>."
- },
- {
-  "id": "s10",
-  "d": "sat",
-  "s": 1100,
-  "e": 1175,
-  "ty": "perf",
-  "t": "Sri Nimishambha School of Dance",
-  "w": "Mysuru",
-  "v": "Auditorium",
-  "a": [
-   "nimishambha"
-  ],
-  "pair": "One ticket (includes this show and Dance Alchemy)",
-  "x": "Sri Nimishambha School of Dance, curated by Apthamitra-fame Guru Vidwan Sridhar Jain, presenting a vibrant showcase of Bharatanatyam, Kathak, Odissi and Indian folk, beautifully interwoven with elements of fusion.",
-  "img": [
-   "poster-nimi"
-  ],
-  "imgalt": [
-   "Poster: Sri Nimishambha School of Dance"
-  ]
  },
  {
   "id": "s12",
@@ -316,14 +262,18 @@
  {
   "id": "u1",
   "d": "sun",
-  "s": 435,
+  "s": 420,
   "e": 510,
+  "tl": "7:00 AM",
+  "ts": "reporting",
+  "dl": "7:00 AM reporting · 7:30 to 8:30 AM",
   "ty": "well",
   "ws": 1,
-  "t": "Dance Fitness",
-  "w": "Details coming soon",
+  "t": "Dance Fitness Marathon",
+  "w": "Led by three trainers",
   "v": "Amphitheatre",
-  "x": "A dance fitness session to start the Sunday morning. The teacher and price will be announced."
+  "x": "Join us for an energetic 75-minute Dance Fitness session led by three amazing trainers, featuring a power-packed mix of trending Bollywood and regional tracks. 7:00 AM reporting, 7:30 to 8:30 AM Dance Fitness Marathon.",
+  "price": "₹499 per person"
  },
  {
   "id": "u3",
@@ -399,7 +349,7 @@
   ],
   "x": "Discover the art of linocut printmaking in this hands-on creative workshop. Drawing inspiration from classical Indian dance mudras, rhythmic percussion patterns and traditional temple architecture, participants will sketch, carve and print their own unique designs. Learn basic carving techniques, explore textures and patterns, and create beautiful handmade prints on cotton rag paper to take home. No prior printmaking experience required.<br>Age: 18+<br>Duration: 2.5 hours<br>Prerequisites: None",
   "price": "₹1,200 per person",
-  "seats": "Limited seats: 20 participants",
+  "seats": "Limited seats: 10 participants",
   "pic": "Linocut_-03",
   "pp": "50% 45%",
   "palt": "Carving Rhythm – Linocut Printmaking Workshop by Artist Bhagya Ajaikumar"
@@ -418,6 +368,7 @@
    "shruthi"
   ],
   "x": "Experience an exploration of Nine Rasas and the emotions of Bharatanatyam through a sensory and culinary installation.<br><br>We invite you to discover a multi course culinary composition, conceived by Shruti Agarwal - The Culinary Designer, accompanied by the rhythm and movement of Bharatanatyam artists.",
+  "price": "₹2,499 per person",
   "pic": "Fusion Culinary",
   "pp": "50% 0%",
   "palt": "Fusion Culinary Exploration by Culinary Designer Shruthi Agarwal"
@@ -456,48 +407,22 @@
   "id": "u10",
   "d": "sun",
   "s": 1140,
-  "e": 1170,
-  "tl": "7:00 PM",
-  "ts": "onwards",
-  "dl": "7:00 PM onwards",
-  "ty": "perf",
-  "t": "The Warrior's Path",
-  "w": "Kalaripayattu, by Atha Beyond",
-  "v": "Auditorium",
-  "a": [
-   "atha"
-  ],
-  "pair": "One ticket (includes this show and Mahabharata: A Mirror to Humanity)",
-  "x": "The Making of an Epic Warrior. A Kalaripayattu performance by Atha Beyond that imagines how a warrior of the Mahabharata age would have trained, in body, mind and spirit: surrender to the guru, forging the body, one-pointed focus, mastery of weapons, and the warrior's code of knowing when not to strike. Told through authentic Kalari practice, with an oil lamp, live percussion and moments of silence. Continues straight into Mahabharata: A Mirror to Humanity, with no break between the two.",
-  "img": [
-   "poster-warrior"
-  ],
-  "imgalt": [
-   "Poster: The Warrior's Path, Kalaripayattu by Atha Beyond"
-  ]
- },
- {
-  "id": "u11",
-  "d": "sun",
-  "s": 1170,
   "e": 1290,
   "tl": "7:00 PM",
   "ts": "onwards",
   "dl": "7:00 PM onwards",
   "ty": "perf",
-  "t": "Mahabharata: A Mirror to Humanity: The Dilemma of Dharma",
-  "w": "Mallika Sarabhai, Dr. Lakshminarayan, Dr. Vasanth Kiran and Vyjayanthi Kashi",
+  "t": "The Warrior's Path, then Mahabharata: A Mirror to Humanity",
+  "w": "One ticket (includes both shows)",
   "v": "Auditorium",
   "a": [
+   "atha",
    "mallika",
    "jena",
    "vasanth",
    "vyjayanthi"
   ],
-  "pair": "One ticket (includes this show and The Warrior's Path)",
-  "x": "The evening begins with The Warrior's Path at 7:00 PM and continues straight into Mahabharata, with no break between them. A captivating theatrical dance and movement experience exploring the untold stories, emotions and complexities of Ambe, Karna, Draupadi, Bheema and Duryodhana. Vyjayanthi Kashi as Ambe, Mallika Sarabhai as Draupadi, Dr. Lakshminarayan as Karna and Dr. Vasanth Kiran as Bheema bring the timeless epic to life through powerful storytelling and dance. 7:00 PM onwards in the Auditorium, after The Warrior's Path.",
-  "img": "poster-mb",
-  "imgalt": "Poster of Mahabharata: A Mirror to Humanity, The Dilemma of Dharma, with Mallika Sarabhai, Vyjayanthi Kashi, Dr. Lakshminarayan and Dr. Vasanth Kiran"
+  "x": "7:00 PM: The Making of an Epic Warrior. A Kalaripayattu performance by Atha Beyond that imagines how a warrior of the Mahabharata age would have trained, in body, mind and spirit: surrender to the guru, forging the body, one-pointed focus, mastery of weapons, and the warrior's code of knowing when not to strike. Told through authentic Kalari practice, with an oil lamp, live percussion and moments of silence. It continues straight into Mahabharata: A Mirror to Humanity, with no break. A captivating theatrical dance and movement experience exploring the untold stories, emotions and complexities of Ambe, Karna, Draupadi, Bheema and Duryodhana. Vyjayanthi Kashi as Ambe, Mallika Sarabhai as Draupadi, Dr. Lakshminarayan as Karna and Dr. Vasanth Kiran as Bheema bring the timeless epic to life through powerful storytelling and dance. One ticket includes both shows."
  },
  {
   "id": "u12",

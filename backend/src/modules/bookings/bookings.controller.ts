@@ -3,7 +3,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Public } from '../../common/decorators/public.decorator';
 import { ListBookingsQueryDto } from '../payments/dto/payment.dto';
 import { BookingsService } from './bookings.service';
-import { BookingStatusQueryDto, CreateBookingDto } from './dto/booking.dto';
+import { BookingLookupQueryDto, BookingStatusQueryDto, CreateBookingDto } from './dto/booking.dto';
 
 @ApiTags('Bookings')
 @Controller('bookings')
@@ -22,6 +22,13 @@ export class BookingsController {
   @ApiOperation({ summary: 'List bookings' })
   findAll(@Query() query: ListBookingsQueryDto) {
     return this.bookings.findAll(query);
+  }
+
+  @Public()
+  @Get('lookup')
+  @ApiOperation({ summary: 'Customer tickets by booking reference and email' })
+  lookup(@Query() query: BookingLookupQueryDto) {
+    return this.bookings.lookup(query.reference, query.email);
   }
 
   @Public()

@@ -10,6 +10,9 @@ import { duration, easeOut } from "@/lib/rasa/motion";
 import { RasaImage } from "./RasaImage";
 import { usePlan } from "@/contexts/plan-context";
 import { ScrollStagger } from "@/components/rasa/motion/ScrollStagger";
+import { publicApi } from "@/lib/public-api";
+import { PROGRAMME_WORKSHOP_SLUG } from "@/lib/rasa/booking-events";
+import { WorkshopBookingSheet } from "@/components/rasa/booking/WorkshopBookingSheet";
 
 type PosterPreview = {
   img: string;
@@ -17,11 +20,36 @@ type PosterPreview = {
   title: string;
 };
 
+type LiveWorkshop = {
+  sessionId: string;
+  price: number;
+};
+
 export function WorkshopsGrid() {
   const [wsday, setWsday] = useState("all");
   const [preview, setPreview] = useState<PosterPreview | null>(null);
+  const [liveBySlug, setLiveBySlug] = useState<Map<string, LiveWorkshop>>(new Map());
+  const [bookingEventId, setBookingEventId] = useState<string | null>(null);
   const reduced = useReducedMotion();
   const { plan, togglePlan } = usePlan();
+
+  useEffect(() => {
+    let cancel = false;
+    publicApi<Array<{ slug: string; sessions: Array<{ id: string; price: string | number }> }>>("/events/published")
+      .then((rows) => {
+        if (cancel) return;
+        const next = new Map<string, LiveWorkshop>();
+        for (const row of rows) {
+          const session = row.sessions[0];
+          if (session) next.set(row.slug, { sessionId: session.id, price: Number(session.price) });
+        }
+        setLiveBySlug(next);
+      })
+      .catch(() => null);
+    return () => {
+      cancel = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!preview) return;
@@ -102,14 +130,20 @@ export function WorkshopsGrid() {
                 </p>
               ) : null}
               <div className="mt-auto flex flex-wrap gap-2 pt-2">
-                <button
-                  type="button"
-                  className="min-h-11 rounded-full border-2 border-plum bg-white px-4 py-2 font-bold text-plum"
-                  aria-pressed={on}
-                  onClick={() => togglePlan(e.id)}
-                >
-                  {on ? "In your plan" : "Add to plan"}
-                </button>
+                {(() => {
+                  const slug = PROGRAMME_WORKSHOP_SLUG[e.id];
+                  const live = slug ? liveBySlug.get(slug) : undefined;
+                  if (!live || live.price <= 0) return null;
+                  return (
+                    <button
+                      type="button"
+                      className="min-h-11 rounded-full border-2 border-burg bg-burg px-4 py-2 font-bold text-white"
+                      onClick={() => setBookingEventId(e.id)}
+                    >
+                      Book workshop
+                    </button>
+                  );
+                })()}
                 <Link
                   href={`/events/${e.d}?focus=${e.id}`}
                   className="inline-flex min-h-11 items-center rounded-full border-2 border-plum bg-white px-4 py-2 font-bold text-plum no-underline"
@@ -164,6 +198,21 @@ export function WorkshopsGrid() {
           </motion.div>
         ) : null}
       </AnimatePresence>
+      <WorkshopBookingSheet
+        eventId={bookingEventId}
+        sessionId={bookingEventId ? liveBySlug.get(PROGRAMME_WORKSHOP_SLUG[bookingEventId])?.sessionId ?? null : null}
+        unitPrice={bookingEventId ? liveBySlug.get(PROGRAMME_WORKSHOP_SLUG[bookingEventId])?.price ?? 0 : 0}
+        combo={
+          (bookingEventId === "s1" || bookingEventId === "s1b") && liveBySlug.get("salsa-jive-combo")
+            ? {
+                sessionId: liveBySlug.get("salsa-jive-combo")!.sessionId,
+                price: liveBySlug.get("salsa-jive-combo")!.price,
+                label: "Salsa & Jive together (2 hours)",
+              }
+            : null
+        }
+        onClose={() => setBookingEventId(null)}
+      />
     </>
   );
 }

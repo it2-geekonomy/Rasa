@@ -7,7 +7,6 @@ import { duration, easeOut } from "@/lib/rasa/motion";
 import type { FestivalEvent } from "@/lib/rasa/types";
 import { ARTISTS, TLAB } from "@/lib/rasa/catalog";
 import { fmtMinutes } from "@/lib/rasa/time";
-import { isAuditoriumTicketEvent } from "@/lib/rasa/booking-events";
 import { lnk } from "@/lib/rasa/ui";
 import { RasaImage } from "./RasaImage";
 import { usePlan } from "@/contexts/plan-context";
@@ -30,19 +29,16 @@ function typeBorder(ty: string) {
 type Props = {
   event: FestivalEvent;
   defaultOpen?: boolean;
-  /** Auditorium performances: open seat map (festival flow). */
-  onPickSeats?: (eventId: string) => void;
-  ticketSeatCount?: number;
+  /** Opens the seat card for a show that is on sale. */
+  onPickTickets?: () => void;
 };
 
-export function EventCard({ event: e, defaultOpen, onPickSeats, ticketSeatCount = 0 }: Props) {
+export function EventCard({ event: e, defaultOpen, onPickTickets }: Props) {
   const [open, setOpen] = useState(defaultOpen ?? false);
   const reduced = useReducedMotion();
   const { plan, togglePlan } = usePlan();
   const { toast } = useToast();
   const onPlan = plan.includes(e.id);
-  const ticketSeats = isAuditoriumTicketEvent(e);
-  const inTicketCart = ticketSeatCount > 0;
   const artists = (e.a || [])
     .map((id) => ARTISTS.find((a) => a.id === id))
     .filter(Boolean);
@@ -99,13 +95,13 @@ export function EventCard({ event: e, defaultOpen, onPickSeats, ticketSeatCount 
             ) : null}
           </span>
         </button>
-        {ticketSeats ? (
+        {onPickTickets ? (
           <button
             type="button"
             className="mt-2.5 inline-flex min-h-11 items-center rounded-full border-2 border-plum bg-white px-4 py-2 text-sm font-bold text-plum hover:bg-tint"
-            onClick={() => onPickSeats?.(e.id)}
+            onClick={onPickTickets}
           >
-            {inTicketCart ? `Edit ${ticketSeatCount} seat${ticketSeatCount === 1 ? "" : "s"}` : "Pick seats on map"}
+            Get tickets
           </button>
         ) : null}
         <AnimatePresence initial={false}>
@@ -165,15 +161,15 @@ export function EventCard({ event: e, defaultOpen, onPickSeats, ticketSeatCount 
       <button
         type="button"
         className="star tick"
-        aria-pressed={ticketSeats ? inTicketCart : onPlan}
+        aria-pressed={onPickTickets ? undefined : onPlan}
         aria-label={
-          ticketSeats
-            ? `${inTicketCart ? "Change seats for" : "Pick seats for"}: ${e.t}`
+          onPickTickets
+            ? `Get tickets: ${e.t}`
             : `${onPlan ? "Remove from" : "Add to"} my plan: ${e.t}`
         }
         onClick={() => {
-          if (ticketSeats) {
-            onPickSeats?.(e.id);
+          if (onPickTickets) {
+            onPickTickets();
             return;
           }
           togglePlan(e.id);

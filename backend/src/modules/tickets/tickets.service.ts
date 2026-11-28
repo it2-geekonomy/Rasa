@@ -62,7 +62,13 @@ export class TicketsService {
     const booking = await tx.booking.findUnique({
       where: { id: bookingId },
       include: {
-        bookingSeats: { select: { id: true, eventSeatId: true } },
+        bookingSeats: {
+          select: {
+            id: true,
+            eventSeatId: true,
+            eventSeat: { select: { eventSessionId: true } },
+          },
+        },
       },
     });
     if (!booking || booking.bookingStatus !== 'CONFIRMED') {
@@ -73,12 +79,14 @@ export class TicketsService {
       booking.bookingSeats.length > 0
         ? booking.bookingSeats.map((seat) => ({
             bookingSeatId: seat.id,
+            eventSeatSessionId: seat.eventSeat.eventSessionId,
             attendee:
               attendees.find((person) => person.eventSeatId === seat.eventSeatId) ??
               attendees[booking.bookingSeats.indexOf(seat)],
           }))
         : Array.from({ length: booking.quantity }, (_, index) => ({
             bookingSeatId: null as string | null,
+            eventSeatSessionId: null as string | null,
             attendee: attendees[index],
           }));
 
@@ -87,7 +95,7 @@ export class TicketsService {
       const person = line.attendee;
       await this.createTicket(tx, {
         bookingId: booking.id,
-        eventSessionId: booking.eventSessionId,
+        eventSessionId: line.eventSeatSessionId ?? booking.eventSessionId,
         bookingSeatId: line.bookingSeatId,
         ticketNumber: `${booking.bookingReference}-${String(index + 1).padStart(2, '0')}`,
         attendeeName: requiredClip(person?.name?.trim() || booking.customerName, 150),
