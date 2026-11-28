@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   AUDITORIUM_SEATS,
   ALLOCATION_LABEL,
@@ -10,7 +10,14 @@ import {
   selectableAllocation,
   type SeatAllocation,
 } from "@/lib/rasa/auditorium-seats";
-import { formatInr, TIER_LABEL, TIER_PRICE_INR, tierForAllocation } from "@/lib/rasa/booking-pricing";
+import {
+  formatInr,
+  priceForRow,
+  ROW_PRICE_BANDS,
+  seatPriceInr,
+  TIER_LABEL,
+  tierForAllocation,
+} from "@/lib/rasa/booking-pricing";
 
 /* ------------------------------------------------------------------ */
 /* Layout data                                                         */
@@ -28,6 +35,7 @@ const REAR_LIST: string[] = [...REAR_ROWS].reverse();
 const FRONT_LIST: string[] = [...FRONT_ROWS].reverse();
 const SEAT_AT = new Map<string, Seat>(AUDITORIUM_SEATS.map((s) => [seatId(s.row, s.col), s]));
 const CONSOLE_ROW = AUDITORIUM_SEATS.find((s) => s.allocation === "console")?.row ?? "ZC";
+const BAND_START_TOP = new Map(ROW_PRICE_BANDS.map((b) => [b.rows[b.rows.length - 1], b] as const));
 
 const GAP = 3; // gap between seats in px
 type Dims = { w: number; h: number; stageH: number };
@@ -337,9 +345,15 @@ const Hall = memo(function Hall({ selected, locked, onSeat, dims, live }: HallPr
       <div className="relative px-5 pt-4">
         <BandLabel>Back · furthest from stage</BandLabel>
         <NumberRow w={dims.w} />
-        {REAR_LIST.map((row) => (
-          <HallRow key={row} row={row} rear selected={selected} locked={locked} onSeat={onSeat} dims={dims} live={live} />
-        ))}
+        {REAR_LIST.map((row) => {
+          const band = BAND_START_TOP.get(row);
+          return (
+            <Fragment key={row}>
+              {band ? <PriceBandDivider label={band.label} priceInr={band.priceInr} /> : null}
+              <HallRow row={row} rear selected={selected} locked={locked} onSeat={onSeat} dims={dims} live={live} />
+            </Fragment>
+          );
+        })}
 
         <div className="my-3 flex items-center gap-3">
           <div className="h-px flex-1 bg-white/15" />
@@ -349,9 +363,15 @@ const Hall = memo(function Hall({ selected, locked, onSeat, dims, live }: HallPr
 
         <BandLabel>Front · closest to stage</BandLabel>
         <NumberRow w={dims.w} />
-        {FRONT_LIST.map((row) => (
-          <HallRow key={row} row={row} rear={false} selected={selected} locked={locked} onSeat={onSeat} dims={dims} live={live} />
-        ))}
+        {FRONT_LIST.map((row) => {
+          const band = BAND_START_TOP.get(row);
+          return (
+            <Fragment key={row}>
+              {band ? <PriceBandDivider label={band.label} priceInr={band.priceInr} /> : null}
+              <HallRow row={row} rear={false} selected={selected} locked={locked} onSeat={onSeat} dims={dims} live={live} />
+            </Fragment>
+          );
+        })}
       </div>
       <div
         className="relative mt-2 w-0 min-w-full"
@@ -374,6 +394,18 @@ const Hall = memo(function Hall({ selected, locked, onSeat, dims, live }: HallPr
 function BandLabel({ children }: { children: ReactNode }) {
   return (
     <p className="mb-1 text-center font-lab text-[11px] font-semibold uppercase tracking-[0.25em] text-white/45">{children}</p>
+  );
+}
+
+function PriceBandDivider({ label, priceInr }: { label: string; priceInr: number }) {
+  return (
+    <div className="my-2 flex items-center gap-3">
+      <div className="h-px flex-1 bg-white/15" />
+      <span className="rounded-full border border-[#ffd77a]/30 bg-white/[0.06] px-3 py-0.5 font-lab text-[11px] font-bold uppercase tracking-[0.18em] text-[#ffd77a]">
+        {formatInr(priceInr)} · {label}
+      </span>
+      <div className="h-px flex-1 bg-white/15" />
+    </div>
   );
 }
 
@@ -475,9 +507,10 @@ function SeatCell({
   const isSelected = selected.has(id);
   const isLocked = locked.has(id) && !isSelected;
   const canPick = (live ? Boolean(offer?.bookable) : selectableAllocation(seat.allocation)) && !isLocked;
+  const rowPrice = priceForRow(seat.row);
   const label = live
-    ? `Row ${seat.row}, seat ${seat.col}${offer ? `, ${offer.status}` : ""}`
-    : `Row ${seat.row}, seat ${seat.col} — ${ALLOCATION_LABEL[seat.allocation]}`;
+    ? `Row ${seat.row}, seat ${seat.col}${offer ? `, ${offer.status}` : ""}${offer?.bookable ? ` (${formatInr(rowPrice)})` : ""}`
+    : `Row ${seat.row}, seat ${seat.col} — ${ALLOCATION_LABEL[seat.allocation]}${selectableAllocation(seat.allocation) ? ` (${formatInr(rowPrice)})` : ""}`;
   const showNum = (live ? Boolean(offer) : selectableAllocation(seat.allocation)) || isSelected;
   const tone = live ? liveTone(offer, isSelected) : isSelected ? SELECTED : ALLOC_BASE[seat.allocation];
 
@@ -692,8 +725,7 @@ function selectionTotal(selected: Set<string>) {
   let total = 0;
   selected.forEach((id) => {
     const seat = SEAT_AT.get(id);
-    const tier = seat ? tierForAllocation(seat.allocation) : null;
-    if (tier) total += TIER_PRICE_INR[tier];
+    if (seat) total += seatPriceInr(seat.row, seat.allocation);
   });
   return total;
 }
@@ -713,7 +745,7 @@ function SelectionSummary({ selected }: { selected: Set<string> }) {
     if (!seat) return;
     const tier = tierForAllocation(seat.allocation);
     if (!tier) return;
-    chips.push(`Row ${seat.row}, seat ${seat.col} · ${TIER_LABEL[tier]}`);
+    chips.push(`Row ${seat.row}, seat ${seat.col} · ${TIER_LABEL[tier]} · ${formatInr(priceForRow(seat.row))}`);
   });
   chips.sort();
 

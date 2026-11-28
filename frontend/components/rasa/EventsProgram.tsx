@@ -15,7 +15,10 @@ import { PageHero } from "./PageHero";
 import { EventCard } from "./EventCard";
 import { PlanSidebar } from "./PlanSidebar";
 import { BookingSeatSheet } from "@/components/rasa/booking/BookingSeatSheet";
+import { CartCheckoutModal } from "@/components/rasa/booking/CartCheckoutModal";
 import { WorkshopBookingSheet } from "@/components/rasa/booking/WorkshopBookingSheet";
+import { useBookingCart } from "@/contexts/booking-cart-context";
+import { formatInr } from "@/lib/rasa/booking-pricing";
 import { usePlan } from "@/contexts/plan-context";
 import { PageBody } from "@/components/rasa/motion/PageBody";
 
@@ -29,6 +32,8 @@ export function EventsProgram({ day: initialDay, focusId }: Props) {
   const [sessionsBySlug, setSessionsBySlug] = useState<Map<string, { id: string; price: number }>>(new Map());
   const [ticketEventId, setTicketEventId] = useState<string | null>(null);
   const [workshopEventId, setWorkshopEventId] = useState<string | null>(null);
+  const [cartOpen, setCartOpen] = useState(false);
+  const { lines, cartTotal, seatCount } = useBookingCart();
 
   useEffect(() => {
     setDay(initialDay);
@@ -79,10 +84,11 @@ export function EventsProgram({ day: initialDay, focusId }: Props) {
   return (
     <>
       <PageHero
+        tight
         title="RASA Festival January 2027"
-        lead="Three days at PCPA. Tap a session for details. Tick to save your plan. Auditorium shows on sale open the live seat map."
+        lead="Three days at PCPA. Tap a session for details. Tick to save your plan."
       />
-      <PageBody className={wrapTight}>
+      <PageBody className={`${wrapTight} max-md:pb-28`}>
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <div className="flex w-full gap-2 max-md:w-full" role="group" aria-label="Day">
             {DAYS.map((x) => (
@@ -111,15 +117,15 @@ export function EventsProgram({ day: initialDay, focusId }: Props) {
             ))}
           </div>
         </div>
-        <div className="mb-4 flex flex-wrap gap-2" role="group" aria-label="Filter by type">
+        <div className="mb-4 flex flex-wrap gap-2 max-md:mb-2.5 max-md:flex-nowrap max-md:gap-1.5 max-md:overflow-x-auto max-md:[scrollbar-width:none] max-md:[&::-webkit-scrollbar]:hidden" role="group" aria-label="Filter by type">
           {TYPES.map((t) => (
             <button
               key={t[0]}
               type="button"
               className={
                 type === t[0]
-                  ? "min-h-11 rounded-full border-2 border-burg bg-burg px-4 py-2 font-bold text-white"
-                  : "min-h-11 rounded-full border-2 border-line bg-white px-4 py-2 font-medium"
+                  ? "min-h-11 shrink-0 rounded-full border-2 border-burg bg-burg px-4 py-2 font-bold text-white max-md:min-h-8 max-md:px-3 max-md:py-1 max-md:text-xs"
+                  : "min-h-11 shrink-0 rounded-full border-2 border-line bg-white px-4 py-2 font-medium max-md:min-h-8 max-md:px-3 max-md:py-1 max-md:text-xs"
               }
               aria-pressed={type === t[0]}
               onClick={() => setType(t[0])}
@@ -159,6 +165,8 @@ export function EventsProgram({ day: initialDay, focusId }: Props) {
             ref={planAsideRef}
             mobileOpen={mobilePlanOpen}
             onMobileClose={closeMobilePlan}
+            onOpenCart={() => setCartOpen(true)}
+            onEditShow={(id) => setTicketEventId(id)}
           />
         </div>
       </PageBody>
@@ -166,7 +174,34 @@ export function EventsProgram({ day: initialDay, focusId }: Props) {
         eventId={ticketEventId}
         sessionId={ticketEventId ? sessionIdFor(ticketEventId, sessionsBySlug) ?? null : null}
         onClose={() => setTicketEventId(null)}
+        onOpenCart={() => setCartOpen(true)}
       />
+      <CartCheckoutModal
+        open={cartOpen}
+        onClose={() => setCartOpen(false)}
+        onEditShow={(id) => setTicketEventId(id)}
+      />
+      {seatCount > 0 ? (
+        <div className="fixed inset-x-0 bottom-[calc(70px+env(safe-area-inset-bottom))] z-40 mx-auto max-w-md px-3 lg:hidden">
+          <div className="flex items-center justify-between gap-2 rounded-2xl border border-plum/20 bg-white/95 px-3.5 py-2 shadow-lg backdrop-blur-md">
+            <div className="min-w-0">
+              <p className="truncate font-display text-xs font-bold text-plum">
+                {seatCount} seat{seatCount === 1 ? "" : "s"} · {lines.length} show{lines.length === 1 ? "" : "s"}
+              </p>
+              <p className="font-lab text-xs font-bold text-burg tabular-nums">
+                {formatInr(cartTotal)}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setCartOpen(true)}
+              className="shrink-0 rounded-full bg-burg px-3.5 py-1.5 text-xs font-bold text-white shadow hover:bg-burg-d"
+            >
+              Checkout &amp; pay
+            </button>
+          </div>
+        </div>
+      ) : null}
       <WorkshopBookingSheet
         eventId={workshopEventId}
         sessionId={workshopEventId ? workshopSessionFor(workshopEventId, sessionsBySlug)?.id ?? null : null}
@@ -201,16 +236,16 @@ function workshopSessionFor(eventId: string, sessionsBySlug: Map<string, { id: s
 
 function VenueKey() {
   return (
-    <div className="mb-3.5 flex flex-wrap items-center gap-2 gap-y-2 text-[0.9rem] text-muted" role="group" aria-label="Venue colours">
+    <div className="mb-3.5 flex flex-wrap items-center gap-2 gap-y-2 text-[0.9rem] text-muted max-md:mb-2.5 max-md:gap-x-3 max-md:gap-y-1 max-md:text-xs" role="group" aria-label="Venue colours">
       {[
         ["sw-amph", "#f4dce0", "Amphitheatre"],
         ["sw-aud", "#ece1ed", "Auditorium"],
         ["sw-art", "#fff", "Art shows"],
         ["sw-other", "#fff", "Rehearsal Studio and Banquet Hall"],
       ].map(([cls, bg, label]) => (
-        <span key={label} className="inline-flex items-center gap-2">
+        <span key={label} className="inline-flex items-center gap-1.5">
           <i
-            className="inline-block size-[18px] rounded-[5px] border border-[#cdb9cf]"
+            className="inline-block size-[18px] rounded-[5px] border border-[#cdb9cf] max-md:size-3.5"
             style={{ background: bg }}
           />
           {label}

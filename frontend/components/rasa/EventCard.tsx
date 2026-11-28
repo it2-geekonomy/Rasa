@@ -58,38 +58,38 @@ export function EventCard({ event: e, defaultOpen, onPickTickets }: Props) {
   return (
     <article
       id={`ev-${e.id}`}
-      className={`mb-2.5 grid grid-cols-[96px_1fr_48px] items-start gap-3.5 rounded-rasa border border-line border-l-[6px] p-4 pl-4 max-md:grid-cols-[4.5rem_1fr_2.75rem] max-md:gap-2 max-md:rounded-xl max-md:p-3 max-md:pl-2.5 ${typeBorder(e.ty)} ${venueClass(e.v, e.t)}`}
+      className={`mb-2.5 grid grid-cols-[96px_1fr_48px] items-start gap-3.5 rounded-rasa border border-line border-l-[6px] p-4 pl-4 max-md:mb-2 max-md:grid-cols-[3.9rem_1fr_2.4rem] max-md:gap-2 max-md:rounded-xl max-md:p-2.5 max-md:pl-2.5 ${typeBorder(e.ty)} ${venueClass(e.v, e.t)}`}
     >
-      <div className="font-lab text-[1.05rem] font-semibold leading-snug tracking-wide text-plum max-md:text-[0.92rem]">
+      <div className="font-lab text-[1.05rem] font-semibold leading-snug tracking-wide text-plum max-md:text-[0.82rem]">
         {e.tl || fmtMinutes(e.s)}
         {e.tl ? (
           e.ts ? (
-            <small className="mt-0 block text-[0.85rem] font-medium text-muted">{e.ts}</small>
+            <small className="mt-0 block text-[0.85rem] font-medium text-muted max-md:text-[0.72rem]">{e.ts}</small>
           ) : null
         ) : (
-          <small className="block text-[0.85rem] font-medium text-muted">to {fmtMinutes(e.e)}</small>
+          <small className="block text-[0.85rem] font-medium text-muted max-md:text-[0.72rem]">to {fmtMinutes(e.e)}</small>
         )}
       </div>
       <div>
         <button
           type="button"
-          className="min-h-11 w-full p-0 text-left"
+          className="min-h-11 w-full p-0 text-left max-md:min-h-0"
           aria-expanded={open}
           onClick={() => setOpen(!open)}
         >
-          <span className="block text-[1.05rem] font-bold">{e.t}</span>
-          {e.w ? <span className="block text-[0.95rem] text-muted">{e.w}</span> : null}
-          <span className="mt-1.5 flex flex-wrap gap-1.5">
+          <span className="block text-[1.05rem] font-bold leading-snug max-md:text-[0.94rem]">{e.t}</span>
+          {e.w ? <span className="block text-[0.95rem] text-muted max-md:text-xs">{e.w}</span> : null}
+          <span className="mt-1.5 flex flex-wrap gap-1.5 max-md:mt-1 max-md:gap-1">
             {e.v ? (
-              <span className="inline-block rounded-full bg-tint2 px-3 py-0.5 text-[0.85rem] font-medium text-plum">
+              <span className="inline-block rounded-full bg-tint2 px-3 py-0.5 text-[0.85rem] font-medium text-plum max-md:px-2 max-md:py-0.5 max-md:text-[0.72rem]">
                 {e.v}
               </span>
             ) : null}
-            <span className="inline-block rounded-full border border-line bg-white px-3 py-0.5 text-[0.85rem] font-medium text-plum">
+            <span className="inline-block rounded-full border border-line bg-white px-3 py-0.5 text-[0.85rem] font-medium text-plum max-md:px-2 max-md:py-0.5 max-md:text-[0.72rem]">
               {TLAB[e.ty]}
             </span>
             {e.pair ? (
-              <span className="inline-block max-w-full rounded-2xl border border-plum bg-white px-3.5 py-1.5 text-left text-[0.85rem] font-medium text-plum">
+              <span className="inline-block max-w-full rounded-2xl border border-plum bg-white px-3.5 py-1.5 text-left text-[0.85rem] font-medium text-plum max-md:px-2.5 max-md:py-1 max-md:text-xs">
                 {e.pair}
               </span>
             ) : null}
@@ -98,7 +98,7 @@ export function EventCard({ event: e, defaultOpen, onPickTickets }: Props) {
         {onPickTickets ? (
           <button
             type="button"
-            className="mt-2.5 inline-flex min-h-11 items-center rounded-full border-2 border-plum bg-white px-4 py-2 text-sm font-bold text-plum hover:bg-tint"
+            className="mt-2.5 inline-flex min-h-11 items-center rounded-full border-2 border-plum bg-white px-4 py-2 text-sm font-bold text-plum hover:bg-tint max-md:mt-1.5 max-md:min-h-8 max-md:px-3 max-md:py-1 max-md:text-xs"
             onClick={onPickTickets}
           >
             Get tickets
@@ -158,28 +158,30 @@ export function EventCard({ event: e, defaultOpen, onPickTickets }: Props) {
           ) : null}
         </AnimatePresence>
       </div>
-      <button
-        type="button"
-        className="star tick"
-        aria-pressed={onPickTickets ? undefined : onPlan}
-        aria-label={
-          onPickTickets
-            ? `Get tickets: ${e.t}`
-            : `${onPlan ? "Remove from" : "Add to"} my plan: ${e.t}`
-        }
-        onClick={() => {
-          if (onPickTickets) {
-            onPickTickets();
-            return;
+      {e.id !== "f1" ? (
+        <button
+          type="button"
+          className="star tick"
+          aria-pressed={onPickTickets ? undefined : onPlan}
+          aria-label={
+            onPickTickets
+              ? `Get tickets: ${e.t}`
+              : `${onPlan ? "Remove from" : "Add to"} my plan: ${e.t}`
           }
-          togglePlan(e.id);
-          toast(onPlan ? `Removed: ${e.t}` : `Added: ${e.t}`);
-        }}
-      >
-        <svg viewBox="0 0 24 24" aria-hidden>
-          <polyline points="5 12.5 10 17.5 19 7" />
-        </svg>
-      </button>
+          onClick={() => {
+            if (onPickTickets) {
+              onPickTickets();
+              return;
+            }
+            togglePlan(e.id);
+            toast(onPlan ? `Removed: ${e.t}` : `Added: ${e.t}`);
+          }}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden>
+            <polyline points="5 12.5 10 17.5 19 7" />
+          </svg>
+        </button>
+      ) : null}
     </article>
   );
 }

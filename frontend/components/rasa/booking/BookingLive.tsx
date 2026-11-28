@@ -106,20 +106,6 @@ export function BookingLive() {
   const [phone, setPhone] = useState("");
 
   useEffect(() => {
-    if (requestedSession) return;
-    const saved = sessionStorage.getItem("rasa.pass");
-    if (!saved) return;
-    try {
-      const parsed = JSON.parse(saved) as { bookingId?: string; email?: string };
-      if (parsed.bookingId && parsed.email) {
-        void loadPasses(parsed.bookingId, parsed.email);
-      }
-    } catch {
-      sessionStorage.removeItem("rasa.pass");
-    }
-  }, [requestedSession]);
-
-  useEffect(() => {
     let cancel = false;
     publicApi<Show[]>("/events/published")
       .then((rows) => {
@@ -305,7 +291,7 @@ export function BookingLive() {
       {error ? <p className="mb-4 rounded-rasa border border-burg/30 bg-white px-4 py-3 text-sm text-burg">{error}</p> : null}
 
       {step === "shows" ? (
-        <section>
+        <section className="space-y-6">
           {loading ? <p className="text-muted">Loading shows…</p> : null}
           {!loading && offers.length === 0 ? (
             <p className="text-muted">No auditorium shows are published yet.</p>
@@ -472,7 +458,7 @@ function TicketLookup({ onFound }: { onFound: (bookingId: string, email: string)
   }
 
   return (
-    <form onSubmit={find} className={`${card} mt-6 grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end`}>
+    <form onSubmit={find} className={`${card} grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end`}>
       <div className="sm:col-span-3">
         <p className={`${lab} text-burg`}>Already paid?</p>
         <p className="mt-1">Enter the booking reference and email to download the QR tickets.</p>
