@@ -70,10 +70,20 @@ export class SessionsService {
 
   async findAll(query: ListSessionsQueryDto) {
     const { page, limit, skip, take } = pageArgs(query.page, query.limit);
+    const search = query.search?.trim();
     const where: Prisma.EventSessionWhereInput = {
       ...(query.eventId ? { eventId: query.eventId } : {}),
       ...(query.venueId ? { venueId: query.venueId } : {}),
       ...(query.status ? { status: query.status } : {}),
+      ...(search
+        ? {
+            OR: [
+              { sessionName: { contains: search, mode: 'insensitive' } },
+              { event: { title: { contains: search, mode: 'insensitive' } } },
+              { venue: { name: { contains: search, mode: 'insensitive' } } },
+            ],
+          }
+        : {}),
     };
     const [data, total] = await Promise.all([
       this.prisma.eventSession.findMany({

@@ -148,3 +148,16 @@ export class CreateCartBookingDto {
   @Type(() => CartItemDto)
   items: CartItemDto[];
 }
+
+export class CancelPendingBookingsDto {
+  @ApiProperty({ type: [String], minItems: 1, maxItems: 10 })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(10)
+  @IsUUID('4', { each: true })
+  bookingIds: string[];
+
+  @ApiProperty({ example: 'asha@example.com' })
+  @IsEmail()
+  email: string;
+}

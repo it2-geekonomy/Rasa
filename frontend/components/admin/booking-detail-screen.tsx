@@ -8,14 +8,20 @@ import { Notice, Panel } from "./ui";
 
 type Ticket = {
   id: string;
+  eventSessionId: string;
   ticketNumber: string;
   qrToken: string;
   attendeeName: string;
   status: string;
+  session?: {
+    sessionName: string | null;
+    event: { title: string };
+  } | null;
   bookingSeat: { eventSeat: { seat: { seatLabel: string } } } | null;
 };
 type Booking = {
   id: string;
+  eventSessionId: string;
   bookingReference: string;
   customerName: string;
   customerEmail: string;
@@ -68,30 +74,44 @@ export function BookingDetailScreen({ bookingId }: { bookingId: string }) {
       {error ? <Notice>{error}</Notice> : null}
       {booking ? <PaymentDetails booking={booking} /> : null}
       <div className="overflow-x-auto rounded-rasa border border-line bg-white">
-        <table className="w-full min-w-[720px] text-left text-sm">
+        <table className="w-full min-w-[780px] text-left text-sm">
           <thead className="bg-tint2 text-plum">
             <tr>
               <th className="px-3 py-2 font-medium">Ticket</th>
+              <th className="px-3 py-2 font-medium">Show</th>
               <th className="px-3 py-2 font-medium">Attendee</th>
               <th className="px-3 py-2 font-medium">Seat</th>
               <th className="px-3 py-2 font-medium">QR token</th>
             </tr>
           </thead>
           <tbody>
-            {booking?.tickets.map((ticket) => (
-              <tr key={ticket.id} className="border-t border-line">
-                <td className="px-3 py-2">
-                  {ticket.ticketNumber}
-                  <p className="text-xs text-muted">{ticket.status}</p>
-                </td>
-                <td className="px-3 py-2">{ticket.attendeeName}</td>
-                <td className="px-3 py-2">{ticket.bookingSeat?.eventSeat.seat.seatLabel ?? "Open entry"}</td>
-                <td className="px-3 py-2 font-mono text-xs break-all">{ticket.qrToken}</td>
-              </tr>
-            ))}
+            {booking?.tickets.map((ticket) => {
+              const showTitle = ticket.session?.event.title ?? booking.session.event.title;
+              const sessionName = ticket.session?.sessionName ?? booking.session.sessionName;
+              const isDayPassBonus =
+                Boolean(ticket.eventSessionId) && ticket.eventSessionId !== booking.eventSessionId;
+              return (
+                <tr key={ticket.id} className="border-t border-line">
+                  <td className="px-3 py-2">
+                    {ticket.ticketNumber}
+                    <p className="text-xs text-muted">{ticket.status}</p>
+                  </td>
+                  <td className="px-3 py-2">
+                    <p className="font-medium text-plum">{showTitle}</p>
+                    <p className="text-xs text-muted">
+                      {sessionName ?? ""}
+                      {isDayPassBonus ? `${sessionName ? " · " : ""}Day-pass included` : ""}
+                    </p>
+                  </td>
+                  <td className="px-3 py-2">{ticket.attendeeName}</td>
+                  <td className="px-3 py-2">{ticket.bookingSeat?.eventSeat.seat.seatLabel ?? "Open entry"}</td>
+                  <td className="px-3 py-2 font-mono text-xs break-all">{ticket.qrToken}</td>
+                </tr>
+              );
+            })}
             {booking && booking.tickets.length === 0 ? (
               <tr>
-                <td className="px-3 py-4 text-muted" colSpan={4}>
+                <td className="px-3 py-4 text-muted" colSpan={5}>
                   Tickets appear after the booking is confirmed.
                 </td>
               </tr>

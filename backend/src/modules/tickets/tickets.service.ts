@@ -147,6 +147,44 @@ export class TicketsService {
     return ticket;
   }
 
+  async publicLookup(rawToken: string) {
+    const token = normalizeQrToken(rawToken);
+    const ticket = await this.prisma.bookingTicket.findUnique({
+      where: { qrToken: token },
+      include: {
+        booking: { select: { bookingReference: true, bookingStatus: true } },
+        session: {
+          select: {
+            sessionName: true,
+            startAt: true,
+            endAt: true,
+            event: { select: { title: true } },
+            venue: { select: { name: true } },
+          },
+        },
+        bookingSeat: {
+          include: { eventSeat: { include: { seat: { select: { seatLabel: true } } } } },
+        },
+      },
+    });
+    if (!ticket) {
+      throw new NotFoundException('Ticket not found');
+    }
+    return {
+      ticketNumber: ticket.ticketNumber,
+      attendeeName: ticket.attendeeName,
+      status: ticket.status,
+      bookingReference: ticket.booking.bookingReference,
+      bookingStatus: ticket.booking.bookingStatus,
+      showTitle: ticket.session.event.title,
+      sessionName: ticket.session.sessionName,
+      venueName: ticket.session.venue.name,
+      startAt: ticket.session.startAt,
+      endAt: ticket.session.endAt,
+      seatLabel: ticket.bookingSeat?.eventSeat.seat.seatLabel ?? null,
+    };
+  }
+
   async validate(qrToken: string, eventSessionId?: string) {
     const ticket = await this.findByToken(qrToken);
     const reason = this.rejectionReason(ticket, eventSessionId);
@@ -230,8 +268,14 @@ export class TicketsService {
   }
 
   private async findByToken(qrToken: string) {
-    const ticket = await this.prisma.bookingTicket.findUnique({
-      where: { qrToken },
+    const token = normalizeQrToken(qrToken);
+    const ticket = await this.prisma.bookingTicket.findFirst({
+      where: {
+        OR: [
+          { qrToken: token },
+          { ticketNumber: { equals: token, mode: 'insensitive' } },
+        ],
+      },
       include: ticketInclude,
     });
     if (!ticket) {
@@ -317,6 +361,12 @@ export class TicketsService {
       }
     }
   }
+}
+
+function normalizeQrToken(raw: string) {
+  const trimmed = raw.trim();
+  const match = trimmed.match(/\/ticket\/([a-zA-Z0-9_-]+)(?:[/?#]|$)/);
+  return match ? match[1] : trimmed;
 }
 
 function readAttendees(value: Prisma.JsonValue | null): AttendeeRecord[] {

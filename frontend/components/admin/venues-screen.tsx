@@ -29,16 +29,31 @@ export function VenuesScreen() {
   const { token } = useAdmin();
   const [venues, setVenues] = useState<Venue[]>([]);
   const [createdVenues, setCreatedVenues] = useState<Venue[]>([]);
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [activeFilter, setActiveFilter] = useState("");
   const [error, setError] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [createError, setCreateError] = useState("");
   const [saving, setSaving] = useState(false);
   const createButton = useRef<HTMLButtonElement>(null);
 
-  const rows = [
+  const allRows = [
     ...createdVenues,
     ...venues.filter((venue) => !createdVenues.some((created) => created.id === venue.id)),
   ];
+  const rows = allRows.filter((venue) => {
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      if (!venue.name.toLowerCase().includes(q) && !(venue.description ?? "").toLowerCase().includes(q)) {
+        return false;
+      }
+    }
+    if (typeFilter && venue.venueType !== typeFilter) return false;
+    if (activeFilter === "true" && !venue.isActive) return false;
+    if (activeFilter === "false" && venue.isActive) return false;
+    return true;
+  });
 
   useEffect(() => {
     api<{ data: Venue[] }>("/venues?limit=20", { token })
@@ -119,6 +134,34 @@ export function VenuesScreen() {
         >
           Create venue
         </button>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          className={`${fieldClass} !w-full sm:!w-64 shrink-0`}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search venue name…"
+        />
+        <select
+          className={`${fieldClass} !w-auto shrink-0`}
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value)}
+          aria-label="Filter by venue type"
+        >
+          <option value="">All types</option>
+          <option value="RESERVED_SEATING">Reserved seating</option>
+          <option value="GENERAL_ADMISSION">General admission</option>
+        </select>
+        <select
+          className={`${fieldClass} !w-auto shrink-0`}
+          value={activeFilter}
+          onChange={(e) => setActiveFilter(e.target.value)}
+          aria-label="Filter by status"
+        >
+          <option value="">All statuses</option>
+          <option value="true">Active</option>
+          <option value="false">Inactive</option>
+        </select>
       </div>
 
       <p role="status" className="sr-only">

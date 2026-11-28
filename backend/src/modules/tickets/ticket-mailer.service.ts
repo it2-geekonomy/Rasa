@@ -27,10 +27,12 @@ const passInclude = {
   },
   session: {
     select: {
+      id: true,
       sessionName: true,
       startAt: true,
       endAt: true,
-      event: { select: { title: true } },
+      capacity: true,
+      event: { select: { title: true, slug: true } },
       venue: { select: { name: true } },
     },
   },
@@ -68,28 +70,87 @@ export class TicketMailer {
       }
       const apiKey = (this.config.get<string>('resend.apiKey') ?? '').trim();
       const from = (this.config.get<string>('resend.from') ?? '').trim();
+      const siteUrl = (this.config.get<string>('siteUrl') ?? 'http://localhost:3000').trim();
       if (!apiKey || !from) {
         this.logger.warn(`Ticket email skipped for ${booking.bookingReference}: Resend is not configured`);
         return;
       }
-      await sendTicketEmail(booking, { apiKey, from });
+      await sendTicketEmail(booking, { apiKey, from, siteUrl });
       this.logger.log(`Ticket email sent for ${booking.bookingReference}`);
+      await this.notifySoldOutIfNeeded(booking, { apiKey, from });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'unknown error';
       this.logger.error(`Ticket email failed for booking ${bookingId}: ${message}`);
     }
   }
+
+  private async notifySoldOutIfNeeded(
+    booking: PassBooking,
+    options: { apiKey: string; from: string },
+  ) {
+    const capacity = booking.session.capacity;
+    if (booking.session.event.slug !== 'carving-rhythm-linocut' || capacity == null) {
+      return;
+    }
+    const agg = await this.prisma.booking.aggregate({
+      where: { eventSessionId: booking.eventSessionId, bookingStatus: 'CONFIRMED' },
+      _sum: { quantity: true },
+    });
+    const confirmed = agg._sum.quantity ?? 0;
+    if (confirmed < capacity || confirmed - booking.quantity >= capacity) {
+      return;
+    }
+    const notifyTo = 'sachin@thegeekonomy.com';
+    const slot = `${when.format(booking.session.startAt)} – ${when.format(booking.session.endAt)}`;
+    const html = `
+      <div style="font-family:Georgia,serif;color:#241426;max-width:560px;margin:0 auto;padding:24px;">
+        <p style="margin:0 0 8px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#931929;">RASA Festival · Sold Out Alert</p>
+        <h1 style="margin:0 0 12px;font-size:22px;color:#3f1441;">${escapeHtml(booking.session.event.title)}</h1>
+        <p style="margin:0 0 12px;font-size:15px;">All <strong>${confirmed} of ${capacity}</strong> slots are now filled.</p>
+        <p style="margin:0 0 6px;font-size:14px;color:#5b1f5d;">Venue: ${escapeHtml(booking.session.venue.name)}</p>
+        <p style="margin:0 0 6px;font-size:14px;color:#5b1f5d;">Time: ${escapeHtml(slot)}</p>
+        <p style="margin:0;font-size:14px;color:#5b1f5d;">Last booking: ${escapeHtml(booking.bookingReference)} (${escapeHtml(booking.customerName)})</p>
+      </div>
+    `;
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${options.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: `RASA Festival <${options.from}>`,
+        to: [notifyTo],
+        subject: `Slots filled (${confirmed}/${capacity}): ${booking.session.event.title}`,
+        html,
+      }),
+    });
+    if (!response.ok) {
+      const body = await response.text();
+      this.logger.error(`Sold-out alert email failed (${response.status}): ${body}`);
+      return;
+    }
+    this.logger.log(`Sold-out alert email sent for ${booking.session.event.slug} (${confirmed}/${capacity})`);
+  }
 }
 
-export async function qrDataUrl(token: string) {
-  return QRCode.toDataURL(token, { width: 360, margin: 1, errorCorrectionLevel: 'M' });
+export function qrPayload(token: string, siteUrl?: string) {
+  const base = (siteUrl ?? process.env.PUBLIC_SITE_URL ?? 'http://localhost:3000').replace(/\/+$/, '');
+  return `${base}/ticket/${token}`;
 }
 
-async function sendTicketEmail(booking: PassBooking, options: { apiKey: string; from: string }) {
+export async function qrDataUrl(token: string, siteUrl?: string) {
+  return QRCode.toDataURL(qrPayload(token, siteUrl), { width: 360, margin: 1, errorCorrectionLevel: 'M' });
+}
+
+async function sendTicketEmail(
+  booking: PassBooking,
+  options: { apiKey: string; from: string; siteUrl: string },
+) {
   const images = await Promise.all(
     booking.tickets.map(async (ticket) => ({
       ticket,
-      png: await QRCode.toBuffer(ticket.qrToken, {
+      png: await QRCode.toBuffer(qrPayload(ticket.qrToken, options.siteUrl), {
         type: 'png',
         width: 480,
         margin: 1,

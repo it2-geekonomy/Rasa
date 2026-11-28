@@ -59,6 +59,7 @@ type BookingCartContextValue = {
     sessionId: string,
     seats: SessionSeatInput[],
     hold?: { holdToken: string; expiresAt: string },
+    releaseOld?: boolean,
   ) => void;
   removeLine: (eventId: string) => void;
   clearCart: (releaseHolds?: boolean) => void;
@@ -166,6 +167,7 @@ export function BookingCartProvider({ children }: { children: ReactNode }) {
       sessionId: string,
       seats: SessionSeatInput[],
       hold?: { holdToken: string; expiresAt: string },
+      releaseOld = true,
     ) => {
       const mapped: BookedSeat[] = seats.map((s) => {
         const meta = seatById.get(s.id);
@@ -183,7 +185,7 @@ export function BookingCartProvider({ children }: { children: ReactNode }) {
       });
       setLines((prev) => {
         const old = prev.find((l) => l.eventId === eventId);
-        if (old?.holdToken && old.holdToken !== hold?.holdToken) {
+        if (releaseOld && old?.holdToken && old.holdToken !== hold?.holdToken) {
           releaseLineHold(old);
         }
         const rest = prev.filter((l) => l.eventId !== eventId);

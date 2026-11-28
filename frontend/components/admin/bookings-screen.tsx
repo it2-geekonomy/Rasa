@@ -19,16 +19,54 @@ type BookingRow = {
   session: { sessionName: string | null; event: { title: string } };
 };
 
+type SessionOption = {
+  id: string;
+  sessionName: string | null;
+  event: { title: string; bookingMode: string };
+};
+
 export function BookingsScreen({
   mode = "SEAT_BASED",
 }: {
-  mode?: "SEAT_BASED" | "CAPACITY_BASED";
+  mode?: "SEAT_BASED" | "CAPACITY_BASED" | "FREE_ENTRY";
 }) {
   const { token } = useAdmin();
   const [rows, setRows] = useState<BookingRow[]>([]);
+  const [sessions, setSessions] = useState<SessionOption[]>([]);
+  const [sessionId, setSessionId] = useState("");
   const [search, setSearch] = useState("");
   const [error, setError] = useState("");
   const isWorkshop = mode === "CAPACITY_BASED";
+  const isFree = mode === "FREE_ENTRY";
+  const heading = isFree
+    ? "Open registrations"
+    : isWorkshop
+      ? "Workshop bookings"
+      : "Bookings";
+  const filterLabel = isFree
+    ? "Filter by event"
+    : isWorkshop
+      ? "Filter by workshop"
+      : "Filter by show";
+  const allOptionLabel = isFree
+    ? "All open events"
+    : isWorkshop
+      ? "All workshops"
+      : "All shows";
+  const itemColumnLabel = isFree ? "Event" : isWorkshop ? "Workshop" : "Show";
+  const emptyText = isFree
+    ? "No open-for-all registrations yet."
+    : isWorkshop
+      ? "No paid workshop bookings yet."
+      : "No paid bookings yet.";
+
+  useEffect(() => {
+    api<{ data: SessionOption[] }>("/sessions?limit=50", { token })
+      .then((result) =>
+        setSessions(result.data.filter((s) => s.event.bookingMode === mode)),
+      )
+      .catch(() => null);
+  }, [token, mode]);
 
   useEffect(() => {
     let cancel = false;
@@ -37,6 +75,7 @@ export function BookingsScreen({
       bookingStatus: "CONFIRMED",
       bookingMode: mode,
     });
+    if (sessionId) query.set("eventSessionId", sessionId);
     if (search.trim()) query.set("search", search.trim());
     const load = () => {
       api<{ data: BookingRow[] }>(`/bookings?${query}`, { token })
@@ -58,15 +97,34 @@ export function BookingsScreen({
       cancel = true;
       window.clearTimeout(handle);
     };
-  }, [search, token, mode]);
+  }, [search, token, mode, sessionId]);
 
   return (
     <>
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <h1 className="font-display text-3xl text-plum">
-          {isWorkshop ? "Workshop bookings" : "Bookings"}
-        </h1>
-        <input className={`${fieldClass} max-w-xs`} value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Name, email, or reference" />
+        <h1 className="font-display text-3xl text-plum">{heading}</h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            className={`${fieldClass} !w-full sm:!w-64 shrink-0`}
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Name, email, or reference"
+          />
+          <select
+            className={`${fieldClass} !w-auto max-w-xs shrink-0`}
+            value={sessionId}
+            onChange={(event) => setSessionId(event.target.value)}
+            aria-label={filterLabel}
+          >
+            <option value="">{allOptionLabel}</option>
+            {sessions.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.event.title}
+                {s.sessionName ? ` (${s.sessionName})` : ""}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
       {error ? <Notice>{error}</Notice> : null}
       <div className="overflow-x-auto rounded-rasa border border-line bg-white">
@@ -75,7 +133,7 @@ export function BookingsScreen({
             <tr>
               <th className="px-3 py-2 font-medium">Reference</th>
               <th className="px-3 py-2 font-medium">Customer</th>
-              <th className="px-3 py-2 font-medium">{isWorkshop ? "Workshop" : "Show"}</th>
+              <th className="px-3 py-2 font-medium">{itemColumnLabel}</th>
               <th className="px-3 py-2 font-medium">Status</th>
               <th className="px-3 py-2 font-medium">Total</th>
               <th className="px-3 py-2 font-medium">Actions</th>
@@ -96,9 +154,9 @@ export function BookingsScreen({
                   {row.session.event.title}
                   <p className="text-xs text-muted">{row.session.sessionName}</p>
                 </td>
-                <td className="px-3 py-2">Paid</td>
+                <td className="px-3 py-2">{isFree ? "Registered" : "Paid"}</td>
                 <td className="px-3 py-2">
-                  {inr(row.totalAmount)}
+                  {isFree ? "Free" : inr(row.totalAmount)}
                   <p className="text-xs text-muted">{row.quantity}</p>
                 </td>
                 <td className="px-3 py-2">
@@ -116,7 +174,7 @@ export function BookingsScreen({
             {rows.length === 0 ? (
               <tr>
                 <td className="px-3 py-4 text-muted" colSpan={6}>
-                  {isWorkshop ? "No paid workshop bookings yet." : "No paid bookings yet."}
+                  {emptyText}
                 </td>
               </tr>
             ) : null}

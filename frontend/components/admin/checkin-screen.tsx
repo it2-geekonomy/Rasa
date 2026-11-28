@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import jsQR from "jsqr";
 import { api, ApiError } from "@/lib/admin/api";
 import { useAdmin } from "./admin-gate";
-import { Notice, Panel, primaryButtonClass, quietButtonClass } from "./ui";
+import { fieldClass, Notice, Panel, primaryButtonClass, quietButtonClass } from "./ui";
 
 type TicketView = {
   ticketNumber: string;
@@ -24,6 +24,7 @@ export function CheckinScreen() {
   const [scanning, setScanning] = useState(true);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [tokenValue, setTokenValue] = useState("");
+  const [manualInput, setManualInput] = useState("");
   const [error, setError] = useState("");
   const [checkedIn, setCheckedIn] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -97,6 +98,7 @@ export function CheckinScreen() {
         body: { qrToken: value },
       });
       setPreview(result.data);
+      setTokenValue(result.data.ticket.ticketNumber);
     } catch (caught) {
       setPreview(null);
       setError(caught instanceof ApiError ? caught.message : "Ticket not found");
@@ -129,17 +131,49 @@ export function CheckinScreen() {
   function scanAgain() {
     setPreview(null);
     setTokenValue("");
+    setManualInput("");
     setError("");
     setCheckedIn(false);
     setScanning(true);
+  }
+
+  function handleManualLookup(event: FormEvent) {
+    event.preventDefault();
+    const cleaned = manualInput.trim();
+    if (!cleaned) return;
+    setScanning(false);
+    setError("");
+    setCheckedIn(false);
+    setTokenValue(cleaned);
+    void lookup(cleaned);
   }
 
   return (
     <>
       <div>
         <h1 className="font-display text-3xl text-plum">Check-in</h1>
-        <p className="mt-1 text-sm text-muted">Point the camera at the ticket QR. Check in only after you see the guest and the seat.</p>
+        <p className="mt-1 text-sm text-muted">
+          Scan the ticket QR with the camera, or enter the ticket number / QR code below.
+        </p>
       </div>
+      <Panel title="Ticket number or QR lookup">
+        <form onSubmit={handleManualLookup} className="flex flex-wrap items-center gap-2">
+          <input
+            className={`${fieldClass} min-w-[240px] flex-1`}
+            value={manualInput}
+            onChange={(e) => setManualInput(e.target.value)}
+            placeholder="Ticket number (e.g. RASAA2644C160F-01) or QR code"
+          />
+          <button type="submit" className={primaryButtonClass} disabled={busy || !manualInput.trim()}>
+            {busy ? "Looking up…" : "Look up"}
+          </button>
+          {!scanning ? (
+            <button type="button" className={quietButtonClass} onClick={scanAgain}>
+              Open camera
+            </button>
+          ) : null}
+        </form>
+      </Panel>
       {scanning ? (
         <Panel title="Camera">
           <video ref={videoRef} className="aspect-[3/4] w-full max-h-[70vh] rounded-rasa bg-black object-cover" playsInline muted />

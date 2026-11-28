@@ -6,6 +6,7 @@ import { BookingsService } from './bookings.service';
 import {
   BookingLookupQueryDto,
   BookingStatusQueryDto,
+  CancelPendingBookingsDto,
   CreateBookingDto,
   CreateCartBookingDto,
 } from './dto/booking.dto';
@@ -27,6 +28,13 @@ export class BookingsController {
   @ApiOperation({ summary: 'Create multiple bookings from a cart with one combined payment' })
   createCart(@Body() dto: CreateCartBookingDto) {
     return this.bookings.createCart(dto);
+  }
+
+  @Public()
+  @Post('cancel-pending')
+  @ApiOperation({ summary: 'Cancel unpaid pending bookings and release their held seats' })
+  cancelPending(@Body() dto: CancelPendingBookingsDto) {
+    return this.bookings.cancelPending(dto);
   }
 
   @Get()
