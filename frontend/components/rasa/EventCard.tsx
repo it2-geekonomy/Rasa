@@ -172,30 +172,28 @@ export function EventCard({ event: e, bannerImage, defaultOpen, onPickTickets }:
           ) : null}
         </AnimatePresence>
       </div>
-      {e.id !== "f1" ? (
-        <button
-          type="button"
-          className="star tick"
-          aria-pressed={onPickTickets ? undefined : onPlan}
-          aria-label={
-            onPickTickets
-              ? `Get tickets: ${e.t}`
-              : `${onPlan ? "Remove from" : "Add to"} my plan: ${e.t}`
+      <button
+        type="button"
+        className="star tick"
+        aria-pressed={onPickTickets ? undefined : onPlan}
+        aria-label={
+          onPickTickets
+            ? `Get tickets: ${e.t}`
+            : `${onPlan ? "Remove from" : "Add to"} my plan: ${e.t}`
+        }
+        onClick={() => {
+          if (onPickTickets) {
+            onPickTickets();
+            return;
           }
-          onClick={() => {
-            if (onPickTickets) {
-              onPickTickets();
-              return;
-            }
-            togglePlan(e.id);
-            toast(onPlan ? `Removed: ${e.t}` : `Added: ${e.t}`);
-          }}
-        >
-          <svg viewBox="0 0 24 24" aria-hidden>
-            <polyline points="5 12.5 10 17.5 19 7" />
-          </svg>
-        </button>
-      ) : null}
+          togglePlan(e.id);
+          toast(onPlan ? `Removed: ${e.t}` : `Added: ${e.t}`);
+        }}
+      >
+        <svg viewBox="0 0 24 24" aria-hidden>
+          <polyline points="5 12.5 10 17.5 19 7" />
+        </svg>
+      </button>
     </article>
   );
 }

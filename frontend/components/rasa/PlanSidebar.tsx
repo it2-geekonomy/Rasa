@@ -40,8 +40,8 @@ export const PlanSidebar = forwardRef<HTMLElement, Props>(function PlanSidebar(
   return (
     <aside
       ref={ref}
-      className={`sticky top-[152px] rounded-2xl bg-tint p-5 lg:max-h-[calc(100dvh-168px)] lg:overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-md:static max-md:mt-5 ${
-        mobileOpen ? "max-md:!block" : "max-md:hidden"
+      className={`sticky top-[152px] rounded-2xl bg-tint p-5 lg:max-h-[calc(100dvh-168px)] lg:overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-lg:static max-lg:mt-5 ${
+        mobileOpen ? "max-lg:!block" : "max-lg:hidden"
       }`}
       aria-label="Your tickets"
     >
