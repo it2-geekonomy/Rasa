@@ -62,7 +62,7 @@ export function SiteFooter() {
       </div>
 
       <div className="mx-auto mt-7 flex max-w-[1240px] flex-col items-start justify-between gap-1.5 border-t border-white/15 pt-4 text-xs tracking-wide text-[#c4accb] max-md:mt-5 sm:flex-row sm:items-center sm:text-[0.82rem]">
-        <p>© {new Date().getFullYear()} RASA · Roots to Rhythm</p>
+        <p>© 2027 RASA · Roots to Rhythm</p>
         <p>
           Developed by{" "}
           <a

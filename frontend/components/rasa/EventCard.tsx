@@ -150,7 +150,7 @@ export function EventCard({ event: e, bannerImage, defaultOpen, onPickTickets }:
                   />
                 ))}
               </div>
-            ) : e.img?.length ? (
+            ) : bannerImage === undefined && e.img?.length ? (
               <>
                 <div className="mt-2.5 flex flex-wrap gap-3">
                   {e.img.map((k, i) => (

@@ -93,6 +93,7 @@ export type LiveSeat = {
   bookable: boolean;
   status: string;
   seatType: string;
+  price?: number;
 };
 
 /* ------------------------------------------------------------------ */
@@ -349,7 +350,12 @@ const Hall = memo(function Hall({ selected, locked, onSeat, dims, live }: HallPr
           const band = BAND_START_TOP.get(row);
           return (
             <Fragment key={row}>
-              {band ? <PriceBandDivider label={band.label} priceInr={band.priceInr} /> : null}
+              {band ? (
+                <PriceBandDivider
+                  label={band.label}
+                  priceInr={livePriceForRow(row, live, band.priceInr)}
+                />
+              ) : null}
               <HallRow row={row} rear selected={selected} locked={locked} onSeat={onSeat} dims={dims} live={live} />
             </Fragment>
           );
@@ -367,7 +373,12 @@ const Hall = memo(function Hall({ selected, locked, onSeat, dims, live }: HallPr
           const band = BAND_START_TOP.get(row);
           return (
             <Fragment key={row}>
-              {band ? <PriceBandDivider label={band.label} priceInr={band.priceInr} /> : null}
+              {band ? (
+                <PriceBandDivider
+                  label={band.label}
+                  priceInr={livePriceForRow(row, live, band.priceInr)}
+                />
+              ) : null}
               <HallRow row={row} rear={false} selected={selected} locked={locked} onSeat={onSeat} dims={dims} live={live} />
             </Fragment>
           );
@@ -395,6 +406,17 @@ function BandLabel({ children }: { children: ReactNode }) {
   return (
     <p className="mb-1 text-center font-lab text-[11px] font-semibold uppercase tracking-[0.25em] text-white/45">{children}</p>
   );
+}
+
+function livePriceForRow(row: string, live: Map<string, LiveSeat> | undefined, fallback: number) {
+  if (!live) return fallback;
+  const prefix = `${row}-`;
+  for (const [key, seat] of live.entries()) {
+    if (key.startsWith(prefix) && typeof seat.price === "number" && seat.price > 0) {
+      return seat.price;
+    }
+  }
+  return fallback;
 }
 
 function PriceBandDivider({ label, priceInr }: { label: string; priceInr: number }) {
@@ -507,7 +529,7 @@ function SeatCell({
   const isSelected = selected.has(id);
   const isLocked = locked.has(id) && !isSelected;
   const canPick = (live ? Boolean(offer?.bookable) : selectableAllocation(seat.allocation)) && !isLocked;
-  const rowPrice = priceForRow(seat.row);
+  const rowPrice = offer?.price && offer.price > 0 ? offer.price : priceForRow(seat.row);
   const label = live
     ? `Row ${seat.row}, seat ${seat.col}${offer ? `, ${offer.status}` : ""}${offer?.bookable ? ` (${formatInr(rowPrice)})` : ""}`
     : `Row ${seat.row}, seat ${seat.col} — ${ALLOCATION_LABEL[seat.allocation]}${selectableAllocation(seat.allocation) ? ` (${formatInr(rowPrice)})` : ""}`;

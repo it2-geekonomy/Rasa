@@ -53,18 +53,19 @@ export function CheckinScreen() {
           audio: false,
           video: { facingMode: { ideal: "environment" } },
         });
-        if (stop) {
+        if (stop || !video) {
           stream.getTracks().forEach((track) => track.stop());
           return;
         }
-        video.srcObject = stream;
-        await video.play();
+        const videoEl = video;
+        videoEl.srcObject = stream;
+        await videoEl.play();
         const detect = () => {
           if (stop) return;
-          if (context && video.readyState >= 2 && video.videoWidth > 0) {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+          if (context && videoEl.readyState >= 2 && videoEl.videoWidth > 0) {
+            canvas.width = videoEl.videoWidth;
+            canvas.height = videoEl.videoHeight;
+            context.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
             const image = context.getImageData(0, 0, canvas.width, canvas.height);
             const code = jsQR(image.data, image.width, image.height, { inversionAttempts: "dontInvert" });
             if (code?.data) {

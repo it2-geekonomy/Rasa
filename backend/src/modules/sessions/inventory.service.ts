@@ -224,9 +224,7 @@ export class InventoryService {
         where: { eventSessionId: sessionId },
         include: seatView,
       });
-      const layout = this.toPublicLayout(session, rows);
-      await this.maskDayPassSeats(session.id, layout.sections);
-      return layout;
+      return this.toPublicLayout(session, rows);
     }
     const capacity = await this.capacity(sessionId);
     return {
@@ -263,11 +261,6 @@ export class InventoryService {
       if (updated.count !== dto.eventSeatIds.length) {
         throw new ConflictException('One or more seats are no longer available');
       }
-      const heldIds = await tx.eventSeat.findMany({
-        where: { id: { in: dto.eventSeatIds } },
-        select: { seatId: true },
-      });
-      await this.holdDayPassSeats(tx, sessionId, heldIds.map((seat) => seat.seatId), holdToken, expiresAt);
       return tx.eventSeat.findMany({
         where: { eventSessionId: sessionId, holdToken },
         include: seatView,
