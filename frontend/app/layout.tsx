@@ -31,7 +31,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className="flex min-h-dvh flex-col font-body text-ink antialiased">
         <Providers>
           <SiteFrame>{children}</SiteFrame>

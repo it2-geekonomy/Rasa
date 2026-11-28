@@ -120,7 +120,7 @@ export const IMG={
  "jena-6":"/images/jena-6.jpg",
  "jena-7":"/images/jena-7.jpg",
  "vin-b":"/images/vin-b.jpg",
- "pcpa-qr":"/images/pcpa-qr.png",
+ "pcpa-qr":"/images/pcpa-qr-map.png",
  "harish":"/images/harish.jpg",
  "swasti-logo":"/images/swasti-logo.jpg",
  "feros":"/images/feros.jpg",

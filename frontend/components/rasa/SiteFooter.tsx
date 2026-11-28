@@ -1,10 +1,18 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import { RasaImage } from "./RasaImage";
 import { ContactRow } from "./ContactRow";
 
+const subscribe = () => () => {};
+
 export function SiteFooter() {
+  const year = useSyncExternalStore(
+    subscribe,
+    () => new Date().getFullYear(),
+    () => 2027,
+  );
   return (
     <footer className="bg-plum-d px-4 pt-9 pb-7 text-sm leading-relaxed text-[#d9bfe0] max-lg:pt-6 max-lg:pb-[calc(76px+env(safe-area-inset-bottom))] md:px-6 lg:pt-10 lg:pb-[calc(28px+env(safe-area-inset-bottom))]">
       <div className="mx-auto flex max-w-[1240px] flex-col gap-8 max-md:gap-5 md:flex-row md:items-start md:justify-between">
@@ -49,20 +57,16 @@ export function SiteFooter() {
           />
 
           <p className="text-[0.82rem] text-[#c4accb]">
-            HCG Foundation:{" "}
-            <a href="tel:08046607760" className="font-medium text-[#f2e8f4] no-underline hover:underline">
-              080 4660 7760
-            </a>
-            {" · "}
-            <a href="mailto:hcgfoundation@gmail.com" className="font-medium text-[#f2e8f4] no-underline hover:underline">
-              hcgfoundation@gmail.com
+            Email:{" "}
+            <a href="mailto:rasarootsfestival@gmail.com" className="font-medium text-[#f2e8f4] no-underline hover:underline">
+              rasarootsfestival@gmail.com
             </a>
           </p>
         </div>
       </div>
 
       <div className="mx-auto mt-7 flex max-w-[1240px] flex-col items-start justify-between gap-1.5 border-t border-white/15 pt-4 text-xs tracking-wide text-[#c4accb] max-md:mt-5 sm:flex-row sm:items-center sm:text-[0.82rem]">
-        <p>© {new Date().getFullYear()} RASA · Roots to Rhythm</p>
+        <p suppressHydrationWarning>© {year} RASA · Roots to Rhythm</p>
         <p>
           Developed by{" "}
           <a

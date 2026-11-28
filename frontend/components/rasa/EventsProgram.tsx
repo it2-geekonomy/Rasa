@@ -24,6 +24,14 @@ import { PageBody } from "@/components/rasa/motion/PageBody";
 
 type Props = { day: DayId; focusId?: string };
 
+const MOBILE_TYPE_LABEL: Record<string, string> = {
+  all: "All",
+  perf: "Performances",
+  work: "Workshops",
+  well: "Wellness",
+  art: "Art & food",
+};
+
 export function EventsProgram({ day: initialDay, focusId }: Props) {
   const { day, setDay, mobilePlanOpen, closeMobilePlan } = usePlan();
   const [type, setType] = useState("all");
@@ -117,20 +125,21 @@ export function EventsProgram({ day: initialDay, focusId }: Props) {
             ))}
           </div>
         </div>
-        <div className="mb-4 flex flex-wrap gap-2 max-md:mb-2.5 max-md:flex-nowrap max-md:gap-1.5 max-md:overflow-x-auto max-md:[scrollbar-width:none] max-md:[&::-webkit-scrollbar]:hidden" role="group" aria-label="Filter by type">
+        <div className="mb-4 flex flex-wrap gap-2 max-md:mb-3 max-md:gap-1.5" role="group" aria-label="Filter by type">
           {TYPES.map((t) => (
             <button
               key={t[0]}
               type="button"
               className={
                 type === t[0]
-                  ? "min-h-11 shrink-0 rounded-full border-2 border-burg bg-burg px-4 py-2 font-bold text-white max-md:min-h-8 max-md:px-3 max-md:py-1 max-md:text-xs"
-                  : "min-h-11 shrink-0 rounded-full border-2 border-line bg-white px-4 py-2 font-medium max-md:min-h-8 max-md:px-3 max-md:py-1 max-md:text-xs"
+                  ? "min-h-11 rounded-full border-2 border-burg bg-burg px-4 py-2 font-bold text-white max-md:min-h-8 max-md:px-3 max-md:py-1 max-md:text-xs"
+                  : "min-h-11 rounded-full border-2 border-line bg-white px-4 py-2 font-medium max-md:min-h-8 max-md:px-3 max-md:py-1 max-md:text-xs"
               }
               aria-pressed={type === t[0]}
               onClick={() => setType(t[0])}
             >
-              {t[1]}
+              <span className="md:hidden">{MOBILE_TYPE_LABEL[t[0]] ?? t[1]}</span>
+              <span className="hidden md:inline">{t[1]}</span>
             </button>
           ))}
         </div>
