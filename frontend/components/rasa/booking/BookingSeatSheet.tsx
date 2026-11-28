@@ -7,6 +7,8 @@ import { fmtMinutes } from "@/lib/rasa/time";
 import { btn, btnLine, lab } from "@/lib/rasa/ui";
 import { sheetBackdrop, sheetPanel, duration, easeOut } from "@/lib/rasa/motion";
 import { publicApi } from "@/lib/public-api";
+import { seatIdsFromLine, useBookingCart } from "@/contexts/booking-cart-context";
+import { useToast } from "@/contexts/toast-context";
 import { AuditoriumSeatMap, type LiveSeat } from "./AuditoriumSeatMap";
 import { TicketPasses, type PassBooking } from "./TicketPasses";
 
@@ -49,6 +51,7 @@ type Props = {
   eventId: string | null;
   sessionId: string | null;
   onClose: () => void;
+  onOpenCart?: () => void;
 };
 
 function money(value: number) {
@@ -60,8 +63,10 @@ function money(value: number) {
   }).format(value);
 }
 
-export function BookingSeatSheet({ eventId, sessionId, onClose }: Props) {
+export function BookingSeatSheet({ eventId, sessionId, onClose, onOpenCart }: Props) {
   const reduced = useReducedMotion();
+  const { setSessionSeats, lineForEvent, seatCount } = useBookingCart();
+  const { toast } = useToast();
   const ev = eventId ? byEventId(eventId) : undefined;
   const open = Boolean(eventId && sessionId && ev);
   const [step, setStep] = useState<"seats" | "details" | "done">("seats");
@@ -92,7 +97,7 @@ export function BookingSeatSheet({ eventId, sessionId, onClose }: Props) {
     if (!sessionId) return;
     let cancel = false;
     setStep("seats");
-    setSelected(new Set());
+    setSelected(new Set(eventId ? seatIdsFromLine(lineForEvent(eventId)) : []));
     setHoldToken(null);
     setResult(null);
     setPass(null);
@@ -102,12 +107,15 @@ export function BookingSeatSheet({ eventId, sessionId, onClose }: Props) {
       .then((layout) => {
         if (cancel) return;
         const map = new Map<string, SeatOffer>();
+        const ownSeatIds = new Set(eventId ? seatIdsFromLine(lineForEvent(eventId)) : []);
         for (const section of layout.sections ?? []) {
           for (const seat of section.seats) {
-            map.set(`${seat.rowLabel}-${seat.seatNumber}`, {
+            const key = `${seat.rowLabel}-${seat.seatNumber}`;
+            const isOwnHeld = ownSeatIds.has(key) && seat.status === "HELD";
+            map.set(key, {
               eventSeatId: seat.eventSeatId,
-              bookable: seat.bookable,
-              status: seat.status,
+              bookable: seat.bookable || isOwnHeld,
+              status: isOwnHeld ? "AVAILABLE" : seat.status,
               seatType: seat.seatType,
               price: Number(seat.price),
               label: seat.seatLabel,
@@ -155,6 +163,61 @@ export function BookingSeatSheet({ eventId, sessionId, onClose }: Props) {
     },
     [seats, selected],
   );
+
+  async function saveToCart(andCheckout: boolean) {
+    if (!ev || !sessionId) return;
+    const mapped = [...selected]
+      .map((key) => {
+        const offer = seats.get(key);
+        if (!offer || !offer.bookable) return null;
+        const idx = key.lastIndexOf("-");
+        return {
+          id: key,
+          eventSeatId: offer.eventSeatId,
+          row: key.slice(0, idx),
+          col: Number(key.slice(idx + 1)),
+          price: offer.price,
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => Boolean(item));
+
+    if (mapped.length === 0) {
+      setSessionSeats(ev.id, sessionId, []);
+      onClose();
+      return;
+    }
+
+    setBusy(true);
+    setError(null);
+    try {
+      const existing = lineForEvent(ev.id);
+      if (existing?.holdToken && existing.sessionId) {
+        await release(existing.holdToken, existing.sessionId);
+      }
+      const hold = await publicApi<{ holdToken: string; expiresAt: string }>(
+        `/sessions/${sessionId}/holds`,
+        {
+          method: "POST",
+          body: { eventSeatIds: mapped.map((s) => s.eventSeatId) },
+        },
+      );
+      setSessionSeats(ev.id, sessionId, mapped, {
+        holdToken: hold.holdToken,
+        expiresAt: hold.expiresAt,
+      });
+      toast(`Reserved ${mapped.length} seat${mapped.length === 1 ? "" : "s"} in cart`);
+      onClose();
+      if (andCheckout) onOpenCart?.();
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "One or more seats were just taken. Please pick different seats.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
 
   function close() {
     const token = holdToken;
@@ -252,74 +315,174 @@ export function BookingSeatSheet({ eventId, sessionId, onClose }: Props) {
             variants={reduced ? undefined : sheetPanel}
             transition={{ duration: duration.base, ease: easeOut }}
           >
-            <div className="shrink-0 border-b border-line px-3 py-2.5 sm:px-5 sm:py-4">
-              <div className="flex items-start justify-between gap-2">
+            <div className="shrink-0 border-b border-line bg-white px-3 py-2.5 sm:px-6 sm:py-4">
+              <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 pr-2">
-                  <p className={`${lab} text-[0.65rem] text-burg sm:text-[0.85rem]`}>
+                  <p className={`${lab} text-[0.65rem] text-burg sm:text-[0.8rem]`}>
                     {dayOf(ev.d).long} · {fmtMinutes(ev.s)}
                   </p>
                   <h2 id="seat-sheet-title" className="font-display text-[0.95rem] leading-snug text-plum sm:text-xl">
                     {ev.t}
                   </h2>
-                  <p className="mt-0.5 hidden text-sm text-muted sm:block">
-                    {step === "seats" ? "Pick seats on the map below." : "Finish the booking for these seats."}
-                  </p>
                 </div>
-                <button
-                  type="button"
-                  className="min-h-11 rounded-full px-3 font-bold text-plum hover:bg-tint"
-                  onClick={close}
-                  aria-label="Close seat picker"
-                >
-                  ✕
-                </button>
+                <div className="flex shrink-0 items-center gap-3">
+                  <ol className="hidden items-center gap-1.5 text-xs font-semibold sm:flex" aria-label="Booking steps">
+                    {(
+                      [
+                        ["seats", "1. Seats"],
+                        ["details", "2. Details"],
+                        ["done", "3. Tickets"],
+                      ] as const
+                    ).map(([key, label], idx) => {
+                      const active = step === key;
+                      const done =
+                        (key === "seats" && (step === "details" || step === "done")) ||
+                        (key === "details" && step === "done");
+                      return (
+                        <li key={key} className="flex items-center gap-1.5">
+                          {idx > 0 ? <span className="text-line">›</span> : null}
+                          <span
+                            className={`rounded-full px-2.5 py-1 ${
+                              active
+                                ? "bg-plum text-white"
+                                : done
+                                  ? "bg-tint2 text-plum"
+                                  : "bg-tint/60 text-muted"
+                            }`}
+                          >
+                            {label}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                  <button
+                    type="button"
+                    className="min-h-11 rounded-full px-3 font-bold text-plum hover:bg-tint"
+                    onClick={close}
+                    aria-label="Close seat picker"
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
-              {error ? <p className="mt-2 text-sm text-burg">{error}</p> : null}
+              {error ? (
+                <p className="mt-2 rounded-lg border border-burg/25 bg-burg/5 px-3 py-2 text-sm font-medium text-burg">
+                  {error}
+                </p>
+              ) : null}
             </div>
 
-            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden px-2 py-2 sm:px-5 sm:py-4">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden px-2 py-2 sm:px-6 sm:py-4">
               {step === "seats" ? (
                 busy && seats.size === 0 ? (
-                  <p className="text-sm text-muted">Loading seats…</p>
+                  <div className="grid flex-1 place-items-center">
+                    <p className="text-sm font-medium text-muted">Loading auditorium seats…</p>
+                  </div>
                 ) : (
                   <AuditoriumSeatMap variant="sheet" selected={selected} onToggle={toggleSeat} live={live} />
                 )
               ) : null}
               {step === "details" ? (
-                <form id="seat-sheet-details" onSubmit={confirm} className="mx-auto grid w-full max-w-xl gap-4 overflow-auto">
-                  <p>
-                    {picked.map((seat) => seat.label).join(", ")} · {money(total)}
-                  </p>
-                  <p className="text-sm">These seats are held for 5 minutes while you finish.</p>
-                  <label className="block text-sm font-semibold text-plum">
-                    Name
-                    <input required value={name} onChange={(item) => setName(item.target.value)} className={inputClass} />
-                  </label>
-                  <label className="block text-sm font-semibold text-plum">
-                    Email
-                    <input required type="email" value={email} onChange={(item) => setEmail(item.target.value)} className={inputClass} />
-                  </label>
-                  <label className="block text-sm font-semibold text-plum">
-                    Phone
-                    <input required value={phone} onChange={(item) => setPhone(item.target.value)} className={inputClass} />
-                  </label>
-                </form>
+                <div className="mx-auto w-full max-w-3xl overflow-y-auto py-2 sm:py-4">
+                  <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] md:items-start">
+                    <div className="rounded-rasa border border-line bg-tint/50 p-4 sm:p-5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className={`${lab} text-xs text-burg`}>Selected seats</span>
+                        <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[0.7rem] font-semibold text-amber-900">
+                          Held for 5 mins
+                        </span>
+                      </div>
+                      <p className="mt-1 font-display text-lg font-semibold text-plum">{ev.t}</p>
+                      <p className="text-xs text-muted">
+                        {dayOf(ev.d).long} · {fmtMinutes(ev.s)}
+                      </p>
+
+                      <ul className="mt-4 max-h-56 divide-y divide-line overflow-y-auto rounded-lg border border-line bg-white px-3 text-sm">
+                        {picked.map((seat) => (
+                          <li key={seat.eventSeatId} className="flex items-center justify-between gap-2 py-2">
+                            <span className="font-semibold text-plum">Seat {seat.label}</span>
+                            <span className="font-medium tabular-nums text-ink">{money(seat.price)}</span>
+                          </li>
+                        ))}
+                      </ul>
+
+                      <div className="mt-4 flex items-baseline justify-between border-t border-line pt-3">
+                        <span className="text-sm font-semibold text-muted">
+                          Total ({picked.length} ticket{picked.length === 1 ? "" : "s"})
+                        </span>
+                        <span className="font-display text-2xl font-bold tabular-nums text-burg">
+                          {money(total)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <form
+                      id="seat-sheet-details"
+                      onSubmit={confirm}
+                      className="rounded-rasa border border-line bg-white p-4 shadow-xs sm:p-5"
+                    >
+                      <h3 className="font-display text-lg font-semibold text-plum">Attendee &amp; ticket delivery</h3>
+                      <p className="mt-1 text-xs text-muted">
+                        Enter the primary contact details. All {picked.length} QR ticket
+                        {picked.length === 1 ? "" : "s"} will be generated and emailed here.
+                      </p>
+                      <div className="mt-4 grid gap-3.5">
+                        <label className="block text-sm font-semibold text-plum">
+                          Full name
+                          <input
+                            required
+                            placeholder="e.g. Ananya Sharma"
+                            value={name}
+                            onChange={(item) => setName(item.target.value)}
+                            className={inputClass}
+                          />
+                        </label>
+                        <label className="block text-sm font-semibold text-plum">
+                          Email address
+                          <input
+                            required
+                            type="email"
+                            placeholder="you@example.com"
+                            value={email}
+                            onChange={(item) => setEmail(item.target.value)}
+                            className={inputClass}
+                          />
+                        </label>
+                        <label className="block text-sm font-semibold text-plum">
+                          Phone number
+                          <input
+                            required
+                            type="tel"
+                            placeholder="10-digit mobile number"
+                            value={phone}
+                            onChange={(item) => setPhone(item.target.value)}
+                            className={inputClass}
+                          />
+                        </label>
+                      </div>
+                    </form>
+                  </div>
+                </div>
               ) : null}
               {step === "done" && pass ? (
-                <div className="overflow-auto">
+                <div className="overflow-y-auto py-2 sm:py-4">
                   <TicketPasses pass={pass} onBookAnother={close} />
                 </div>
               ) : null}
               {step === "done" && !pass && result ? (
-                <div className="mx-auto max-w-xl">
-                  <p className={`${lab} text-burg`}>{result.booking.bookingReference}</p>
-                  <p className="mt-2">
+                <div className="mx-auto my-auto w-full max-w-md rounded-rasa border border-line bg-tint/40 p-6 text-center">
+                  <p className={`${lab} text-xs text-burg`}>{result.booking.bookingReference}</p>
+                  <h3 className="mt-1 font-display text-xl font-semibold text-plum">
+                    {result.checkout ? "Complete payment to generate tickets" : "Generating your QR tickets…"}
+                  </h3>
+                  <p className="mt-2 text-sm font-medium text-muted">
                     {money(Number(result.booking.totalAmount))} · {result.booking.bookingStatus}
                   </p>
                   {result.checkout ? (
                     <button
                       type="button"
-                      className={`${btn} mt-4`}
+                      className={`${btn} mt-5`}
                       onClick={() =>
                         openCheckout(result, {
                           onPaid: () => loadPasses(result.booking.id, result.booking.customerEmail),
@@ -372,9 +535,36 @@ export function BookingSeatSheet({ eventId, sessionId, onClose }: Props) {
                     </button>
                   )}
                   {step === "seats" ? (
-                    <button type="button" className={`${btn} w-full min-h-11 text-sm sm:w-auto`} disabled={busy || picked.length === 0} onClick={holdAndContinue}>
-                      {busy ? "Holding…" : "Continue"}
-                    </button>
+                    onOpenCart ? (
+                      <>
+                        <button
+                          type="button"
+                          className={`${btnLine} w-full min-h-11 text-sm sm:w-auto`}
+                          disabled={busy || picked.length === 0}
+                          onClick={() => saveToCart(false)}
+                        >
+                          Add to cart
+                        </button>
+                        <button
+                          type="button"
+                          className={`${btn} w-full min-h-11 text-sm sm:w-auto`}
+                          disabled={busy || (picked.length === 0 && seatCount === 0)}
+                          onClick={() => {
+                            if (picked.length > 0) saveToCart(true);
+                            else {
+                              onClose();
+                              onOpenCart();
+                            }
+                          }}
+                        >
+                          {picked.length > 0 ? "Add & checkout" : `View cart (${seatCount})`}
+                        </button>
+                      </>
+                    ) : (
+                      <button type="button" className={`${btn} w-full min-h-11 text-sm sm:w-auto`} disabled={busy || picked.length === 0} onClick={holdAndContinue}>
+                        {busy ? "Holding…" : "Continue"}
+                      </button>
+                    )
                   ) : null}
                   {step === "details" ? (
                     <button type="submit" form="seat-sheet-details" className={`${btn} w-full min-h-11 text-sm sm:w-auto`} disabled={busy}>

@@ -38,6 +38,4 @@ export const PROGRAMME_WORKSHOP_SLUG: Record<string, string> = {
 };
 
 /** Free-entry programme items that still take registration. */
-export const PROGRAMME_REGISTRATION_SLUG: Record<string, string> = {
-  f1: "inauguration-and-dance",
-};
+export const PROGRAMME_REGISTRATION_SLUG: Record<string, string> = {};

@@ -11,7 +11,7 @@ import { BookingStepper } from "./BookingStepper";
 import { BookingEventPicker } from "./BookingEventPicker";
 import { AuditoriumSeatMap } from "./AuditoriumSeatMap";
 import { BookingCartReview } from "./BookingCartReview";
-import { formatInr, TIER_PRICE_INR, tierForAllocation } from "@/lib/rasa/booking-pricing";
+import { formatInr, seatPriceInr } from "@/lib/rasa/booking-pricing";
 import { AUDITORIUM_SEATS, parseSeatId } from "@/lib/rasa/auditorium-seats";
 
 type Step = "event" | "seats" | "cart";
@@ -86,8 +86,7 @@ export function BookingExperience() {
       const { row, col } = parseSeatId(id);
       const seat = AUDITORIUM_SEATS.find((s) => s.row === row && s.col === col);
       if (!seat) return;
-      const tier = tierForAllocation(seat.allocation);
-      if (tier) n += TIER_PRICE_INR[tier];
+      n += seatPriceInr(seat.row, seat.allocation);
     });
     return n;
   }, [draft]);

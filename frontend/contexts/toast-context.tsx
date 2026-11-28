@@ -37,7 +37,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             animate={{ opacity: 1, y: 0, x: "-50%" }}
             exit={{ opacity: 0, y: 10, x: "-50%" }}
             transition={{ duration: duration.fast, ease: easeOut }}
-            className="pointer-events-none fixed bottom-[calc(150px+env(safe-area-inset-bottom))] left-1/2 z-60 max-w-[90vw] rounded-full bg-ink px-5 py-3 text-center text-white max-md:bottom-[calc(88px+env(safe-area-inset-bottom))]"
+            className="pointer-events-none fixed bottom-6 left-1/2 z-[80] w-max max-w-[min(92vw,24rem)] rounded-xl bg-ink/95 px-4 py-2.5 text-center text-sm font-medium text-white shadow-lg backdrop-blur-xs max-md:bottom-[calc(136px+env(safe-area-inset-bottom))]"
           >
             {message}
           </motion.div>
