@@ -33,4 +33,4 @@ COPY --from=builder /app/frontend/lib/rasa/img-map.ts /app/frontend/lib/rasa/img
 
 EXPOSE 6060
 
-CMD ["sh", "-c", "npx prisma db push --skip-generate && if [ \"$RUN_SEED\" = \"true\" ]; then npx ts-node -r tsconfig-paths/register prisma/seed.ts; fi && node dist/main"]
+CMD ["sh", "-c", "npx prisma db push --skip-generate && if [ \"$RUN_SEED\" = \"true\" ]; then npx ts-node -r tsconfig-paths/register prisma/seed.ts; fi && if [ -f dist/main.js ]; then exec node dist/main.js; else exec node dist/src/main.js; fi"]
