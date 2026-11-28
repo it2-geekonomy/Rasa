@@ -189,7 +189,7 @@ export function WorkshopBookingSheet({ eventId, sessionId, unitPrice, combo, onC
           role="dialog"
           aria-modal="true"
           aria-labelledby="workshop-sheet-title"
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-3 backdrop-blur-xs sm:p-5"
+          className="fixed inset-0 z-[70] flex items-end justify-center bg-black/50 backdrop-blur-xs sm:items-center sm:p-5"
           initial={reduced ? false : "hidden"}
           animate="visible"
           exit="exit"
@@ -198,7 +198,7 @@ export function WorkshopBookingSheet({ eventId, sessionId, unitPrice, combo, onC
           onClick={close}
         >
           <motion.div
-            className="flex max-h-[92dvh] w-full max-w-xl flex-col overflow-hidden rounded-rasa border border-line bg-white shadow-2xl"
+            className="flex h-[100dvh] max-h-[100dvh] w-full flex-col overflow-hidden bg-white shadow-2xl sm:h-auto sm:max-h-[92dvh] sm:max-w-2xl sm:rounded-rasa sm:border sm:border-line"
             onClick={(event) => event.stopPropagation()}
             initial={reduced ? false : "hidden"}
             animate="visible"
@@ -209,15 +209,23 @@ export function WorkshopBookingSheet({ eventId, sessionId, unitPrice, combo, onC
             <div className="shrink-0 border-b border-line px-4 py-3 sm:px-5 sm:py-4">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 pr-2">
-                  <p className={`${lab} text-[0.75rem] text-burg`}>
-                    {dayOf(ev.d).long} · {fmtMinutes(ev.s)} to {fmtMinutes(ev.e)}
-                  </p>
-                  <h2 id="workshop-sheet-title" className="font-display text-lg leading-snug text-plum sm:text-xl">
-                    {ev.t}
-                  </h2>
-                  <p className="mt-0.5 text-sm text-muted">
-                    {ev.v} · {money(activePrice)} per person
-                  </p>
+                  {step === "done" && pass ? (
+                    <h2 id="workshop-sheet-title" className="font-display text-lg leading-snug text-plum sm:text-xl">
+                      Your ticket{pass.tickets.length === 1 ? "" : "s"}
+                    </h2>
+                  ) : (
+                    <>
+                      <p className={`${lab} text-[0.75rem] text-burg`}>
+                        {dayOf(ev.d).long} · {fmtMinutes(ev.s)} to {fmtMinutes(ev.e)}
+                      </p>
+                      <h2 id="workshop-sheet-title" className="font-display text-lg leading-snug text-plum sm:text-xl">
+                        {ev.t}
+                      </h2>
+                      <p className="mt-0.5 text-sm text-muted">
+                        {ev.v} · {money(activePrice)} per person
+                      </p>
+                    </>
+                  )}
                 </div>
                 <button
                   type="button"
@@ -231,7 +239,7 @@ export function WorkshopBookingSheet({ eventId, sessionId, unitPrice, combo, onC
               {error ? <p className="mt-2 text-sm text-burg">{error}</p> : null}
             </div>
 
-            <div className="flex-1 overflow-auto px-4 py-4 sm:px-5">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5">
               {step === "form" ? (
                 busy && !availability ? (
                   <p className="text-sm text-muted">Checking slots…</p>
