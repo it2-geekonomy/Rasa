@@ -20,6 +20,7 @@ export default () => ({
     region: process.env.R2_REGION ?? 'auto',
   },
   corsOrigin: process.env.CORS_ORIGIN ?? 'http://localhost:3000',
+  siteUrl: (process.env.PUBLIC_SITE_URL ?? 'http://localhost:3000').replace(/\/+$/, ''),
   resend: {
     apiKey: process.env.RESEND_API_KEY ?? '',
     from: process.env.RESEND_FROM_EMAIL ?? '',
