@@ -202,9 +202,12 @@ export class EventsService {
         id: true,
         title: true,
         slug: true,
+        eventType: true,
         bookingMode: true,
         shortDescription: true,
+        description: true,
         category: true,
+        bannerImage: true,
         sessions: {
           where: {
             status: { not: 'CANCELLED' },
@@ -217,7 +220,22 @@ export class EventsService {
             endAt: true,
             capacity: true,
             price: true,
-            venue: { select: { name: true } },
+            venue: { select: { id: true, name: true } },
+          },
+        },
+        artists: {
+          orderBy: { sortOrder: 'asc' },
+          select: {
+            role: true,
+            artist: {
+              select: {
+                id: true,
+                slug: true,
+                name: true,
+                designation: true,
+                profileImage: true,
+              },
+            },
           },
         },
       },

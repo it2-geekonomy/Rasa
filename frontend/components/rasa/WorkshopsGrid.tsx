@@ -7,45 +7,158 @@ import { DAYS, EV, dayOf, ARTISTS } from "@/lib/rasa/catalog";
 import { fmtMinutes } from "@/lib/rasa/time";
 import { card, gridAnimItem, lnk } from "@/lib/rasa/ui";
 import { duration, easeOut } from "@/lib/rasa/motion";
-import { RasaImage } from "./RasaImage";
-import { usePlan } from "@/contexts/plan-context";
 import { ScrollStagger } from "@/components/rasa/motion/ScrollStagger";
 import { publicApi } from "@/lib/public-api";
 import { PROGRAMME_WORKSHOP_SLUG } from "@/lib/rasa/booking-events";
+import { parseBannerImages } from "@/lib/rasa/banner-images";
+import { formatInr } from "@/lib/rasa/booking-pricing";
+import type { DayId } from "@/lib/rasa/types";
 import { WorkshopBookingSheet } from "@/components/rasa/booking/WorkshopBookingSheet";
 
 type PosterPreview = {
-  img: string;
+  src: string;
   alt: string;
   title: string;
 };
 
-type LiveWorkshop = {
-  sessionId: string;
-  price: number;
+type PublishedWorkshopRow = {
+  id: string;
+  title: string;
+  slug: string;
+  bookingMode: string;
+  shortDescription: string | null;
+  description: string | null;
+  bannerImage: string | null;
+  sessions: Array<{
+    id: string;
+    startAt: string;
+    endAt: string | null;
+    capacity: number | null;
+    price: string | number;
+    venue: { name: string };
+  }>;
+  artists: Array<{
+    artist: { slug: string; name: string };
+  }>;
 };
+
+type WorkshopCardItem = {
+  id: string;
+  slug: string;
+  sessionId: string;
+  day: DayId;
+  startMinutes: number;
+  endMinutes: number;
+  title: string;
+  subtitle: string;
+  venue: string;
+  description: string;
+  price: number;
+  priceLabel: string;
+  capacityLabel: string | null;
+  posterUrl: string | null;
+  artists: Array<{ slug: string; name: string }>;
+};
+
+const SLUG_TO_WORKSHOP_ID: Record<string, string> = Object.fromEntries(
+  Object.entries(PROGRAMME_WORKSHOP_SLUG).map(([id, slug]) => [slug, id]),
+);
+
+function istDayAndMinutes(iso: string): { day: DayId; minutes: number } {
+  const ist = new Date(Date.parse(iso) + 330 * 60 * 1000);
+  const dateStr = ist.toISOString().slice(0, 10);
+  const minutes = ist.getUTCHours() * 60 + ist.getUTCMinutes();
+  const day: DayId = dateStr === "2027-01-08" ? "fri" : dateStr === "2027-01-09" ? "sat" : "sun";
+  return { day, minutes };
+}
 
 export function WorkshopsGrid() {
   const [wsday, setWsday] = useState("all");
   const [preview, setPreview] = useState<PosterPreview | null>(null);
-  const [liveBySlug, setLiveBySlug] = useState<Map<string, LiveWorkshop>>(new Map());
-  const [bookingEventId, setBookingEventId] = useState<string | null>(null);
+  const [workshops, setWorkshops] = useState<WorkshopCardItem[]>([]);
+  const [comboSession, setComboSession] = useState<{ sessionId: string; price: number } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [bookingItem, setBookingItem] = useState<WorkshopCardItem | null>(null);
   const reduced = useReducedMotion();
-  const { plan, togglePlan } = usePlan();
 
   useEffect(() => {
     let cancel = false;
-    publicApi<Array<{ slug: string; sessions: Array<{ id: string; price: string | number }> }>>("/events/published")
+    publicApi<PublishedWorkshopRow[]>("/events/published")
       .then((rows) => {
         if (cancel) return;
-        const next = new Map<string, LiveWorkshop>();
+        const items: WorkshopCardItem[] = [];
+        let combo: { sessionId: string; price: number } | null = null;
+
         for (const row of rows) {
+          if (row.bookingMode !== "CAPACITY_BASED") continue;
           const session = row.sessions[0];
-          if (session) next.set(row.slug, { sessionId: session.id, price: Number(session.price) });
+          if (!session) continue;
+
+          if (row.slug === "salsa-jive-combo") {
+            combo = { sessionId: session.id, price: Number(session.price) };
+            continue;
+          }
+
+          const catalogId = SLUG_TO_WORKSHOP_ID[row.slug];
+          const staticMatch = catalogId ? EV.find((e) => e.id === catalogId) : undefined;
+          const start = istDayAndMinutes(session.startAt);
+          const end = session.endAt ? istDayAndMinutes(session.endAt).minutes : start.minutes + 60;
+          const price = Number(session.price ?? 0);
+          const banners = parseBannerImages(row.bannerImage);
+
+          const priceLabel =
+            staticMatch?.price ??
+            (price > 0 ? `${formatInr(price)} per person` : "Free");
+
+          const capacityLabel =
+            session.capacity != null
+              ? `Limited to ${session.capacity} participants`
+              : staticMatch?.seats ?? null;
+
+          const artists =
+            row.artists.length > 0
+              ? row.artists.map((a) => ({ slug: a.artist.slug, name: a.artist.name }))
+              : (staticMatch?.a ?? [])
+                  .map((id) => ARTISTS.find((a) => a.id === id))
+                  .filter((a): a is NonNullable<typeof a> => Boolean(a))
+                  .map((a) => ({ slug: a.id, name: a.n }));
+
+          items.push({
+            id: catalogId ?? row.slug,
+            slug: row.slug,
+            sessionId: session.id,
+            day: start.day,
+            startMinutes: start.minutes,
+            endMinutes: end,
+            title: row.title,
+            subtitle: staticMatch?.w ?? row.shortDescription ?? "",
+            venue: session.venue?.name ?? staticMatch?.v ?? "",
+            description:
+              row.description ?? (staticMatch?.x ? staticMatch.x.replace(/<[^>]+>/g, "") : ""),
+            price,
+            priceLabel,
+            capacityLabel,
+            posterUrl: banners[0] ?? null,
+            artists,
+          });
         }
-        setLiveBySlug(next);
+
+        items.sort((a, b) => {
+          const dayOrder = { fri: 0, sat: 1, sun: 2 };
+          return (
+            dayOrder[a.day] - dayOrder[b.day] ||
+            a.startMinutes - b.startMinutes ||
+            a.title.localeCompare(b.title)
+          );
+        });
+
+        setComboSession(combo);
+        setWorkshops(items);
       })
-      .catch(() => null);
+      .catch(() => null)
+      .finally(() => {
+        if (!cancel) setLoading(false);
+      });
     return () => {
       cancel = true;
     };
@@ -59,10 +172,13 @@ export function WorkshopsGrid() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [preview]);
-  const list = EV.filter((e) => e.ws && (wsday === "all" || e.d === wsday));
+
+  const list = workshops.filter((e) => wsday === "all" || e.day === wsday);
   const dayOpts: [string, string][] = [
     ["all", "All days"],
-    ...DAYS.filter((d) => EV.some((e) => e.ws && e.d === d.id)).map((d) => [d.id, d.long] as [string, string]),
+    ...DAYS.filter((d) => workshops.some((e) => e.day === d.id)).map(
+      (d) => [d.id, d.long] as [string, string],
+    ),
   ];
 
   return (
@@ -84,82 +200,80 @@ export function WorkshopsGrid() {
           </button>
         ))}
       </div>
-      <ScrollStagger className="grid grid-cols-3 items-stretch gap-[18px] max-md:grid-cols-1">
-        {list.map((e) => {
-          const on = plan.includes(e.id);
-          return (
+      {loading && workshops.length === 0 ? (
+        <p className="text-sm text-muted">Loading workshops…</p>
+      ) : (
+        <ScrollStagger className="grid grid-cols-3 items-stretch gap-[18px] max-md:grid-cols-1">
+          {list.map((e) => (
             <div key={e.id} data-scroll-item className={gridAnimItem}>
-            <div className={`${card} flex h-full min-h-0 flex-col gap-1.5`}>
-              {e.pic ? (
-                <button
-                  type="button"
-                  onClick={() => setPreview({ img: e.pic!, alt: e.palt || e.t, title: e.t })}
-                  className="group block w-full cursor-zoom-in overflow-hidden rounded-rasa p-0 text-left"
-                  aria-label={`View full poster for ${e.t}`}
-                >
-                  <RasaImage
-                    img={e.pic}
-                    alt={e.palt || e.t}
-                    className="h-auto aspect-[16/9]! transition-transform duration-300 group-hover:scale-[1.02]"
-                    style={{ aspectRatio: "16 / 9", objectPosition: e.pp || "50% 40%" }}
-                    width={800}
-                    height={450}
-                  />
-                </button>
-              ) : null}
-              <div className="font-lab text-sm font-semibold uppercase tracking-wider text-burg">
-                {dayOf(e.d).short} {dayOf(e.d).num}, {fmtMinutes(e.s)} to {fmtMinutes(e.e)}
-              </div>
-              <h3 className="font-display text-xl font-semibold text-plum">{e.t}</h3>
-              {e.w ? <p className="text-muted">{e.w}</p> : null}
-              <p className="text-muted">{e.v}</p>
-              {e.x ? <p className="text-[0.95rem] text-muted">{e.x.replace(/<[^>]+>/g, "")}</p> : null}
-              <div className="font-display text-[1.4rem] font-bold text-burg">{e.price || "Price to come"}</div>
-              {!e.price ? <p className="text-[0.9rem] text-muted">Each workshop is priced separately.</p> : null}
-              {e.seats ? <p className="text-[0.9rem] text-muted">{e.seats}</p> : null}
-              {e.a?.length ? (
-                <p className="mt-1">
-                  {e.a.map((id) => {
-                    const a = ARTISTS.find((x) => x.id === id);
-                    return a ? (
-                      <Link key={id} href={`/artists/${id}`} className={lnk}>
-                        About {a.n}
+              <div className={`${card} flex h-full min-h-0 flex-col gap-1.5`}>
+                {e.posterUrl ? (
+                  <button
+                    type="button"
+                    onClick={() => setPreview({ src: e.posterUrl!, alt: e.title, title: e.title })}
+                    className="group block w-full cursor-zoom-in overflow-hidden rounded-rasa p-0 text-left"
+                    aria-label={`View full poster for ${e.title}`}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={e.posterUrl}
+                      alt={e.title}
+                      className="aspect-[16/9] h-auto w-full object-cover object-[50%_40%] transition-transform duration-300 group-hover:scale-[1.02]"
+                      loading="lazy"
+                    />
+                  </button>
+                ) : null}
+                <div className="font-lab text-sm font-semibold uppercase tracking-wider text-burg">
+                  {dayOf(e.day).short} {dayOf(e.day).num}, {fmtMinutes(e.startMinutes)} to{" "}
+                  {fmtMinutes(e.endMinutes)}
+                </div>
+                <h3 className="font-display text-xl font-semibold text-plum">{e.title}</h3>
+                {e.subtitle ? <p className="text-muted">{e.subtitle}</p> : null}
+                <p className="text-muted">{e.venue}</p>
+                {e.description ? (
+                  <p className="text-[0.95rem] text-muted">{e.description}</p>
+                ) : null}
+                <div className="font-display text-[1.4rem] font-bold text-burg">
+                  {e.priceLabel}
+                </div>
+                {e.capacityLabel ? (
+                  <p className="text-[0.9rem] text-muted">{e.capacityLabel}</p>
+                ) : null}
+                {e.artists.length ? (
+                  <p className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
+                    {e.artists.map((a) => (
+                      <Link key={a.slug} href={`/artists/${a.slug}`} className={lnk}>
+                        About {a.name}
                       </Link>
-                    ) : null;
-                  })}
-                </p>
-              ) : null}
-              <div className="mt-auto flex flex-wrap gap-2 pt-2">
-                {(() => {
-                  const slug = PROGRAMME_WORKSHOP_SLUG[e.id];
-                  const live = slug ? liveBySlug.get(slug) : undefined;
-                  if (!live || live.price <= 0) return null;
-                  return (
+                    ))}
+                  </p>
+                ) : null}
+                <div className="mt-auto flex flex-wrap gap-2 pt-2">
+                  {e.price > 0 ? (
                     <button
                       type="button"
                       className="min-h-11 rounded-full border-2 border-burg bg-burg px-4 py-2 font-bold text-white"
-                      onClick={() => setBookingEventId(e.id)}
+                      onClick={() => setBookingItem(e)}
                     >
                       Book workshop
                     </button>
-                  );
-                })()}
-                <Link
-                  href={`/events/${e.d}?focus=${e.id}`}
-                  className="inline-flex min-h-11 items-center rounded-full border-2 border-plum bg-white px-4 py-2 font-bold text-plum no-underline"
-                >
-                  See in programme
-                </Link>
+                  ) : null}
+                  <Link
+                    href={`/events/${e.day}?focus=${e.id}`}
+                    className="inline-flex min-h-11 items-center rounded-full border-2 border-plum bg-white px-4 py-2 font-bold text-plum no-underline"
+                  >
+                    See in programme
+                  </Link>
+                </div>
               </div>
             </div>
-            </div>
-          );
-        })}
-      </ScrollStagger>
+          ))}
+        </ScrollStagger>
+      )}
       <AnimatePresence>
         {preview ? (
           <motion.div
-            key={preview.img}
+            key={preview.src}
             role="dialog"
             aria-modal="true"
             aria-label={preview.title}
@@ -186,32 +300,34 @@ export function WorkshopsGrid() {
               >
                 ✕ Close
               </button>
-              <RasaImage
-                img={preview.img}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={preview.src}
                 alt={preview.alt}
-                className="max-h-[82dvh]! w-auto! max-w-[92vw]! rounded-rasa bg-transparent! object-contain! shadow-2xl"
-                width={1600}
-                height={1200}
+                className="max-h-[82dvh] w-auto max-w-[92vw] rounded-rasa object-contain shadow-2xl"
               />
-              <p className="text-center font-display text-base font-semibold text-white">{preview.title}</p>
+              <p className="text-center font-display text-base font-semibold text-white">
+                {preview.title}
+              </p>
             </motion.div>
           </motion.div>
         ) : null}
       </AnimatePresence>
       <WorkshopBookingSheet
-        eventId={bookingEventId}
-        sessionId={bookingEventId ? liveBySlug.get(PROGRAMME_WORKSHOP_SLUG[bookingEventId])?.sessionId ?? null : null}
-        unitPrice={bookingEventId ? liveBySlug.get(PROGRAMME_WORKSHOP_SLUG[bookingEventId])?.price ?? 0 : 0}
+        eventId={bookingItem?.id ?? null}
+        sessionId={bookingItem?.sessionId ?? null}
+        unitPrice={bookingItem?.price ?? 0}
         combo={
-          (bookingEventId === "s1" || bookingEventId === "s1b") && liveBySlug.get("salsa-jive-combo")
+          (bookingItem?.slug === "salsa-workshop" || bookingItem?.slug === "jive-workshop") &&
+          comboSession
             ? {
-                sessionId: liveBySlug.get("salsa-jive-combo")!.sessionId,
-                price: liveBySlug.get("salsa-jive-combo")!.price,
+                sessionId: comboSession.sessionId,
+                price: comboSession.price,
                 label: "Salsa & Jive together (2 hours)",
               }
             : null
         }
-        onClose={() => setBookingEventId(null)}
+        onClose={() => setBookingItem(null)}
       />
     </>
   );
