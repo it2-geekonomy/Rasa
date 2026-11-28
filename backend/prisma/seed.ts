@@ -681,6 +681,21 @@ const WORKSHOPS: Array<{
     artistSlugs: [],
   },
   {
+    slug: 'organic-food-breakfast',
+    title: 'Organic Food Breakfast',
+    sessionName: 'Sunday morning',
+    venue: 'Amphitheatre',
+    startAt: '2027-01-10T04:00:00.000Z',
+    endAt: '2027-01-10T06:00:00.000Z',
+    price: 0,
+    slots: null,
+    eventType: 'EXHIBITION',
+    category: 'Art and food',
+    shortDescription: 'Arogya (HCG). Sunday 10 January, 9:30 AM to 11:30 AM, Amphitheatre.',
+    description: 'An organic food breakfast by Arogya, HCG. Price to be announced.',
+    artistSlugs: [],
+  },
+  {
     slug: 'kolu-kalaripayattu',
     title: 'Kolu: Kalaripayattu and Animal Poses',
     sessionName: 'Saturday 10:00 AM',
@@ -962,6 +977,43 @@ async function seedWorkshops(
   }
 }
 
+const DEFAULT_EVENT_BANNERS: Record<string, string> = {
+  // Auditorium shows
+  'three-forces-agam-band': '/images/poster-fri1.jpg',
+  'kathak-and-bharatanatyam': '/images/lab-pink.jpg',
+  'dance-alchemy-and-nimishambha': '/images/lourd-smile.jpg',
+  'fusion-express': '/images/poster-fusion.jpg',
+  'warriors-path-and-mahabharata': '/images/atha-4.jpg',
+  // Workshops (exact posters from events.json)
+  'kolu-kalaripayattu': '/images/Kalaripayatu-01.jpg',
+  'salsa-workshop': '/images/Salsa-01.jpg',
+  'jive-workshop': '/images/Jive-01.jpg',
+  'salsa-jive-combo': '/images/Salsa-01.jpg',
+  'sound-healing-session-1': '/images/Sound Healing-01.jpg',
+  'sound-healing-session-2': '/images/Sound Healing-01.jpg',
+  'art-of-drumming': '/images/Art of Drumming-01.jpg',
+  'yoga-raaga': '/images/Yoga Raaga-01.jpg',
+  'meipadam-workshop': '/images/Meipadam-02-01.jpg',
+  'bharatanatyam-dikshitar-kriti': '/images/Bharatanatyam-01.jpg',
+  'carving-rhythm-linocut': '/images/Linocut_-03.jpg',
+  'fusion-culinary-exploration': '/images/Fusion Culinary.jpg',
+  // Open-for-all events with linked artists
+  'tandav-art-show': '/images/bhagya-ws.jpg',
+  'nritya-naada': '/images/sumanth-us.jpg',
+};
+
+async function seedEventBanners() {
+  let updated = 0;
+  for (const [slug, bannerImage] of Object.entries(DEFAULT_EVENT_BANNERS)) {
+    const res = await prisma.event.updateMany({
+      where: { slug, bannerImage: null },
+      data: { bannerImage },
+    });
+    updated += res.count;
+  }
+  console.log(`Event banners backfilled (only where empty): ${updated}`);
+}
+
 async function main() {
   const adminId = await seedAdmin();
   const venues = await seedVenues();
@@ -978,6 +1030,7 @@ async function main() {
   const artistsBySlug = await seedArtists();
   await seedAuditoriumShows(auditoriumId, adminId, artistsBySlug);
   await seedWorkshops(venues, adminId, artistsBySlug);
+  await seedEventBanners();
 }
 
 main()

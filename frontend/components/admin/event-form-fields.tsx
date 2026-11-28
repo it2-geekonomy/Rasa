@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArtistPicker } from "./artist-picker";
 import { ImageUploadField } from "./image-upload";
+import { parseBannerImages, serializeBannerImages } from "@/lib/rasa/banner-images";
 import { fieldClass, labelClass, primaryButtonClass, quietButtonClass } from "./ui";
 
 export const EVENT_CATEGORIES = ["Performance", "Workshop", "Wellness", "Art", "Food"] as const;
@@ -121,11 +122,51 @@ export function EventFormFields({
         />
         Featured event
       </label>
-      <div className="md:col-span-2">
+      <div className="grid gap-3 md:col-span-2">
+        {parseBannerImages(form.bannerImage).length > 0 ? (
+          <div className="grid gap-2">
+            <p className="text-sm font-medium text-plum">
+              Banner images ({parseBannerImages(form.bannerImage).length})
+            </p>
+            <div className="flex flex-wrap gap-3">
+              {parseBannerImages(form.bannerImage).map((url, idx) => (
+                <div
+                  key={`${url}-${idx}`}
+                  className="relative overflow-hidden rounded-rasa border border-line bg-tint"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={url}
+                    alt={`Banner ${idx + 1}`}
+                    className="h-24 w-36 object-cover"
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-1 top-1 rounded-full bg-ink/80 px-2 py-0.5 text-xs font-medium text-white hover:bg-burg"
+                    onClick={() => {
+                      const next = parseBannerImages(form.bannerImage).filter((_, i) => i !== idx);
+                      setForm((prev) => ({ ...prev, bannerImage: serializeBannerImages(next) }));
+                    }}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
         <ImageUploadField
-          label="Banner image"
-          value={form.bannerImage}
-          onChange={(bannerImage) => setForm((prev) => ({ ...prev, bannerImage }))}
+          label={
+            parseBannerImages(form.bannerImage).length > 0
+              ? "Add another banner image"
+              : "Banner image"
+          }
+          value=""
+          onChange={(url) => {
+            if (!url.trim()) return;
+            const next = [...parseBannerImages(form.bannerImage), url.trim()];
+            setForm((prev) => ({ ...prev, bannerImage: serializeBannerImages(next) }));
+          }}
           token={token}
           folder="events"
         />

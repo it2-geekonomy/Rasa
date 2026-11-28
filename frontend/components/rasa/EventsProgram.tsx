@@ -8,7 +8,7 @@ import {
   PROGRAMME_TICKET_SLUG,
   PROGRAMME_WORKSHOP_SLUG,
 } from "@/lib/rasa/booking-events";
-import type { DayId } from "@/lib/rasa/types";
+import type { DayId, FestivalEvent } from "@/lib/rasa/types";
 import { wrapTight } from "@/lib/rasa/ui";
 import { publicApi } from "@/lib/public-api";
 import { PageHero } from "./PageHero";
@@ -22,6 +22,124 @@ import { formatInr } from "@/lib/rasa/booking-pricing";
 import { usePlan } from "@/contexts/plan-context";
 import { PageBody } from "@/components/rasa/motion/PageBody";
 
+type PublishedEventRow = {
+  id: string;
+  title: string;
+  slug: string;
+  eventType: string;
+  bookingMode: "SEAT_BASED" | "CAPACITY_BASED" | "FREE_ENTRY";
+  shortDescription: string | null;
+  description: string | null;
+  category: string | null;
+  bannerImage: string | null;
+  sessions: Array<{
+    id: string;
+    sessionName: string | null;
+    startAt: string;
+    endAt: string | null;
+    capacity: number | null;
+    price: string | number;
+    venue: { id: string; name: string };
+  }>;
+  artists: Array<{
+    role: string | null;
+    artist: {
+      id: string;
+      slug: string;
+      name: string;
+      designation: string | null;
+      profileImage: string | null;
+    };
+  }>;
+};
+
+type LiveProgrammeItem = {
+  event: FestivalEvent;
+  slug: string;
+  sessionId: string;
+  bookingMode: "SEAT_BASED" | "CAPACITY_BASED" | "FREE_ENTRY";
+  price: number;
+  bannerImage: string | null;
+};
+
+const SLUG_TO_CATALOG_ID: Record<string, string> = {
+  "inauguration-and-dance": "f1",
+  "organic-food-breakfast": "u2",
+  ...Object.fromEntries([
+    ...Object.entries(PROGRAMME_TICKET_SLUG).map(([id, slug]) => [slug, id]),
+    ...Object.entries(PROGRAMME_WORKSHOP_SLUG).map(([id, slug]) => [slug, id]),
+    ...Object.entries(PROGRAMME_REGISTRATION_SLUG).map(([id, slug]) => [slug, id]),
+  ]),
+};
+
+function istDayAndMinutes(iso: string): { day: DayId; minutes: number } {
+  // Convert UTC ISO timestamp to IST (UTC+5:30)
+  const ist = new Date(Date.parse(iso) + 330 * 60 * 1000);
+  const dateStr = ist.toISOString().slice(0, 10);
+  const minutes = ist.getUTCHours() * 60 + ist.getUTCMinutes();
+  const day: DayId = dateStr === "2027-01-08" ? "fri" : dateStr === "2027-01-09" ? "sat" : "sun";
+  return { day, minutes };
+}
+
+function mapEventType(eventType: string): FestivalEvent["ty"] {
+  if (eventType === "WORKSHOP") return "work";
+  if (eventType === "WELLNESS") return "well";
+  if (eventType === "EXHIBITION") return "art";
+  return "perf";
+}
+
+function toLiveProgrammeItems(rows: PublishedEventRow[]): LiveProgrammeItem[] {
+  const items: LiveProgrammeItem[] = [];
+  for (const row of rows) {
+    // Combo helper SKU is selectable inside Salsa & Jive booking sheet
+    if (row.slug === "salsa-jive-combo") continue;
+    const session = row.sessions[0];
+    if (!session) continue;
+
+    const catalogId = SLUG_TO_CATALOG_ID[row.slug];
+    const staticMatch = catalogId ? EV.find((e) => e.id === catalogId) : undefined;
+    const start = istDayAndMinutes(session.startAt);
+    const end = session.endAt
+      ? istDayAndMinutes(session.endAt).minutes
+      : start.minutes + 60;
+
+    const event: FestivalEvent = {
+      id: catalogId ?? row.slug,
+      d: start.day,
+      s: start.minutes,
+      e: end,
+      tl: staticMatch?.tl,
+      ts: staticMatch?.ts,
+      t: row.title,
+      w: row.shortDescription ?? staticMatch?.w ?? "",
+      v: session.venue?.name ?? staticMatch?.v ?? "",
+      ty: mapEventType(row.eventType),
+      ws: row.eventType === "WORKSHOP" || staticMatch?.ws,
+      a:
+        row.artists.length > 0
+          ? row.artists.map((a) => a.artist.slug)
+          : staticMatch?.a,
+      x: row.description
+        ? `<p>${row.description.replace(/\n+/g, "</p><p>")}</p>`
+        : staticMatch?.x,
+      pair: staticMatch?.pair,
+      img: staticMatch?.img,
+      imgalt: staticMatch?.imgalt,
+    };
+
+    items.push({
+      event,
+      slug: row.slug,
+      sessionId: session.id,
+      bookingMode: row.bookingMode,
+      price: Number(session.price ?? 0),
+      bannerImage: row.bannerImage,
+    });
+  }
+  items.sort((a, b) => a.event.s - b.event.s || a.event.t.localeCompare(b.event.t));
+  return items;
+}
+
 type Props = { day: DayId; focusId?: string };
 
 export function EventsProgram({ day: initialDay, focusId }: Props) {
@@ -29,6 +147,7 @@ export function EventsProgram({ day: initialDay, focusId }: Props) {
   const [type, setType] = useState("all");
   const planAsideRef = useRef<HTMLElement>(null);
   const router = useRouter();
+  const [liveItems, setLiveItems] = useState<LiveProgrammeItem[] | null>(null);
   const [sessionsBySlug, setSessionsBySlug] = useState<Map<string, { id: string; price: number }>>(new Map());
   const [ticketEventId, setTicketEventId] = useState<string | null>(null);
   const [workshopEventId, setWorkshopEventId] = useState<string | null>(null);
@@ -41,7 +160,7 @@ export function EventsProgram({ day: initialDay, focusId }: Props) {
 
   useEffect(() => {
     let cancel = false;
-    publicApi<Array<{ slug: string; sessions: Array<{ id: string; price: string | number }> }>>("/events/published")
+    publicApi<PublishedEventRow[]>("/events/published")
       .then((rows) => {
         if (cancel) return;
         const next = new Map<string, { id: string; price: number }>();
@@ -50,6 +169,7 @@ export function EventsProgram({ day: initialDay, focusId }: Props) {
           if (session) next.set(row.slug, { id: session.id, price: Number(session.price) });
         }
         setSessionsBySlug(next);
+        setLiveItems(toLiveProgrammeItems(rows));
       })
       .catch(() => null);
     return () => {
@@ -72,7 +192,9 @@ export function EventsProgram({ day: initialDay, focusId }: Props) {
   }, [mobilePlanOpen]);
 
   const d = dayOf(day as DayId);
-  let list = EV.filter(
+  const sourceEvents = liveItems ? liveItems.map((item) => item.event) : EV;
+  const liveByEventId = new Map(liveItems?.map((item) => [item.event.id, item]) ?? []);
+  const list = sourceEvents.filter(
     (e) =>
       e.d === day &&
       (type === "all" ||
@@ -80,6 +202,16 @@ export function EventsProgram({ day: initialDay, focusId }: Props) {
         (e.ty === "brk" && type === "perf") ||
         (e.id === "u3" && type === "perf")),
   );
+
+  const selectedTicketSessionId = ticketEventId
+    ? liveByEventId.get(ticketEventId)?.sessionId ?? sessionIdFor(ticketEventId, sessionsBySlug) ?? null
+    : null;
+  const selectedWorkshopLive = workshopEventId ? liveByEventId.get(workshopEventId) : undefined;
+  const selectedWorkshopSession = workshopEventId
+    ? selectedWorkshopLive
+      ? { id: selectedWorkshopLive.sessionId, price: selectedWorkshopLive.price }
+      : workshopSessionFor(workshopEventId, sessionsBySlug)
+    : undefined;
 
   return (
     <>
@@ -141,20 +273,31 @@ export function EventsProgram({ day: initialDay, focusId }: Props) {
               <b>{d.long}.</b> {d.info}
             </p>
             {list.length ? (
-              list.map((e) => (
-                <EventCard
-                  key={e.id}
-                  event={e}
-                  defaultOpen={focusId === e.id}
-                  onPickTickets={
-                    sessionIdFor(e.id, sessionsBySlug)
+              list.map((e) => {
+                const live = liveByEventId.get(e.id);
+                const noBookingRequired =
+                  e.id === "f1" || live?.slug === "inauguration-and-dance";
+                const onPickTickets = noBookingRequired
+                  ? undefined
+                  : live
+                    ? live.bookingMode === "SEAT_BASED"
+                      ? () => setTicketEventId(e.id)
+                      : () => setWorkshopEventId(e.id)
+                    : sessionIdFor(e.id, sessionsBySlug)
                       ? () => setTicketEventId(e.id)
                       : workshopSessionFor(e.id, sessionsBySlug)
                         ? () => setWorkshopEventId(e.id)
-                        : undefined
-                  }
-                />
-              ))
+                        : undefined;
+                return (
+                  <EventCard
+                    key={e.id}
+                    event={e}
+                    bannerImage={live?.bannerImage ?? null}
+                    defaultOpen={focusId === e.id}
+                    onPickTickets={onPickTickets}
+                  />
+                );
+              })
             ) : (
               <p className="text-[0.9rem] text-muted">
                 Nothing in this filter on {d.long}. Try another filter.
@@ -172,7 +315,7 @@ export function EventsProgram({ day: initialDay, focusId }: Props) {
       </PageBody>
       <BookingSeatSheet
         eventId={ticketEventId}
-        sessionId={ticketEventId ? sessionIdFor(ticketEventId, sessionsBySlug) ?? null : null}
+        sessionId={selectedTicketSessionId}
         onClose={() => setTicketEventId(null)}
         onOpenCart={() => setCartOpen(true)}
       />
@@ -204,8 +347,8 @@ export function EventsProgram({ day: initialDay, focusId }: Props) {
       ) : null}
       <WorkshopBookingSheet
         eventId={workshopEventId}
-        sessionId={workshopEventId ? workshopSessionFor(workshopEventId, sessionsBySlug)?.id ?? null : null}
-        unitPrice={workshopEventId ? workshopSessionFor(workshopEventId, sessionsBySlug)?.price ?? 0 : 0}
+        sessionId={selectedWorkshopSession?.id ?? null}
+        unitPrice={selectedWorkshopSession?.price ?? 0}
         combo={
           (workshopEventId === "s1" || workshopEventId === "s1b") && sessionsBySlug.get("salsa-jive-combo")
             ? {

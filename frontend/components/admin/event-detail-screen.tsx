@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { api, inr, when } from "@/lib/admin/api";
 import { useAdmin } from "./admin-gate";
+import { parseBannerImages } from "@/lib/rasa/banner-images";
 import {
   BackIcon,
   EyeIcon,
@@ -131,10 +132,18 @@ export function EventDetailScreen({ eventId }: { eventId: string }) {
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]">
         <Panel title="About this event">
-          {event.bannerImage ? (
-            <div className="mb-4 overflow-hidden rounded-rasa border border-line bg-tint">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={event.bannerImage} alt={event.title} className="max-h-64 w-full object-cover" />
+          {parseBannerImages(event.bannerImage).length > 0 ? (
+            <div className="mb-4 grid gap-3 sm:grid-cols-2">
+              {parseBannerImages(event.bannerImage).map((url, idx) => (
+                <div key={`${url}-${idx}`} className="overflow-hidden rounded-rasa border border-line bg-tint">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={url}
+                    alt={`${event.title}${idx > 0 ? ` (${idx + 1})` : ""}`}
+                    className="max-h-64 w-full object-cover"
+                  />
+                </div>
+              ))}
             </div>
           ) : null}
           {event.shortDescription || event.description ? (
