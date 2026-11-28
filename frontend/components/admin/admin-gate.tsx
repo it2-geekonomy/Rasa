@@ -39,6 +39,7 @@ const LINKS = [
   { href: "/admin/venues", label: "Venues", icon: PinIcon },
   { href: "/admin/bookings", label: "Bookings", icon: BookIcon },
   { href: "/admin/workshop-bookings", label: "Workshop bookings", icon: BookIcon },
+  { href: "/admin/open-registrations", label: "Open registrations", icon: BookIcon },
   { href: "/admin/checkin", label: "Check-in", icon: ScanIcon },
 ] as const;
 

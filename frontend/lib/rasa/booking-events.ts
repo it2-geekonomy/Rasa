@@ -38,4 +38,12 @@ export const PROGRAMME_WORKSHOP_SLUG: Record<string, string> = {
 };
 
 /** Free-entry programme items that still take registration. */
-export const PROGRAMME_REGISTRATION_SLUG: Record<string, string> = {};
+export const PROGRAMME_REGISTRATION_SLUG: Record<string, string> = {
+  f1: "inauguration-and-dance",
+  f4: "tandav-art-show",
+  s13: "swasti-gallery-art-exhibition",
+  u3: "talk-active-health-longevity",
+  u8: "interactive-discussion-mahabharata",
+  u9: "nritya-naada",
+  u12: "meet-the-rasa-artists",
+};

@@ -23,6 +23,7 @@ export function ArtistsScreen() {
   const [rows, setRows] = useState<ArtistRow[]>([]);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [activeFilter, setActiveFilter] = useState("");
   const [meta, setMeta] = useState<PageMeta | null>(null);
   const [error, setError] = useState("");
 
@@ -33,6 +34,7 @@ export function ArtistsScreen() {
       page: String(page),
     });
     if (search.trim()) query.set("search", search.trim());
+    if (activeFilter) query.set("isActive", activeFilter);
     const load = () => {
       api<{ data: ArtistRow[]; meta: PageMeta }>(`/artists?${query}`, { token })
         .then((result) => {
@@ -56,7 +58,7 @@ export function ArtistsScreen() {
       cancel = true;
       window.clearTimeout(handle);
     };
-  }, [token, page, search]);
+  }, [token, page, search, activeFilter]);
 
   const totalPages = Math.max(meta?.totalPages ?? 1, 1);
 
@@ -69,7 +71,7 @@ export function ArtistsScreen() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <input
-            className={`${fieldClass} max-w-xs`}
+            className={`${fieldClass} !w-full sm:!w-56 shrink-0`}
             value={search}
             onChange={(event) => {
               setSearch(event.target.value);
@@ -77,6 +79,19 @@ export function ArtistsScreen() {
             }}
             placeholder="Search name or role…"
           />
+          <select
+            className={`${fieldClass} !w-auto shrink-0`}
+            value={activeFilter}
+            onChange={(event) => {
+              setActiveFilter(event.target.value);
+              setPage(1);
+            }}
+            aria-label="Filter by status"
+          >
+            <option value="">All statuses</option>
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
           <Link href="/admin/artists/new" className={`${primaryButtonClass} shrink-0 no-underline`}>
             Create artist
           </Link>

@@ -201,10 +201,16 @@ export function BookingSeatSheet({ eventId, sessionId, onClose, onOpenCart }: Pr
           body: { eventSeatIds: mapped.map((s) => s.eventSeatId) },
         },
       );
-      setSessionSeats(ev.id, sessionId, mapped, {
-        holdToken: hold.holdToken,
-        expiresAt: hold.expiresAt,
-      });
+      setSessionSeats(
+        ev.id,
+        sessionId,
+        mapped,
+        {
+          holdToken: hold.holdToken,
+          expiresAt: hold.expiresAt,
+        },
+        false,
+      );
       toast(`Reserved ${mapped.length} seat${mapped.length === 1 ? "" : "s"} in cart`);
       onClose();
       if (andCheckout) onOpenCart?.();
@@ -214,6 +220,26 @@ export function BookingSeatSheet({ eventId, sessionId, onClose, onOpenCart }: Pr
           ? caught.message
           : "One or more seats were just taken. Please pick different seats.",
       );
+      // Refresh live seat availability so held/taken seats update immediately
+      publicApi<Availability>(`/sessions/${sessionId}/availability`)
+        .then((layout) => {
+          const map = new Map<string, SeatOffer>();
+          for (const section of layout.sections ?? []) {
+            for (const seat of section.seats) {
+              const key = `${seat.rowLabel}-${seat.seatNumber}`;
+              map.set(key, {
+                eventSeatId: seat.eventSeatId,
+                bookable: seat.bookable,
+                status: seat.status,
+                seatType: seat.seatType,
+                price: Number(seat.price),
+                label: seat.seatLabel,
+              });
+            }
+          }
+          setSeats(map);
+        })
+        .catch(() => null);
     } finally {
       setBusy(false);
     }
@@ -233,6 +259,10 @@ export function BookingSeatSheet({ eventId, sessionId, onClose, onOpenCart }: Pr
     setBusy(true);
     setError(null);
     try {
+      const existing = ev ? lineForEvent(ev.id) : undefined;
+      if (existing?.holdToken && existing.sessionId) {
+        await release(existing.holdToken, existing.sessionId);
+      }
       const hold = await publicApi<{ holdToken: string }>(`/sessions/${sessionId}/holds`, {
         method: "POST",
         body: { eventSeatIds: picked.map((seat) => seat.eventSeatId) },

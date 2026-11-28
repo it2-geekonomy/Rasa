@@ -30,37 +30,77 @@ type RazorpayHandler = {
   razorpay_signature: string;
 };
 
+export async function cancelPendingBookings(results: SingleBookingResult[]): Promise<void> {
+  const pending = results.filter((r) => r.booking.bookingStatus === "PENDING");
+  if (!pending.length) return;
+  const email = pending[0].booking.customerEmail;
+  await publicApi("/bookings/cancel-pending", {
+    method: "POST",
+    body: {
+      bookingIds: pending.map((r) => r.booking.id),
+      email,
+    },
+  }).catch(() => null);
+}
+
 export async function holdAndCreateCartBookings(input: {
   items: CartCheckoutItem[];
   customerName: string;
   customerEmail: string;
   customerPhone: string;
 }): Promise<SingleBookingResult[]> {
-  const results: SingleBookingResult[] = [];
+  // Release any previous cart holds first so we never conflict with our own
+  // held seats or accidentally book a stale seat list from an earlier edit.
   for (const item of input.items) {
-    const expiryMs = item.holdExpiresAt ? Date.parse(item.holdExpiresAt) : 0;
-    const hasActiveHold = Boolean(item.holdToken && expiryMs > Date.now() + 5000);
-    let holdToken = item.holdToken;
-    if (!hasActiveHold) {
-      const hold = await publicApi<{ holdToken: string }>(`/sessions/${item.eventSessionId}/holds`, {
+    if (item.holdToken) {
+      await publicApi(`/sessions/${item.eventSessionId}/holds/release`, {
         method: "POST",
-        body: { eventSeatIds: item.eventSeatIds },
-      });
-      holdToken = hold.holdToken;
+        body: { holdToken: item.holdToken },
+      }).catch(() => null);
     }
-    const created = await publicApi<SingleBookingResult>("/bookings", {
+  }
+
+  // Create fresh holds for the exact seats currently shown in the cart.
+  const freshHolds: Array<{ eventSessionId: string; holdToken: string }> = [];
+  try {
+    for (const item of input.items) {
+      const hold = await publicApi<{ holdToken: string }>(
+        `/sessions/${item.eventSessionId}/holds`,
+        {
+          method: "POST",
+          body: { eventSeatIds: item.eventSeatIds },
+        },
+      );
+      freshHolds.push({ eventSessionId: item.eventSessionId, holdToken: hold.holdToken });
+    }
+
+    const created = await publicApi<{
+      bookings: SingleBookingResult["booking"][];
+      checkout: SingleBookingResult["checkout"];
+    }>("/bookings/cart", {
       method: "POST",
       body: {
-        eventSessionId: item.eventSessionId,
-        holdToken,
         customerName: input.customerName,
         customerEmail: input.customerEmail,
         customerPhone: input.customerPhone,
+        items: freshHolds,
       },
     });
-    results.push(created);
+
+    return created.bookings.map((booking, index) => ({
+      booking,
+      checkout: index === 0 ? created.checkout : null,
+    }));
+  } catch (caught) {
+    // Roll back any fresh holds created in this attempt so seats don't stay stuck HELD.
+    for (const held of freshHolds) {
+      await publicApi(`/sessions/${held.eventSessionId}/holds/release`, {
+        method: "POST",
+        body: { holdToken: held.holdToken },
+      }).catch(() => null);
+    }
+    throw caught;
   }
-  return results;
 }
 
 export async function loadCartPasses(

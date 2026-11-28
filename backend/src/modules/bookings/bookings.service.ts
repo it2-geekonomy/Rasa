@@ -10,7 +10,11 @@ import { BookingMode, Prisma } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { pageArgs, pageMeta } from '../../common/utils/pagination';
 import { InventoryService } from '../sessions/inventory.service';
-import { CreateBookingDto, CreateCartBookingDto } from './dto/booking.dto';
+import {
+  CancelPendingBookingsDto,
+  CreateBookingDto,
+  CreateCartBookingDto,
+} from './dto/booking.dto';
 import { ListBookingsQueryDto } from '../payments/dto/payment.dto';
 import { bookingInclude, PaymentsService } from '../payments/payments.service';
 import { qrDataUrl, TicketMailer } from '../tickets/ticket-mailer.service';
@@ -125,6 +129,43 @@ export class BookingsService {
     return { booking, checkout };
   }
 
+  async cancelPending(dto: CancelPendingBookingsDto) {
+    const email = dto.email.toLowerCase();
+    return this.prisma.$transaction(async (tx) => {
+      const pending = await tx.booking.findMany({
+        where: {
+          id: { in: dto.bookingIds },
+          customerEmail: email,
+          bookingStatus: 'PENDING',
+        },
+        include: { bookingSeats: { select: { eventSeatId: true } } },
+      });
+      if (pending.length === 0) return { cancelled: 0 };
+
+      const ids = pending.map((b) => b.id);
+      const seatIds = pending.flatMap((b) => b.bookingSeats.map((s) => s.eventSeatId));
+
+      await tx.booking.updateMany({
+        where: { id: { in: ids } },
+        data: { bookingStatus: 'CANCELLED', paymentStatus: 'FAILED' },
+      });
+      await tx.payment.updateMany({
+        where: { bookingId: { in: ids }, status: 'CREATED' },
+        data: { status: 'FAILED' },
+      });
+      if (seatIds.length > 0) {
+        await tx.bookingSeat.deleteMany({
+          where: { bookingId: { in: ids } },
+        });
+        await tx.eventSeat.updateMany({
+          where: { id: { in: seatIds }, status: 'HELD' },
+          data: { status: 'AVAILABLE', holdToken: null, holdExpiresAt: null },
+        });
+      }
+      return { cancelled: ids.length };
+    });
+  }
+
   async findAll(query: ListBookingsQueryDto) {
     const { page, limit, skip, take } = pageArgs(query.page, query.limit);
     const search = query.search?.trim();
@@ -213,7 +254,11 @@ export class BookingsService {
         holdToken: dto.holdToken,
         status: 'HELD',
         holdExpiresAt: { gt: now },
-        bookingSeats: { none: {} },
+        bookingSeats: {
+          none: {
+            booking: { bookingStatus: { in: ['PENDING', 'CONFIRMED'] } },
+          },
+        },
       },
       data: {
         holdToken: checkoutToken,

@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { byEventId, dayOf } from "@/lib/rasa/catalog";
 import { fmtMinutes } from "@/lib/rasa/time";
@@ -9,6 +9,7 @@ import { sheetBackdrop, sheetPanel, duration, easeOut } from "@/lib/rasa/motion"
 import { seatLabel, useBookingCart } from "@/contexts/booking-cart-context";
 import { formatInr } from "@/lib/rasa/booking-pricing";
 import {
+  cancelPendingBookings,
   holdAndCreateCartBookings,
   loadCartPasses,
   payBookingsSequentially,
@@ -33,11 +34,25 @@ export function CartCheckoutModal({ open, onClose, onEditShow }: Props) {
   const [result, setResult] = useState<SingleBookingResult[] | null>(null);
   const [passes, setPasses] = useState<PassBooking[] | null>(null);
 
+  // If the cart changes (e.g. an item is removed or edited) before payment succeeds,
+  // cancel the abandoned unpaid order and discard it so the next checkout uses the current cart.
+  useEffect(() => {
+    if (!passes?.length && result?.length) {
+      void cancelPendingBookings(result);
+      setResult(null);
+      setError(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lines]);
+
   function handleClose() {
+    if (!passes?.length && result?.length) {
+      void cancelPendingBookings(result);
+    }
     setError(null);
+    setResult(null);
     if (passes?.length) {
       setPasses(null);
-      setResult(null);
     }
     onClose();
   }
@@ -60,8 +75,9 @@ export function CartCheckoutModal({ open, onClose, onEditShow }: Props) {
 
     setBusy(true);
     setError(null);
+    let created: SingleBookingResult[] | null = null;
     try {
-      const created = await holdAndCreateCartBookings({
+      created = await holdAndCreateCartBookings({
         items,
         customerName: name.trim(),
         customerEmail: email.trim(),
@@ -74,6 +90,10 @@ export function CartCheckoutModal({ open, onClose, onEditShow }: Props) {
       setPasses(loaded);
       clearCart(false);
     } catch (caught) {
+      if (created?.length) {
+        await cancelPendingBookings(created);
+        setResult(null);
+      }
       setError(caught instanceof Error ? caught.message : "Could not complete the cart booking");
     } finally {
       setBusy(false);

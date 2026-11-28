@@ -70,6 +70,11 @@ export class CreateSessionDto {
 export class UpdateSessionDto extends PartialType(CreateSessionDto) {}
 
 export class ListSessionsQueryDto extends PaginationQueryDto {
+  @ApiPropertyOptional({ example: 'kathak' })
+  @IsOptional()
+  @IsString()
+  search?: string;
+
   @ApiPropertyOptional({ format: 'uuid' })
   @IsOptional()
   @IsUUID()
