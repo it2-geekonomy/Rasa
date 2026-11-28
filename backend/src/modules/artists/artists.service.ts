@@ -85,6 +85,105 @@ export class ArtistsService {
     return { data, meta: pageMeta(total, page, limit) };
   }
 
+  async findAllPublic(query: ListArtistsQueryDto) {
+    const { page, limit, skip, take } = pageArgs(query.page, query.limit ?? 100);
+    const category = query.category?.trim().toLowerCase();
+    const where: Prisma.ArtistWhereInput = {
+      isActive: true,
+      ...(category && category !== 'all'
+        ? { socialLinks: { path: ['category'], equals: category } }
+        : {}),
+      ...(query.search
+        ? {
+            OR: [
+              { name: { contains: query.search.trim(), mode: 'insensitive' } },
+              { designation: { contains: query.search.trim(), mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    };
+    const [data, total] = await Promise.all([
+      this.prisma.artist.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { name: 'asc' },
+        select: {
+          ...artistSelect,
+          events: {
+            where: { event: { status: 'PUBLISHED' } },
+            orderBy: { sortOrder: 'asc' },
+            select: {
+              role: true,
+              sortOrder: true,
+              event: {
+                select: {
+                  id: true,
+                  title: true,
+                  slug: true,
+                  category: true,
+                  eventType: true,
+                  bookingMode: true,
+                  bannerImage: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+      this.prisma.artist.count({ where }),
+    ]);
+    return { data, meta: pageMeta(total, page, limit) };
+  }
+
+  async findBySlug(slug: string) {
+    const artist = await this.prisma.artist.findFirst({
+      where: { slug: slug.trim(), isActive: true },
+      include: {
+        photos: {
+          orderBy: { createdAt: 'asc' },
+          select: { id: true, imageUrl: true, createdAt: true },
+        },
+        events: {
+          where: { event: { status: 'PUBLISHED' } },
+          orderBy: { sortOrder: 'asc' },
+          include: {
+            event: {
+              select: {
+                id: true,
+                title: true,
+                slug: true,
+                shortDescription: true,
+                category: true,
+                eventType: true,
+                bookingMode: true,
+                status: true,
+                bannerImage: true,
+                sessions: {
+                  where: { status: { not: 'CANCELLED' } },
+                  orderBy: { startAt: 'asc' },
+                  select: {
+                    id: true,
+                    sessionName: true,
+                    startAt: true,
+                    endAt: true,
+                    price: true,
+                    status: true,
+                    venue: { select: { id: true, name: true } },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+    if (!artist) {
+      throw new NotFoundException('Artist not found');
+    }
+    return artist;
+  }
+
   async findOne(id: string) {
     const artist = await this.prisma.artist.findUnique({
       where: { id },

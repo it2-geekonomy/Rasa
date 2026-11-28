@@ -10,6 +10,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Public } from '../../common/decorators/public.decorator';
 import { ArtistsService } from './artists.service';
 import { CreateArtistDto, ListArtistsQueryDto, UpdateArtistDto } from './dto/artist.dto';
 
@@ -23,6 +24,20 @@ export class ArtistsController {
   @ApiOperation({ summary: 'Create an artist' })
   create(@Body() dto: CreateArtistDto) {
     return this.artistsService.create(dto);
+  }
+
+  @Public()
+  @Get('public')
+  @ApiOperation({ summary: 'List active artists for the public website' })
+  findAllPublic(@Query() query: ListArtistsQueryDto) {
+    return this.artistsService.findAllPublic(query);
+  }
+
+  @Public()
+  @Get('slug/:slug')
+  @ApiOperation({ summary: 'Get an active artist by slug with photos and published events' })
+  findBySlug(@Param('slug') slug: string) {
+    return this.artistsService.findBySlug(slug);
   }
 
   @Get()
