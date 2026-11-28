@@ -1,6 +1,7 @@
 import { randomBytes } from 'crypto';
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -9,9 +10,14 @@ import { BookingMode, Prisma } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { pageArgs, pageMeta } from '../../common/utils/pagination';
 import { InventoryService } from '../sessions/inventory.service';
-import { CreateBookingDto } from './dto/booking.dto';
+import {
+  CancelPendingBookingsDto,
+  CreateBookingDto,
+  CreateCartBookingDto,
+} from './dto/booking.dto';
 import { ListBookingsQueryDto } from '../payments/dto/payment.dto';
 import { bookingInclude, PaymentsService } from '../payments/payments.service';
+import { qrDataUrl, TicketMailer } from '../tickets/ticket-mailer.service';
 
 type AttendeeRecord = {
   name: string;
@@ -27,6 +33,7 @@ export class BookingsService {
     private readonly prisma: PrismaService,
     private readonly inventory: InventoryService,
     private readonly payments: PaymentsService,
+    private readonly mailer: TicketMailer,
     private readonly config: ConfigService,
   ) {}
 
@@ -48,6 +55,7 @@ export class BookingsService {
     });
 
     if (new Prisma.Decimal(booking.totalAmount).isZero()) {
+      void this.mailer.deliver(booking.id);
       return { booking, checkout: null };
     }
     const checkout = await this.payments.createCheckout(booking.id);
@@ -56,6 +64,60 @@ export class BookingsService {
       include: bookingInclude,
     });
     return { booking: refreshed, checkout };
+  }
+
+  async createCart(dto: CreateCartBookingDto) {
+    const created = await this.prisma.$transaction(async (tx) => {
+      const results = [];
+      for (const item of dto.items) {
+        const session = await tx.eventSession.findUnique({
+          where: { id: item.eventSessionId },
+          include: { event: { select: { id: true, status: true, bookingMode: true } } },
+        });
+        if (!session) {
+          throw new NotFoundException('Session not found');
+        }
+        if (session.event.status !== 'PUBLISHED') {
+          throw new BadRequestException('This event is not open for booking');
+        }
+        if (session.status === 'CANCELLED' || session.status === 'SOLD_OUT') {
+          throw new ConflictException('This session is not available for booking');
+        }
+        const singleDto: CreateBookingDto = {
+          eventSessionId: item.eventSessionId,
+          holdToken: item.holdToken,
+          quantity: item.quantity,
+          attendees: item.attendees,
+          customerName: dto.customerName,
+          customerEmail: dto.customerEmail,
+          customerPhone: dto.customerPhone,
+        };
+        const booking =
+          session.event.bookingMode === BookingMode.SEAT_BASED
+            ? await this.createSeatBooking(tx, singleDto, session.price)
+            : await this.createCapacityBooking(tx, singleDto, session);
+        results.push(booking);
+      }
+      return results;
+    });
+
+    const freeConfirmed = created.filter((b) => b.bookingStatus === 'CONFIRMED');
+    for (const b of freeConfirmed) {
+      void this.mailer.deliver(b.id);
+    }
+
+    const pendingPaid = created.filter((b) => b.bookingStatus !== 'CONFIRMED');
+    if (pendingPaid.length === 0) {
+      return { bookings: created, checkout: null };
+    }
+
+    const checkout = await this.payments.createCartCheckout(pendingPaid.map((b) => b.id));
+    const refreshed = await this.prisma.booking.findMany({
+      where: { id: { in: created.map((b) => b.id) } },
+      include: bookingInclude,
+      orderBy: { createdAt: 'asc' },
+    });
+    return { bookings: refreshed, checkout };
   }
 
   async retryCheckout(bookingId: string) {
@@ -67,12 +129,50 @@ export class BookingsService {
     return { booking, checkout };
   }
 
+  async cancelPending(dto: CancelPendingBookingsDto) {
+    const email = dto.email.toLowerCase();
+    return this.prisma.$transaction(async (tx) => {
+      const pending = await tx.booking.findMany({
+        where: {
+          id: { in: dto.bookingIds },
+          customerEmail: email,
+          bookingStatus: 'PENDING',
+        },
+        include: { bookingSeats: { select: { eventSeatId: true } } },
+      });
+      if (pending.length === 0) return { cancelled: 0 };
+
+      const ids = pending.map((b) => b.id);
+      const seatIds = pending.flatMap((b) => b.bookingSeats.map((s) => s.eventSeatId));
+
+      await tx.booking.updateMany({
+        where: { id: { in: ids } },
+        data: { bookingStatus: 'CANCELLED', paymentStatus: 'FAILED' },
+      });
+      await tx.payment.updateMany({
+        where: { bookingId: { in: ids }, status: 'CREATED' },
+        data: { status: 'FAILED' },
+      });
+      if (seatIds.length > 0) {
+        await tx.bookingSeat.deleteMany({
+          where: { bookingId: { in: ids } },
+        });
+        await tx.eventSeat.updateMany({
+          where: { id: { in: seatIds }, status: 'HELD' },
+          data: { status: 'AVAILABLE', holdToken: null, holdExpiresAt: null },
+        });
+      }
+      return { cancelled: ids.length };
+    });
+  }
+
   async findAll(query: ListBookingsQueryDto) {
     const { page, limit, skip, take } = pageArgs(query.page, query.limit);
     const search = query.search?.trim();
     const where: Prisma.BookingWhereInput = {
       ...(query.eventSessionId ? { eventSessionId: query.eventSessionId } : {}),
       ...(query.bookingStatus ? { bookingStatus: query.bookingStatus } : {}),
+      ...(query.bookingMode ? { session: { event: { bookingMode: query.bookingMode } } } : {}),
       ...(query.email ? { customerEmail: query.email.toLowerCase() } : {}),
       ...(search
         ? {
@@ -109,12 +209,34 @@ export class BookingsService {
     return booking;
   }
 
+  async lookup(reference: string, email: string) {
+    const booking = await this.prisma.booking.findFirst({
+      where: { bookingReference: { equals: reference.trim(), mode: 'insensitive' } },
+      select: { id: true, customerEmail: true },
+    });
+    if (!booking || booking.customerEmail !== email.toLowerCase()) {
+      throw new NotFoundException('Booking not found');
+    }
+    return this.status(booking.id, email);
+  }
+
   async status(id: string, email: string) {
     const booking = await this.findOne(id);
     if (booking.customerEmail !== email.toLowerCase()) {
       throw new NotFoundException('Booking not found');
     }
-    return booking;
+    const tickets = await Promise.all(
+      booking.tickets.map(async (ticket) => {
+        const { qrToken, ...rest } = ticket;
+        return {
+          ...rest,
+          seatLabel: ticket.bookingSeat?.eventSeat.seat.seatLabel ?? null,
+          showTitle: ticket.session?.event.title ?? null,
+          qrDataUrl: qrToken ? await qrDataUrl(qrToken) : null,
+        };
+      }),
+    );
+    return { ...booking, tickets };
   }
 
   private async createSeatBooking(
@@ -129,11 +251,14 @@ export class BookingsService {
     const checkoutToken = randomBytes(32).toString('hex');
     const claimed = await tx.eventSeat.updateMany({
       where: {
-        eventSessionId: dto.eventSessionId,
         holdToken: dto.holdToken,
         status: 'HELD',
         holdExpiresAt: { gt: now },
-        bookingSeats: { none: {} },
+        bookingSeats: {
+          none: {
+            booking: { bookingStatus: { in: ['PENDING', 'CONFIRMED'] } },
+          },
+        },
       },
       data: {
         holdToken: checkoutToken,
@@ -146,6 +271,13 @@ export class BookingsService {
     const held = await tx.eventSeat.findMany({
       where: { eventSessionId: dto.eventSessionId, holdToken: checkoutToken },
       include: { seat: { select: { seatLabel: true } } },
+    });
+    if (held.length === 0) {
+      throw new BadRequestException('The seat hold is missing or has expired');
+    }
+    const covered = await tx.eventSeat.findMany({
+      where: { holdToken: checkoutToken, eventSessionId: { not: dto.eventSessionId } },
+      select: { id: true },
     });
     if (dto.attendees && dto.attendees.length !== held.length) {
       throw new BadRequestException('Provide one attendee for each held seat');
@@ -171,11 +303,18 @@ export class BookingsService {
       attendees,
     });
     await tx.bookingSeat.createMany({
-      data: held.map((seat) => ({
-        bookingId: booking.id,
-        eventSeatId: seat.id,
-        price: seat.price,
-      })),
+      data: [
+        ...held.map((seat) => ({
+          bookingId: booking.id,
+          eventSeatId: seat.id,
+          price: seat.price,
+        })),
+        ...covered.map((seat) => ({
+          bookingId: booking.id,
+          eventSeatId: seat.id,
+          price: 0,
+        })),
+      ],
     });
     if (subtotal.isZero()) {
       return this.payments.confirmFree(tx, booking.id);
@@ -261,6 +400,6 @@ export class BookingsService {
   }
 
   private ttlMs() {
-    return (this.config.get<number>('holds.ttlMinutes') ?? 10) * 60 * 1000;
+    return (this.config.get<number>('holds.ttlMinutes') ?? 5) * 60 * 1000;
   }
 }

@@ -10,10 +10,11 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma, BookingStatus } from '@prisma/client';
-import Razorpay from 'razorpay';
+import Razorpay = require('razorpay');
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { pageArgs, pageMeta } from '../../common/utils/pagination';
 import { ListPaymentsQueryDto, VerifyPaymentDto } from './dto/payment.dto';
+import { TicketMailer } from '../tickets/ticket-mailer.service';
 import { TicketsService } from '../tickets/tickets.service';
 import { checkoutSignature, signaturesMatch, webhookSignature } from './razorpay.util';
 
@@ -47,6 +48,7 @@ export class PaymentsService {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     private readonly tickets: TicketsService,
+    private readonly mailer: TicketMailer,
   ) {}
 
   async createCheckout(bookingId: string): Promise<CheckoutPayload> {
@@ -74,13 +76,13 @@ export class PaymentsService {
       });
       orderId = order.id;
     } catch (error) {
-      this.logger.error(
-        `Razorpay order failed for ${booking.bookingReference}: ${
-          error instanceof Error ? error.message : 'unknown error'
-        }`,
-      );
+      const detail = razorpayError(error);
+      this.logger.error(`Razorpay order failed for ${booking.bookingReference}: ${detail}`);
+      const rejectedKeys = detail === 'Authentication failed';
       throw new BadGatewayException(
-        `Could not start checkout for ${booking.bookingReference}. Retry payment for this booking.`,
+        rejectedKeys
+          ? `Razorpay rejected the API keys. Booking ${booking.bookingReference} stays pending.`
+          : `Could not start checkout for ${booking.bookingReference}: ${detail}`,
       );
     }
 
@@ -103,6 +105,87 @@ export class PaymentsService {
     };
   }
 
+  async createCartCheckout(bookingIds: string[]) {
+    if (bookingIds.length === 1) {
+      return this.createCheckout(bookingIds[0]);
+    }
+    const bookings = await this.prisma.booking.findMany({
+      where: { id: { in: bookingIds } },
+      select: {
+        id: true,
+        bookingReference: true,
+        totalAmount: true,
+        bookingStatus: true,
+        paymentStatus: true,
+      },
+    });
+    if (bookings.length !== bookingIds.length) {
+      throw new NotFoundException('One or more bookings were not found');
+    }
+    const total = bookings.reduce(
+      (sum, b) => sum.plus(b.totalAmount),
+      new Prisma.Decimal(0),
+    );
+    const amount = this.toPaise(total);
+    if (amount <= 0) {
+      throw new BadRequestException('Free bookings do not need Razorpay checkout');
+    }
+
+    const { keyId, keySecret } = this.credentials();
+    const client = new Razorpay({ key_id: keyId, key_secret: keySecret });
+    let orderId: string;
+    try {
+      const order = await client.orders.create({
+        amount,
+        currency: 'INR',
+        receipt: bookings[0].bookingReference,
+        notes: {
+          cartBookingIds: bookingIds.join(','),
+        },
+      });
+      orderId = order.id;
+    } catch (error) {
+      const detail = razorpayError(error);
+      this.logger.error(`Razorpay cart order failed: ${detail}`);
+      throw new BadGatewayException(
+        detail.includes('Authentication failed')
+          ? 'Razorpay rejected the API keys. Check RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in backend/.env.'
+          : 'Could not start Razorpay checkout. Your bookings stay pending.',
+      );
+    }
+
+    const primary = await this.prisma.payment.create({
+      data: {
+        bookingId: bookings[0].id,
+        provider: 'RAZORPAY',
+        razorpayOrderId: orderId,
+        amount: bookings[0].totalAmount,
+        currency: 'INR',
+        status: 'CREATED',
+      },
+    });
+    for (let index = 1; index < bookings.length; index += 1) {
+      await this.prisma.payment.create({
+        data: {
+          bookingId: bookings[index].id,
+          provider: 'RAZORPAY_CART',
+          razorpayOrderId: `${orderId}#${index}`,
+          amount: bookings[index].totalAmount,
+          currency: 'INR',
+          status: 'CREATED',
+        },
+      });
+    }
+
+    return {
+      keyId,
+      orderId,
+      amount,
+      currency: 'INR',
+      paymentId: primary.id,
+    };
+  }
+
   async verify(dto: VerifyPaymentDto) {
     const { keySecret } = this.credentials();
     const expected = checkoutSignature(dto.razorpayOrderId, dto.razorpayPaymentId, keySecret);
@@ -118,6 +201,19 @@ export class PaymentsService {
       throw new ConflictException(
         'Payment was received after the reservation expired. The seats were not confirmed.',
       );
+    }
+    if (result.outcome === 'confirmed' && result.booking) {
+      void this.mailer.deliver(result.booking.id);
+    }
+    const companions = await this.captureCartCompanions(
+      dto.razorpayOrderId,
+      dto.razorpayPaymentId,
+      dto.razorpaySignature,
+    );
+    for (const item of companions) {
+      if (item.outcome === 'confirmed' && item.booking) {
+        void this.mailer.deliver(item.booking.id);
+      }
     }
     return result.booking;
   }
@@ -151,6 +247,15 @@ export class PaymentsService {
         paymentId,
         amountPaise: payment?.amount,
       });
+      if (result.outcome === 'confirmed' && result.booking) {
+        void this.mailer.deliver(result.booking.id);
+      }
+      const companions = await this.captureCartCompanions(orderId, paymentId);
+      for (const item of companions) {
+        if (item.outcome === 'confirmed' && item.booking) {
+          void this.mailer.deliver(item.booking.id);
+        }
+      }
       if (result.outcome === 'ignored') {
         return { received: true, ignored: true };
       }
@@ -188,6 +293,27 @@ export class PaymentsService {
       throw new ConflictException('One or more seats are no longer held for this booking');
     }
     return result.booking;
+  }
+
+  private async captureCartCompanions(orderId: string, paymentId: string, signature?: string) {
+    const companions = await this.prisma.payment.findMany({
+      where: { razorpayOrderId: { startsWith: `${orderId}#` } },
+      select: { razorpayOrderId: true },
+      orderBy: { createdAt: 'asc' },
+    });
+    const results = [];
+    for (let index = 0; index < companions.length; index += 1) {
+      const companionOrderId = companions[index].razorpayOrderId;
+      if (!companionOrderId) continue;
+      results.push(
+        await this.capture({
+          orderId: companionOrderId,
+          paymentId: `${paymentId}#${index + 1}`,
+          signature,
+        }),
+      );
+    }
+    return results;
   }
 
   private async capture(input: {
@@ -350,7 +476,7 @@ export class PaymentsService {
     bookingSeats: { eventSeatId: string }[];
   }) {
     if (booking.bookingSeats.length === 0) {
-      const ttlMs = (this.config.get<number>('holds.ttlMinutes') ?? 10) * 60 * 1000;
+      const ttlMs = (this.config.get<number>('holds.ttlMinutes') ?? 5) * 60 * 1000;
       if (booking.createdAt.getTime() + ttlMs <= Date.now()) {
         throw new ConflictException('This reservation has expired');
       }
@@ -368,8 +494,8 @@ export class PaymentsService {
   }
 
   private credentials(reference?: string) {
-    const keyId = this.config.get<string>('razorpay.keyId') ?? '';
-    const keySecret = this.config.get<string>('razorpay.keySecret') ?? '';
+    const keyId = (this.config.get<string>('razorpay.keyId') ?? '').trim();
+    const keySecret = (this.config.get<string>('razorpay.keySecret') ?? '').trim();
     if (!keyId || !keySecret) {
       const suffix = reference ? ` Booking ${reference} stays pending.` : '';
       throw new ServiceUnavailableException(`Razorpay is not configured.${suffix}`);
@@ -384,6 +510,15 @@ export class PaymentsService {
   private loadBooking(tx: Tx, id: string) {
     return tx.booking.findUniqueOrThrow({ where: { id }, include: bookingInclude });
   }
+}
+
+function razorpayError(error: unknown) {
+  if (error instanceof Error && error.message) return error.message;
+  if (error && typeof error === 'object') {
+    const body = error as { error?: { description?: string; code?: string } };
+    return body.error?.description || body.error?.code || 'unknown error';
+  }
+  return 'unknown error';
 }
 
 export const bookingInclude = {
@@ -413,6 +548,15 @@ export const bookingInclude = {
   tickets: {
     orderBy: { ticketNumber: 'asc' as const },
     include: {
+      session: {
+        select: {
+          sessionName: true,
+          startAt: true,
+          endAt: true,
+          event: { select: { title: true } },
+          venue: { select: { name: true } },
+        },
+      },
       bookingSeat: {
         select: {
           eventSeat: {

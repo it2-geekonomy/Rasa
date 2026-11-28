@@ -3,7 +3,13 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Public } from '../../common/decorators/public.decorator';
 import { ListBookingsQueryDto } from '../payments/dto/payment.dto';
 import { BookingsService } from './bookings.service';
-import { BookingStatusQueryDto, CreateBookingDto } from './dto/booking.dto';
+import {
+  BookingLookupQueryDto,
+  BookingStatusQueryDto,
+  CancelPendingBookingsDto,
+  CreateBookingDto,
+  CreateCartBookingDto,
+} from './dto/booking.dto';
 
 @ApiTags('Bookings')
 @Controller('bookings')
@@ -17,11 +23,32 @@ export class BookingsController {
     return this.bookings.create(dto);
   }
 
+  @Public()
+  @Post('cart')
+  @ApiOperation({ summary: 'Create multiple bookings from a cart with one combined payment' })
+  createCart(@Body() dto: CreateCartBookingDto) {
+    return this.bookings.createCart(dto);
+  }
+
+  @Public()
+  @Post('cancel-pending')
+  @ApiOperation({ summary: 'Cancel unpaid pending bookings and release their held seats' })
+  cancelPending(@Body() dto: CancelPendingBookingsDto) {
+    return this.bookings.cancelPending(dto);
+  }
+
   @Get()
   @ApiBearerAuth()
   @ApiOperation({ summary: 'List bookings' })
   findAll(@Query() query: ListBookingsQueryDto) {
     return this.bookings.findAll(query);
+  }
+
+  @Public()
+  @Get('lookup')
+  @ApiOperation({ summary: 'Customer tickets by booking reference and email' })
+  lookup(@Query() query: BookingLookupQueryDto) {
+    return this.bookings.lookup(query.reference, query.email);
   }
 
   @Public()

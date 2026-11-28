@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { api, type PageMeta } from "@/lib/admin/api";
 import { useAdmin } from "./admin-gate";
-import { EyeIcon, Notice, primaryButtonClass, quietButtonClass } from "./ui";
+import { EyeIcon, fieldClass, formatEnum, Notice, primaryButtonClass, quietButtonClass } from "./ui";
 
 type EventRow = {
   id: string;
@@ -21,17 +21,44 @@ export function EventsScreen() {
   const { token } = useAdmin();
   const [rows, setRows] = useState<EventRow[]>([]);
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [bookingMode, setBookingMode] = useState("");
+  const [status, setStatus] = useState("");
+  const [category, setCategory] = useState("");
   const [meta, setMeta] = useState<PageMeta | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    api<{ data: EventRow[]; meta: PageMeta }>(`/events?limit=${PAGE_SIZE}&page=${page}`, { token })
-      .then((result) => {
-        setRows(result.data);
-        setMeta(result.meta);
-      })
-      .catch((caught) => setError(caught instanceof Error ? caught.message : "Could not load events"));
-  }, [token, page]);
+    let cancel = false;
+    const query = new URLSearchParams({ limit: String(PAGE_SIZE), page: String(page) });
+    if (search.trim()) query.set("search", search.trim());
+    if (bookingMode) query.set("bookingMode", bookingMode);
+    if (status) query.set("status", status);
+    if (category) query.set("category", category);
+    const load = () => {
+      api<{ data: EventRow[]; meta: PageMeta }>(`/events?${query}`, { token })
+        .then((result) => {
+          if (!cancel) {
+            setRows(result.data);
+            setMeta(result.meta);
+          }
+        })
+        .catch((caught) => {
+          if (!cancel) setError(caught instanceof Error ? caught.message : "Could not load events");
+        });
+    };
+    if (!search.trim()) {
+      load();
+      return () => {
+        cancel = true;
+      };
+    }
+    const handle = window.setTimeout(load, 200);
+    return () => {
+      cancel = true;
+      window.clearTimeout(handle);
+    };
+  }, [token, page, search, bookingMode, status, category]);
 
   const totalPages = Math.max(meta?.totalPages ?? 1, 1);
 
@@ -45,6 +72,62 @@ export function EventsScreen() {
         <Link href="/admin/events/new" className={`${primaryButtonClass} no-underline`}>
           Create event
         </Link>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          className={`${fieldClass} !w-full sm:!w-64 shrink-0`}
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
+          placeholder="Search event title…"
+        />
+        <select
+          className={`${fieldClass} !w-auto shrink-0`}
+          value={category}
+          onChange={(e) => {
+            setCategory(e.target.value);
+            setPage(1);
+          }}
+          aria-label="Filter by category"
+        >
+          <option value="">All categories</option>
+          <option value="Performance">Performance</option>
+          <option value="Workshop">Workshop</option>
+          <option value="Wellness">Wellness</option>
+          <option value="Art">Art</option>
+          <option value="Food">Food</option>
+        </select>
+        <select
+          className={`${fieldClass} !w-auto shrink-0`}
+          value={bookingMode}
+          onChange={(e) => {
+            setBookingMode(e.target.value);
+            setPage(1);
+          }}
+          aria-label="Filter by booking mode"
+        >
+          <option value="">All modes</option>
+          <option value="SEAT_BASED">Seat based</option>
+          <option value="CAPACITY_BASED">Capacity based</option>
+          <option value="FREE_ENTRY">Free entry</option>
+        </select>
+        <select
+          className={`${fieldClass} !w-auto shrink-0`}
+          value={status}
+          onChange={(e) => {
+            setStatus(e.target.value);
+            setPage(1);
+          }}
+          aria-label="Filter by status"
+        >
+          <option value="">All statuses</option>
+          <option value="PUBLISHED">Published</option>
+          <option value="DRAFT">Draft</option>
+          <option value="CANCELLED">Cancelled</option>
+          <option value="COMPLETED">Completed</option>
+        </select>
       </div>
       {error ? <Notice>{error}</Notice> : null}
       <div className="overflow-x-auto rounded-rasa border border-line bg-white">
@@ -65,7 +148,7 @@ export function EventsScreen() {
                   <p className="font-medium text-plum">{row.title}</p>
                   <p className="text-xs text-muted">{row.category}</p>
                 </td>
-                <td className="px-3 py-2">{row.bookingMode}</td>
+                <td className="px-3 py-2">{formatEnum(row.bookingMode)}</td>
                 <td className="px-3 py-2">{row.status}</td>
                 <td className="px-3 py-2">{row._count.sessions}</td>
                 <td className="px-3 py-2">

@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   AUDITORIUM_SEATS,
   ALLOCATION_LABEL,
@@ -10,7 +10,14 @@ import {
   selectableAllocation,
   type SeatAllocation,
 } from "@/lib/rasa/auditorium-seats";
-import { formatInr, TIER_LABEL, TIER_PRICE_INR, tierForAllocation } from "@/lib/rasa/booking-pricing";
+import {
+  formatInr,
+  priceForRow,
+  ROW_PRICE_BANDS,
+  seatPriceInr,
+  TIER_LABEL,
+  tierForAllocation,
+} from "@/lib/rasa/booking-pricing";
 
 /* ------------------------------------------------------------------ */
 /* Layout data                                                         */
@@ -28,6 +35,7 @@ const REAR_LIST: string[] = [...REAR_ROWS].reverse();
 const FRONT_LIST: string[] = [...FRONT_ROWS].reverse();
 const SEAT_AT = new Map<string, Seat>(AUDITORIUM_SEATS.map((s) => [seatId(s.row, s.col), s]));
 const CONSOLE_ROW = AUDITORIUM_SEATS.find((s) => s.allocation === "console")?.row ?? "ZC";
+const BAND_START_TOP = new Map(ROW_PRICE_BANDS.map((b) => [b.rows[b.rows.length - 1], b] as const));
 
 const GAP = 3; // gap between seats in px
 type Dims = { w: number; h: number; stageH: number };
@@ -58,7 +66,7 @@ const ALLOC_BASE: Record<SeatAllocation, string> = {
 };
 
 const SELECTED =
-  "border-2 border-white bg-[#d12a45] text-white shadow-[0_0_10px_rgba(255,90,120,.85)]";
+  "border-2 border-white bg-[#168a45] text-white shadow-[0_0_10px_rgba(22,138,69,.75)]";
 
 const LEGEND_SHORT: Record<SeatAllocation, string> = {
   available: "Open",
@@ -80,6 +88,14 @@ const LEGEND_SWATCH: Record<SeatAllocation, string> = {
   console: "bg-orange-300",
 };
 
+export type LiveSeat = {
+  eventSeatId: string;
+  bookable: boolean;
+  status: string;
+  seatType: string;
+  price?: number;
+};
+
 /* ------------------------------------------------------------------ */
 /* Main component                                                      */
 /* ------------------------------------------------------------------ */
@@ -90,6 +106,8 @@ type Props = {
   lockedIds?: Set<string>;
   /** Programme sheet: map fills height; hide duplicate summary under map. */
   variant?: "default" | "sheet";
+  /** Live inventory keyed by row-seat, for example A-12. */
+  live?: Map<string, LiveSeat>;
 };
 
 type ScrollMetrics = {
@@ -109,7 +127,7 @@ type MiniLayout = {
   stage: { x: number; y: number; w: number; h: number } | null;
 };
 
-export function AuditoriumSeatMap({ selected, onToggle, lockedIds, variant = "default" }: Props) {
+export function AuditoriumSeatMap({ selected, onToggle, lockedIds, variant = "default", live }: Props) {
   const locked = useMemo(() => lockedIds ?? new Set<string>(), [lockedIds]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -245,10 +263,12 @@ export function AuditoriumSeatMap({ selected, onToggle, lockedIds, variant = "de
     (_el: HTMLButtonElement, seat: Seat) => {
       const id = seatId(seat.row, seat.col);
       const isSel = selected.has(id);
-      const canPick = selectableAllocation(seat.allocation) && !(locked.has(id) && !isSel);
+      const offer = live?.get(id);
+      const open = live ? Boolean(offer?.bookable) : selectableAllocation(seat.allocation);
+      const canPick = open && !(locked.has(id) && !isSel);
       if (canPick || isSel) onToggle(id);
     },
-    [selected, locked, onToggle],
+    [selected, locked, onToggle, live],
   );
 
   const sheet = variant === "sheet";
@@ -261,7 +281,7 @@ export function AuditoriumSeatMap({ selected, onToggle, lockedIds, variant = "de
         sheet ? "h-full min-h-0 flex-1 gap-2" : "space-y-3 max-lg:gap-2 max-lg:space-y-2"
       }`}
     >
-      <Legend compact={sheet} />
+      {live ? <LiveLegend compact={sheet} /> : <Legend compact={sheet} />}
 
       <div className={`relative flex w-full min-w-0 flex-col ${sheet ? "min-h-0 flex-1" : ""}`}>
         <div
@@ -271,7 +291,7 @@ export function AuditoriumSeatMap({ selected, onToggle, lockedIds, variant = "de
           }`}
         >
           <div ref={contentRef} className="mx-auto flex w-max min-w-full flex-col items-center">
-            <Hall selected={selected} locked={locked} onSeat={onSeat} dims={DEFAULT_DIMS} />
+            <Hall selected={selected} locked={locked} onSeat={onSeat} dims={DEFAULT_DIMS} live={live} />
           </div>
         </div>
 
@@ -280,6 +300,7 @@ export function AuditoriumSeatMap({ selected, onToggle, lockedIds, variant = "de
             metrics={metrics}
             layout={miniLayout}
             selected={selected}
+            live={live}
             visible={miniVisible}
             onJump={(rx, ry) => {
               showMiniBriefly();
@@ -289,7 +310,7 @@ export function AuditoriumSeatMap({ selected, onToggle, lockedIds, variant = "de
         ) : null}
       </div>
 
-      {sheet ? null : (
+      {sheet || live ? null : (
         <div className="max-lg:hidden">
           <SelectionSummary selected={selected} />
         </div>
@@ -312,9 +333,10 @@ type HallProps = {
   selected: Set<string>;
   locked: Set<string>;
   onSeat: (el: HTMLButtonElement, seat: Seat) => void;
+  live?: Map<string, LiveSeat>;
 };
 
-const Hall = memo(function Hall({ selected, locked, onSeat, dims }: HallProps) {
+const Hall = memo(function Hall({ selected, locked, onSeat, dims, live }: HallProps) {
   return (
     <div className="relative">
       <div
@@ -324,9 +346,20 @@ const Hall = memo(function Hall({ selected, locked, onSeat, dims }: HallProps) {
       <div className="relative px-5 pt-4">
         <BandLabel>Back · furthest from stage</BandLabel>
         <NumberRow w={dims.w} />
-        {REAR_LIST.map((row) => (
-          <HallRow key={row} row={row} rear selected={selected} locked={locked} onSeat={onSeat} dims={dims} />
-        ))}
+        {REAR_LIST.map((row) => {
+          const band = BAND_START_TOP.get(row);
+          return (
+            <Fragment key={row}>
+              {band ? (
+                <PriceBandDivider
+                  label={band.label}
+                  priceInr={livePriceForRow(row, live, band.priceInr)}
+                />
+              ) : null}
+              <HallRow row={row} rear selected={selected} locked={locked} onSeat={onSeat} dims={dims} live={live} />
+            </Fragment>
+          );
+        })}
 
         <div className="my-3 flex items-center gap-3">
           <div className="h-px flex-1 bg-white/15" />
@@ -336,9 +369,20 @@ const Hall = memo(function Hall({ selected, locked, onSeat, dims }: HallProps) {
 
         <BandLabel>Front · closest to stage</BandLabel>
         <NumberRow w={dims.w} />
-        {FRONT_LIST.map((row) => (
-          <HallRow key={row} row={row} rear={false} selected={selected} locked={locked} onSeat={onSeat} dims={dims} />
-        ))}
+        {FRONT_LIST.map((row) => {
+          const band = BAND_START_TOP.get(row);
+          return (
+            <Fragment key={row}>
+              {band ? (
+                <PriceBandDivider
+                  label={band.label}
+                  priceInr={livePriceForRow(row, live, band.priceInr)}
+                />
+              ) : null}
+              <HallRow row={row} rear={false} selected={selected} locked={locked} onSeat={onSeat} dims={dims} live={live} />
+            </Fragment>
+          );
+        })}
       </div>
       <div
         className="relative mt-2 w-0 min-w-full"
@@ -361,6 +405,29 @@ const Hall = memo(function Hall({ selected, locked, onSeat, dims }: HallProps) {
 function BandLabel({ children }: { children: ReactNode }) {
   return (
     <p className="mb-1 text-center font-lab text-[11px] font-semibold uppercase tracking-[0.25em] text-white/45">{children}</p>
+  );
+}
+
+function livePriceForRow(row: string, live: Map<string, LiveSeat> | undefined, fallback: number) {
+  if (!live) return fallback;
+  const prefix = `${row}-`;
+  for (const [key, seat] of live.entries()) {
+    if (key.startsWith(prefix) && typeof seat.price === "number" && seat.price > 0) {
+      return seat.price;
+    }
+  }
+  return fallback;
+}
+
+function PriceBandDivider({ label, priceInr }: { label: string; priceInr: number }) {
+  return (
+    <div className="my-2 flex items-center gap-3">
+      <div className="h-px flex-1 bg-white/15" />
+      <span className="rounded-full border border-[#ffd77a]/30 bg-white/[0.06] px-3 py-0.5 font-lab text-[11px] font-bold uppercase tracking-[0.18em] text-[#ffd77a]">
+        {formatInr(priceInr)} · {label}
+      </span>
+      <div className="h-px flex-1 bg-white/15" />
+    </div>
   );
 }
 
@@ -396,6 +463,7 @@ function HallRow({
   locked,
   onSeat,
   dims,
+  live,
 }: {
   dims: Dims;
   row: string;
@@ -403,6 +471,7 @@ function HallRow({
   selected: Set<string>;
   locked: Set<string>;
   onSeat: (el: HTMLButtonElement, seat: Seat) => void;
+  live?: Map<string, LiveSeat>;
 }) {
   return (
     <div data-mini-row={row} className="mb-[3px] flex items-center justify-center gap-2">
@@ -428,7 +497,7 @@ function HallRow({
                 const seat = SEAT_AT.get(seatId(row, col));
                 if (!seat) return <span key={col} className="shrink-0" style={{ width: dims.w, height: dims.h }} />;
                 return (
-                  <SeatCell key={col} seat={seat} selected={selected} locked={locked} onSeat={onSeat} dims={dims} />
+                  <SeatCell key={col} seat={seat} selected={selected} locked={locked} onSeat={onSeat} dims={dims} live={live} />
                 );
               })
             )}
@@ -446,19 +515,26 @@ function SeatCell({
   locked,
   onSeat,
   dims,
+  live,
 }: {
   dims: Dims;
   seat: Seat;
   selected: Set<string>;
   locked: Set<string>;
   onSeat: (el: HTMLButtonElement, seat: Seat) => void;
+  live?: Map<string, LiveSeat>;
 }) {
   const id = seatId(seat.row, seat.col);
+  const offer = live?.get(id);
   const isSelected = selected.has(id);
   const isLocked = locked.has(id) && !isSelected;
-  const canPick = selectableAllocation(seat.allocation) && !isLocked;
-  const label = `Row ${seat.row}, seat ${seat.col} — ${ALLOCATION_LABEL[seat.allocation]}`;
-  const showNum = selectableAllocation(seat.allocation) || isSelected;
+  const canPick = (live ? Boolean(offer?.bookable) : selectableAllocation(seat.allocation)) && !isLocked;
+  const rowPrice = offer?.price && offer.price > 0 ? offer.price : priceForRow(seat.row);
+  const label = live
+    ? `Row ${seat.row}, seat ${seat.col}${offer ? `, ${offer.status}` : ""}${offer?.bookable ? ` (${formatInr(rowPrice)})` : ""}`
+    : `Row ${seat.row}, seat ${seat.col} — ${ALLOCATION_LABEL[seat.allocation]}${selectableAllocation(seat.allocation) ? ` (${formatInr(rowPrice)})` : ""}`;
+  const showNum = (live ? Boolean(offer) : selectableAllocation(seat.allocation)) || isSelected;
+  const tone = live ? liveTone(offer, isSelected) : isSelected ? SELECTED : ALLOC_BASE[seat.allocation];
 
   return (
     <button
@@ -469,12 +545,49 @@ function SeatCell({
       aria-disabled={!canPick && !isSelected}
       onClick={(event) => onSeat(event.currentTarget, seat)}
       style={{ width: dims.w, height: dims.h, fontSize: clampNum(dims.h - 4, 8, 12) }}
-      className={`flex shrink-0 items-center justify-center rounded-b-[3px] rounded-t-[8px] font-lab font-bold leading-none tabular-nums transition-colors motion-reduce:transition-none ${
-        isSelected ? SELECTED : ALLOC_BASE[seat.allocation]
-      } ${isLocked ? "opacity-40" : ""} ${canPick || isSelected ? "cursor-pointer" : "cursor-not-allowed"}`}
+      className={`flex shrink-0 items-center justify-center rounded-b-[3px] rounded-t-[8px] font-lab font-bold leading-none tabular-nums transition-colors motion-reduce:transition-none ${tone} ${isLocked ? "opacity-40" : ""} ${canPick || isSelected ? "cursor-pointer" : "cursor-not-allowed"}`}
     >
       <span className={`pointer-events-none ${showNum ? "" : "invisible"}`}>{seat.col}</span>
     </button>
+  );
+}
+
+function liveTone(offer: LiveSeat | undefined, selected: boolean) {
+  if (selected) return SELECTED;
+  if (!offer) return ALLOC_BASE.missing;
+  if (offer.bookable) return ALLOC_BASE.available;
+  if (offer.status === "HELD") return "border-2 border-[#e8b84a] bg-[#fff6d8] text-ink";
+  if (offer.status === "BOOKED") return "border-2 border-burg bg-burg text-white";
+  return "border-2 border-zinc-500 bg-zinc-600 text-zinc-200";
+}
+
+function LiveLegend({ compact }: { compact?: boolean }) {
+  const items = [
+    { label: "Available", swatch: "border-2 border-[#cdb9cf] bg-white" },
+    { label: "Blocked", swatch: "border-2 border-zinc-500 bg-zinc-600" },
+    { label: "Held", swatch: "border-2 border-[#e8b84a] bg-[#fff6d8]" },
+    { label: "Booked", swatch: "border-2 border-burg bg-burg" },
+  ];
+  return (
+    <TableLegend compact={compact}>
+      {items.map((item) => (
+        <span
+          key={item.label}
+          role="listitem"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-tint/80 px-2.5 py-1 text-xs"
+        >
+          <span className={`inline-block size-3.5 shrink-0 rounded-sm sm:size-4 ${item.swatch}`} aria-hidden />
+          <span className="font-medium">{item.label}</span>
+        </span>
+      ))}
+      <span
+        role="listitem"
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-tint px-2.5 py-1 text-xs font-semibold text-plum"
+      >
+        <span className="inline-block size-3.5 shrink-0 rounded-sm border-2 border-[#168a45] bg-[#168a45] sm:size-4" aria-hidden />
+        Selected
+      </span>
+    </TableLegend>
   );
 }
 
@@ -585,7 +698,7 @@ function Legend({ compact }: { compact?: boolean }) {
         className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-tint px-2.5 py-1 text-xs font-semibold text-plum"
       >
         <span
-          className="inline-block size-3.5 shrink-0 rounded-sm border-2 border-[#d12a45] bg-[#d12a45] sm:size-4"
+          className="inline-block size-3.5 shrink-0 rounded-sm border-2 border-[#168a45] bg-[#168a45] sm:size-4"
           aria-hidden
         />
         Selected
@@ -634,8 +747,7 @@ function selectionTotal(selected: Set<string>) {
   let total = 0;
   selected.forEach((id) => {
     const seat = SEAT_AT.get(id);
-    const tier = seat ? tierForAllocation(seat.allocation) : null;
-    if (tier) total += TIER_PRICE_INR[tier];
+    if (seat) total += seatPriceInr(seat.row, seat.allocation);
   });
   return total;
 }
@@ -655,7 +767,7 @@ function SelectionSummary({ selected }: { selected: Set<string> }) {
     if (!seat) return;
     const tier = tierForAllocation(seat.allocation);
     if (!tier) return;
-    chips.push(`Row ${seat.row}, seat ${seat.col} · ${TIER_LABEL[tier]}`);
+    chips.push(`Row ${seat.row}, seat ${seat.col} · ${TIER_LABEL[tier]} · ${formatInr(priceForRow(seat.row))}`);
   });
   chips.sort();
 
@@ -688,12 +800,14 @@ function MiniMap({
   metrics,
   layout,
   selected,
+  live,
   visible,
   onJump,
 }: {
   metrics: ScrollMetrics;
   layout: MiniLayout;
   selected: Set<string>;
+  live?: Map<string, LiveSeat>;
   visible: boolean;
   onJump: (rx: number, ry: number) => void;
 }) {
@@ -729,7 +843,7 @@ function MiniMap({
           if (e.buttons === 1) jumpFromPointer(e.clientX, e.clientY);
         }}
       >
-        <MiniMapGrid layout={layout} selected={selected} />
+        <MiniMapGrid layout={layout} selected={selected} live={live} />
         <div
           className="pointer-events-none absolute border-2 border-[#ef4444] bg-[#ef4444]/15"
           style={{
@@ -744,15 +858,29 @@ function MiniMap({
   );
 }
 
-const MiniMapGrid = memo(function MiniMapGrid({ layout, selected }: { layout: MiniLayout; selected: Set<string> }) {
+function miniFill(id: string, allocation: SeatAllocation, selected: Set<string>, live?: Map<string, LiveSeat>) {
+  if (selected.has(id)) return "#168a45";
+  if (!live) return selectableAllocation(allocation) ? "rgba(255,255,255,0.88)" : "rgba(255,255,255,0.28)";
+  const offer = live.get(id);
+  if (offer?.bookable) return "rgba(255,255,255,0.88)";
+  if (offer?.status === "HELD") return "#e8b84a";
+  if (offer?.status === "BOOKED") return "#931929";
+  return "rgba(255,255,255,0.28)";
+}
+
+const MiniMapGrid = memo(function MiniMapGrid({
+  layout,
+  selected,
+  live,
+}: {
+  layout: MiniLayout;
+  selected: Set<string>;
+  live?: Map<string, LiveSeat>;
+}) {
   return (
     <svg viewBox={`0 0 ${layout.sw} ${layout.sh}`} preserveAspectRatio="none" className="block size-full">
       {layout.seats.map((s) => {
-        const fill = selected.has(s.id)
-          ? "#ef4444"
-          : selectableAllocation(s.allocation)
-            ? "rgba(255,255,255,0.88)"
-            : "rgba(255,255,255,0.28)";
+        const fill = miniFill(s.id, s.allocation, selected, live);
         return <rect key={s.id} x={s.x} y={s.y} width={s.w} height={s.h} rx={4} fill={fill} />;
       })}
       {layout.stage ? (

@@ -25,7 +25,7 @@ export function BottomNav({ onMore, moreOpen }: Props) {
 
   return (
     <nav
-      className="bnav fixed bottom-[calc(6px+env(safe-area-inset-bottom))] left-2.5 right-2.5 z-40 hidden max-md:flex min-h-[50px] items-stretch justify-between gap-0.5 rounded-full bg-plum-d p-0.5 shadow-[0_6px_20px_rgba(36,20,38,.32)]"
+      className="bnav fixed bottom-[calc(8px+env(safe-area-inset-bottom))] left-2.5 right-2.5 z-40 hidden max-md:flex min-h-[50px] items-stretch justify-between gap-0.5 rounded-full border border-white/15 bg-plum-d/95 p-0.5 shadow-[0_6px_20px_rgba(36,20,38,.42)] backdrop-blur-md"
       aria-label="Quick"
     >
       {items.map((item) => {

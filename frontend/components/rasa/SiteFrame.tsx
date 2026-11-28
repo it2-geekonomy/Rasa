@@ -10,7 +10,7 @@ export function SiteFrame({ children }: { children: ReactNode }) {
   if (admin) return children;
 
   return (
-    <div className="flex min-h-dvh flex-col pb-[calc(64px+env(safe-area-inset-bottom))] md:pb-0">
+    <div className="flex min-h-dvh flex-col">
       <SiteHeader />
       <main className="min-w-0 flex-1">{children}</main>
       <SiteFooter />

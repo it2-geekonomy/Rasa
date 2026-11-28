@@ -67,6 +67,11 @@ export class ListArtistsQueryDto extends PaginationQueryDto {
   @IsString()
   search?: string;
 
+  @ApiPropertyOptional({ example: 'music', description: 'Filter by category (music, dance, more)' })
+  @IsOptional()
+  @IsString()
+  category?: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   @Transform(({ value }) => {

@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { byEventId, dayOf } from "@/lib/rasa/catalog";
 import { fmtMinutes } from "@/lib/rasa/time";
 import { btn, btnLine, card } from "@/lib/rasa/ui";
 import { formatInr, TIER_LABEL } from "@/lib/rasa/booking-pricing";
 import { useBookingCart, seatLabel } from "@/contexts/booking-cart-context";
+import { CartCheckoutModal } from "./CartCheckoutModal";
 
 type Props = {
   onAddAnother: () => void;
@@ -13,6 +15,7 @@ type Props = {
 
 export function BookingCartReview({ onAddAnother, onEditSeats }: Props) {
   const { lines, cartTotal, removeLine, clearCart } = useBookingCart();
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
 
   if (!lines.length) {
     return (
@@ -63,7 +66,7 @@ export function BookingCartReview({ onAddAnother, onEditSeats }: Props) {
             <button type="button" className={btnLine} onClick={onAddAnother}>
               Add another show
             </button>
-            <button type="button" className={btn} disabled title="Payment integration coming soon">
+            <button type="button" className={btn} onClick={() => setCheckoutOpen(true)}>
               Proceed to pay
             </button>
           </div>
@@ -71,11 +74,16 @@ export function BookingCartReview({ onAddAnother, onEditSeats }: Props) {
         <button
           type="button"
           className="mt-4 text-sm font-medium text-muted underline-offset-2 hover:text-burg hover:underline"
-          onClick={clearCart}
+          onClick={() => clearCart(true)}
         >
           Clear cart
         </button>
       </div>
+      <CartCheckoutModal
+        open={checkoutOpen}
+        onClose={() => setCheckoutOpen(false)}
+        onEditShow={onEditSeats}
+      />
     </div>
   );
 }

@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { BookingMode, EventStatus, Prisma, VenueType } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { pageArgs, pageMeta } from '../../common/utils/pagination';
 import { rethrowPrisma } from '../../common/utils/prisma-error';
@@ -192,6 +192,55 @@ export class EventsService {
     }
     await this.prisma.event.delete({ where: { id } });
     return { id };
+  }
+
+  async findPublishedAuditorium() {
+    const events = await this.prisma.event.findMany({
+      where: { status: EventStatus.PUBLISHED },
+      orderBy: { createdAt: 'asc' },
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        eventType: true,
+        bookingMode: true,
+        shortDescription: true,
+        description: true,
+        category: true,
+        bannerImage: true,
+        sessions: {
+          where: {
+            status: { not: 'CANCELLED' },
+          },
+          orderBy: { startAt: 'asc' },
+          select: {
+            id: true,
+            sessionName: true,
+            startAt: true,
+            endAt: true,
+            capacity: true,
+            price: true,
+            venue: { select: { id: true, name: true } },
+          },
+        },
+        artists: {
+          orderBy: { sortOrder: 'asc' },
+          select: {
+            role: true,
+            artist: {
+              select: {
+                id: true,
+                slug: true,
+                name: true,
+                designation: true,
+                profileImage: true,
+              },
+            },
+          },
+        },
+      },
+    });
+    return events.filter((event) => event.sessions.length > 0);
   }
 
   private async validateArtistIds(rawIds?: string[]) {

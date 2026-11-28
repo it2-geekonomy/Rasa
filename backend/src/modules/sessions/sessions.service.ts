@@ -70,10 +70,20 @@ export class SessionsService {
 
   async findAll(query: ListSessionsQueryDto) {
     const { page, limit, skip, take } = pageArgs(query.page, query.limit);
+    const search = query.search?.trim();
     const where: Prisma.EventSessionWhereInput = {
       ...(query.eventId ? { eventId: query.eventId } : {}),
       ...(query.venueId ? { venueId: query.venueId } : {}),
       ...(query.status ? { status: query.status } : {}),
+      ...(search
+        ? {
+            OR: [
+              { sessionName: { contains: search, mode: 'insensitive' } },
+              { event: { title: { contains: search, mode: 'insensitive' } } },
+              { venue: { name: { contains: search, mode: 'insensitive' } } },
+            ],
+          }
+        : {}),
     };
     const [data, total] = await Promise.all([
       this.prisma.eventSession.findMany({
@@ -213,8 +223,8 @@ export class SessionsService {
         `Seat blocks are only for the Auditorium. ${venue.name} uses a number of slots.`,
       );
     }
-    if (bookingMode === 'CAPACITY_BASED' && (capacity == null || Number(capacity) < 1)) {
-      throw new BadRequestException(`Enter how many slots this ${venue.name} session has.`);
+    if (bookingMode === 'CAPACITY_BASED' && capacity != null && Number(capacity) < 1) {
+      throw new BadRequestException(`Slots for ${venue.name} must be at least 1, or leave blank for unlimited.`);
     }
   }
 

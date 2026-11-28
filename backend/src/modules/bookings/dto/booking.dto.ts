@@ -88,3 +88,76 @@ export class BookingStatusQueryDto {
   @IsEmail()
   email: string;
 }
+
+export class BookingLookupQueryDto extends BookingStatusQueryDto {
+  @ApiProperty({ example: 'RASA1A2B3C4D5E' })
+  @IsString()
+  @MaxLength(50)
+  reference: string;
+}
+
+export class CartItemDto {
+  @ApiProperty({ format: 'uuid' })
+  @IsUUID()
+  eventSessionId: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  holdToken?: string;
+
+  @ApiPropertyOptional({ minimum: 1, maximum: 50 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  quantity?: number;
+
+  @ApiPropertyOptional({ type: [AttendeeDto] })
+  @IsOptional()
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(50)
+  @ValidateNested({ each: true })
+  @Type(() => AttendeeDto)
+  attendees?: AttendeeDto[];
+}
+
+export class CreateCartBookingDto {
+  @ApiProperty({ example: 'Asha Rao', maxLength: 150 })
+  @IsString()
+  @MaxLength(150)
+  customerName: string;
+
+  @ApiProperty({ example: 'asha@example.com' })
+  @IsEmail()
+  customerEmail: string;
+
+  @ApiProperty({ example: '9845012345' })
+  @IsString()
+  @Matches(/^[0-9+\-\s]{8,20}$/)
+  customerPhone: string;
+
+  @ApiProperty({ type: [CartItemDto], minItems: 1, maxItems: 10 })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(10)
+  @ValidateNested({ each: true })
+  @Type(() => CartItemDto)
+  items: CartItemDto[];
+}
+
+export class CancelPendingBookingsDto {
+  @ApiProperty({ type: [String], minItems: 1, maxItems: 10 })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(10)
+  @IsUUID('4', { each: true })
+  bookingIds: string[];
+
+  @ApiProperty({ example: 'asha@example.com' })
+  @IsEmail()
+  email: string;
+}

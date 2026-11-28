@@ -62,7 +62,13 @@ export class TicketsService {
     const booking = await tx.booking.findUnique({
       where: { id: bookingId },
       include: {
-        bookingSeats: { select: { id: true, eventSeatId: true } },
+        bookingSeats: {
+          select: {
+            id: true,
+            eventSeatId: true,
+            eventSeat: { select: { eventSessionId: true } },
+          },
+        },
       },
     });
     if (!booking || booking.bookingStatus !== 'CONFIRMED') {
@@ -73,12 +79,14 @@ export class TicketsService {
       booking.bookingSeats.length > 0
         ? booking.bookingSeats.map((seat) => ({
             bookingSeatId: seat.id,
+            eventSeatSessionId: seat.eventSeat.eventSessionId,
             attendee:
               attendees.find((person) => person.eventSeatId === seat.eventSeatId) ??
               attendees[booking.bookingSeats.indexOf(seat)],
           }))
         : Array.from({ length: booking.quantity }, (_, index) => ({
             bookingSeatId: null as string | null,
+            eventSeatSessionId: null as string | null,
             attendee: attendees[index],
           }));
 
@@ -87,7 +95,7 @@ export class TicketsService {
       const person = line.attendee;
       await this.createTicket(tx, {
         bookingId: booking.id,
-        eventSessionId: booking.eventSessionId,
+        eventSessionId: line.eventSeatSessionId ?? booking.eventSessionId,
         bookingSeatId: line.bookingSeatId,
         ticketNumber: `${booking.bookingReference}-${String(index + 1).padStart(2, '0')}`,
         attendeeName: requiredClip(person?.name?.trim() || booking.customerName, 150),
@@ -137,6 +145,44 @@ export class TicketsService {
       throw new NotFoundException('Ticket not found');
     }
     return ticket;
+  }
+
+  async publicLookup(rawToken: string) {
+    const token = normalizeQrToken(rawToken);
+    const ticket = await this.prisma.bookingTicket.findUnique({
+      where: { qrToken: token },
+      include: {
+        booking: { select: { bookingReference: true, bookingStatus: true } },
+        session: {
+          select: {
+            sessionName: true,
+            startAt: true,
+            endAt: true,
+            event: { select: { title: true } },
+            venue: { select: { name: true } },
+          },
+        },
+        bookingSeat: {
+          include: { eventSeat: { include: { seat: { select: { seatLabel: true } } } } },
+        },
+      },
+    });
+    if (!ticket) {
+      throw new NotFoundException('Ticket not found');
+    }
+    return {
+      ticketNumber: ticket.ticketNumber,
+      attendeeName: ticket.attendeeName,
+      status: ticket.status,
+      bookingReference: ticket.booking.bookingReference,
+      bookingStatus: ticket.booking.bookingStatus,
+      showTitle: ticket.session.event.title,
+      sessionName: ticket.session.sessionName,
+      venueName: ticket.session.venue.name,
+      startAt: ticket.session.startAt,
+      endAt: ticket.session.endAt,
+      seatLabel: ticket.bookingSeat?.eventSeat.seat.seatLabel ?? null,
+    };
   }
 
   async validate(qrToken: string, eventSessionId?: string) {
@@ -222,8 +268,14 @@ export class TicketsService {
   }
 
   private async findByToken(qrToken: string) {
-    const ticket = await this.prisma.bookingTicket.findUnique({
-      where: { qrToken },
+    const token = normalizeQrToken(qrToken);
+    const ticket = await this.prisma.bookingTicket.findFirst({
+      where: {
+        OR: [
+          { qrToken: token },
+          { ticketNumber: { equals: token, mode: 'insensitive' } },
+        ],
+      },
       include: ticketInclude,
     });
     if (!ticket) {
@@ -309,6 +361,12 @@ export class TicketsService {
       }
     }
   }
+}
+
+function normalizeQrToken(raw: string) {
+  const trimmed = raw.trim();
+  const match = trimmed.match(/\/ticket\/([a-zA-Z0-9_-]+)(?:[/?#]|$)/);
+  return match ? match[1] : trimmed;
 }
 
 function readAttendees(value: Prisma.JsonValue | null): AttendeeRecord[] {

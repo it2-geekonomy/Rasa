@@ -38,7 +38,8 @@ const LINKS = [
   { href: "/admin/artists", label: "Artists", icon: UsersIcon },
   { href: "/admin/venues", label: "Venues", icon: PinIcon },
   { href: "/admin/bookings", label: "Bookings", icon: BookIcon },
-  { href: "/admin/payments", label: "Payments", icon: CardIcon },
+  { href: "/admin/workshop-bookings", label: "Workshop bookings", icon: BookIcon },
+  { href: "/admin/open-registrations", label: "Open registrations", icon: BookIcon },
   { href: "/admin/checkin", label: "Check-in", icon: ScanIcon },
 ] as const;
 
@@ -213,15 +214,6 @@ function BookIcon() {
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
       <path d="M6 5h11a2 2 0 0 1 2 2v12H8a2 2 0 0 0-2 2V5Z" />
       <path d="M6 19a2 2 0 0 1 2-2h11" />
-    </svg>
-  );
-}
-
-function CardIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
-      <rect x="3" y="6" width="18" height="12" rx="2" />
-      <path d="M3 10h18" />
     </svg>
   );
 }

@@ -21,12 +21,9 @@ type SeatRow = {
   };
 };
 
-const OWNERS = [
-  { owner: "RASA", status: "AVAILABLE", label: "Open for sale" },
+const ACTIONS = [
+  { owner: "RASA", status: "AVAILABLE", label: "Available" },
   { owner: "RASA", status: "BLOCKED", label: "Block" },
-  { owner: "BOOKMYSHOW", status: "BLOCKED", label: "BookMyShow" },
-  { owner: "VENUE", status: "BLOCKED", label: "Venue" },
-  { owner: "VIP", status: "BLOCKED", label: "VIP" },
 ] as const;
 
 const BLOCKS = [
@@ -35,7 +32,7 @@ const BLOCKS = [
   { id: "right", label: "Seats 28–39", from: 28, to: 39 },
 ] as const;
 
-const SELECTED = "border-burg bg-burg text-white shadow-[0_2px_6px_rgba(147,25,41,.35)]";
+const SELECTED = "border-emerald-700 bg-emerald-600 text-white shadow-[0_2px_6px_rgba(5,150,105,.35)]";
 
 const SEAT_CELL =
   "flex h-7 w-7 shrink-0 items-center justify-center rounded-md border-2 font-lab text-[11px] font-bold leading-none tabular-nums";
@@ -203,12 +200,8 @@ export function AdminSeatMap({
         <p className="text-sm font-medium text-plum">{picked.size} selected</p>
       </div>
       <div className="mt-3 flex gap-1.5 overflow-x-auto text-xs text-ink" role="list" aria-label="Seat legend">
-        <Legend swatch="border-[#cdb9cf] bg-white" label="Open" />
+        <Legend swatch="border-[#cdb9cf] bg-white" label="Available" />
         <Legend swatch="border-zinc-300 bg-zinc-100" label="Blocked" />
-        <Legend swatch="border-indigo-400 bg-indigo-50" label="BookMyShow" />
-        <Legend swatch="border-emerald-400 bg-emerald-100" label="Venue" />
-        <Legend swatch="border-sky-400 bg-sky-50" label="VIP" />
-        <Legend swatch="border-amber-400 bg-amber-50" label="Access" />
         <Legend swatch="border-[#e8b84a] bg-[#fff6d8]" label="Held" />
         <Legend swatch="border-burg bg-burg" label="Booked" />
         <Legend swatch={SELECTED} label="Selected" />
@@ -253,7 +246,7 @@ export function AdminSeatMap({
           Price for the selected seats
           <input className={fieldClass} type="number" min="0" step="0.01" value={price} onChange={(event) => setPrice(event.target.value)} placeholder="Leave blank to keep" />
         </label>
-        {OWNERS.map((action) => (
+        {ACTIONS.map((action) => (
           <button
             key={action.label}
             type="button"
@@ -361,7 +354,7 @@ function GridRow({
               key={seat.id}
               type="button"
               data-seat={seat.seat.seatLabel}
-              title={`${seat.seat.seatLabel} · ${seat.seat.section.sectionName} · ${seat.allocationOwner} · ${seat.status}`}
+              title={`${seat.seat.seatLabel} · ${statusName(seat.status)} · ₹${Number(seat.price).toLocaleString("en-IN")}`}
               aria-pressed={selected}
               aria-disabled={booked}
               onPointerDown={(event) => onDragStart(event, seat)}
@@ -426,13 +419,17 @@ function Legend({ swatch, label }: { swatch: string; label: string }) {
   );
 }
 
+function statusName(status: string) {
+  if (status === "AVAILABLE") return "Available";
+  if (status === "BLOCKED") return "Blocked";
+  if (status === "HELD") return "Held";
+  if (status === "BOOKED") return "Booked";
+  return status;
+}
+
 function tone(seat: SeatRow) {
   if (seat.status === "BOOKED") return "border-burg bg-burg text-white";
   if (seat.status === "HELD") return "border-[#e8b84a] bg-[#fff6d8] text-ink";
-  if (seat.seat.seatType === "WHEELCHAIR") return "border-amber-400 bg-amber-50 text-amber-950";
-  if (seat.allocationOwner === "VENUE") return "border-emerald-500/90 bg-emerald-100 text-emerald-950";
-  if (seat.allocationOwner === "VIP") return "border-sky-400 bg-sky-50 text-sky-950";
-  if (seat.allocationOwner === "BOOKMYSHOW") return "border-indigo-400 bg-indigo-50 text-indigo-950";
   if (seat.status === "AVAILABLE") return "border-[#cdb9cf] bg-white text-ink hover:bg-tint";
   return "border-zinc-300 bg-zinc-100 text-zinc-700";
 }

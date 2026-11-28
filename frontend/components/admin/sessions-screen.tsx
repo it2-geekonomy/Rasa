@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { api, inr, when, type PageMeta } from "@/lib/admin/api";
 import { useAdmin } from "./admin-gate";
-import { EyeIcon, formatEnum, Notice, quietButtonClass, statusBadgeClass } from "./ui";
+import { EyeIcon, fieldClass, formatEnum, Notice, quietButtonClass, statusBadgeClass } from "./ui";
 
 type SessionRow = {
   id: string;
@@ -17,23 +17,57 @@ type SessionRow = {
   venue: { name: string };
 };
 
+type VenueOption = { id: string; name: string };
+
 const PAGE_SIZE = 10;
 
 export function SessionsScreen() {
   const { token } = useAdmin();
   const [rows, setRows] = useState<SessionRow[]>([]);
+  const [venues, setVenues] = useState<VenueOption[]>([]);
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [venueId, setVenueId] = useState("");
+  const [status, setStatus] = useState("");
   const [meta, setMeta] = useState<PageMeta | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    api<{ data: SessionRow[]; meta: PageMeta }>(`/sessions?limit=${PAGE_SIZE}&page=${page}`, { token })
-      .then((result) => {
-        setRows(result.data);
-        setMeta(result.meta);
-      })
-      .catch((caught) => setError(caught instanceof Error ? caught.message : "Could not load sessions"));
-  }, [token, page]);
+    api<{ data: VenueOption[] }>("/venues?limit=50", { token })
+      .then((result) => setVenues(result.data))
+      .catch(() => null);
+  }, [token]);
+
+  useEffect(() => {
+    let cancel = false;
+    const query = new URLSearchParams({ limit: String(PAGE_SIZE), page: String(page) });
+    if (search.trim()) query.set("search", search.trim());
+    if (venueId) query.set("venueId", venueId);
+    if (status) query.set("status", status);
+    const load = () => {
+      api<{ data: SessionRow[]; meta: PageMeta }>(`/sessions?${query}`, { token })
+        .then((result) => {
+          if (!cancel) {
+            setRows(result.data);
+            setMeta(result.meta);
+          }
+        })
+        .catch((caught) => {
+          if (!cancel) setError(caught instanceof Error ? caught.message : "Could not load sessions");
+        });
+    };
+    if (!search.trim()) {
+      load();
+      return () => {
+        cancel = true;
+      };
+    }
+    const handle = window.setTimeout(load, 200);
+    return () => {
+      cancel = true;
+      window.clearTimeout(handle);
+    };
+  }, [token, page, search, venueId, status]);
 
   const totalPages = Math.max(meta?.totalPages ?? 1, 1);
 
@@ -44,6 +78,49 @@ export function SessionsScreen() {
         <p className="mt-1 text-sm text-muted">
           {meta ? `${meta.total} sessions · Open one to set seats, price, or capacity.` : "Loading sessions…"}
         </p>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          className={`${fieldClass} !w-full sm:!w-64 shrink-0`}
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
+          placeholder="Search session, show, or venue…"
+        />
+        <select
+          className={`${fieldClass} !w-auto shrink-0`}
+          value={venueId}
+          onChange={(e) => {
+            setVenueId(e.target.value);
+            setPage(1);
+          }}
+          aria-label="Filter by venue"
+        >
+          <option value="">All venues</option>
+          {venues.map((v) => (
+            <option key={v.id} value={v.id}>
+              {v.name}
+            </option>
+          ))}
+        </select>
+        <select
+          className={`${fieldClass} !w-auto shrink-0`}
+          value={status}
+          onChange={(e) => {
+            setStatus(e.target.value);
+            setPage(1);
+          }}
+          aria-label="Filter by status"
+        >
+          <option value="">All statuses</option>
+          <option value="SCHEDULED">Scheduled</option>
+          <option value="OPEN">Open</option>
+          <option value="SOLD_OUT">Sold out</option>
+          <option value="CANCELLED">Cancelled</option>
+          <option value="COMPLETED">Completed</option>
+        </select>
       </div>
       {error ? <Notice>{error}</Notice> : null}
       <div className="overflow-x-auto rounded-rasa border border-line bg-white">

@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { ACAT, ARTISTS, SOON } from "@/lib/rasa/catalog";
+import { useEffect, useMemo, useState } from "react";
+import { ACAT, ARTISTS, byArtistId, SOON } from "@/lib/rasa/catalog";
+import { fetchPublicArtists, resolveArtistImageUrl, type PublicArtist } from "@/lib/rasa/artists-api";
 import { card, gridAnimItem, lnk } from "@/lib/rasa/ui";
 import { RasaImage } from "./RasaImage";
 import { ContactRow } from "./ContactRow";
@@ -24,28 +25,75 @@ const PRI = [
   "shruthi",
 ];
 
-function rk(id: string) {
+function rk(id: string, liveSlugs: Set<string>) {
   const i = PRI.indexOf(id);
-  return i < 0 ? (ARTISTS.some((a) => a.id === id) ? 50 : 60) : i;
+  return i < 0 ? (liveSlugs.has(id) || ARTISTS.some((a) => a.id === id) ? 50 : 60) : i;
+}
+
+type FullArtistCard = {
+  id: string;
+  name: string;
+  role: string;
+  category: string;
+  imgUrl: string | null;
+  pos?: string;
+};
+
+function mapApiArtist(a: PublicArtist): FullArtistCard {
+  const local = byArtistId(a.slug);
+  const category = a.socialLinks?.category || local?.c || "well";
+  const imgUrl = resolveArtistImageUrl(a.profileImage) ?? resolveArtistImageUrl(a.photos?.[0]?.imageUrl);
+  return {
+    id: a.slug,
+    name: a.name,
+    role: a.designation || local?.r || "",
+    category,
+    imgUrl,
+    pos: local?.pos,
+  };
 }
 
 export function ArtistsGrid() {
   const [acat, setAcat] = useState("all");
+  const [liveArtists, setLiveArtists] = useState<PublicArtist[] | null>(null);
+
+  useEffect(() => {
+    let cancel = false;
+    fetchPublicArtists()
+      .then((rows) => {
+        if (!cancel && rows.length > 0) setLiveArtists(rows);
+      })
+      .catch(() => null);
+    return () => {
+      cancel = true;
+    };
+  }, []);
 
   const items = useMemo(() => {
-    const L = ARTISTS.filter((a) => acat === "all" || a.c === acat);
-    const Q = SOON.filter((a) => acat === "all" || a[2] === acat);
+    const fullList: FullArtistCard[] = liveArtists
+      ? liveArtists.map(mapApiArtist)
+      : ARTISTS.map((a) => ({
+          id: a.id,
+          name: a.n,
+          role: a.r,
+          category: a.c,
+          imgUrl: a.img.length ? a.img[0] : null,
+          pos: a.pos,
+        }));
+    const liveSlugs = new Set(fullList.map((a) => a.id));
+    const L = fullList.filter((a) => acat === "all" || a.category === acat);
+    const Q = SOON.filter((a) => !liveSlugs.has(a[0].toLowerCase()) && (acat === "all" || a[2] === acat));
     type Row =
-      | { k: string; i: number; type: "full"; artist: (typeof L)[0] }
+      | { k: string; i: number; type: "full"; artist: FullArtistCard }
       | { k: string; i: number; type: "soon"; soon: (typeof Q)[0] };
     const rows: Row[] = [
       ...L.map((a, i) => ({ k: a.id, i, type: "full" as const, artist: a })),
       ...Q.map((a, i) => ({ k: a[0], i: i + 100, type: "soon" as const, soon: a })),
     ];
     rows.forEach((x, idx) => (x.i = idx));
-    rows.sort((p, q) => rk(p.k) - rk(q.k) || p.i - q.i);
+    rows.sort((p, q) => rk(p.k, liveSlugs) - rk(q.k, liveSlugs) || p.i - q.i);
     return rows;
-  }, [acat]);
+  }, [acat, liveArtists]);
 
   return (
     <>
@@ -71,22 +119,31 @@ export function ArtistsGrid() {
           x.type === "full" ? (
             <div key={x.k} data-scroll-item className={gridAnimItem}>
             <Link href={`/artists/${x.artist.id}`} className="block h-full no-underline hover:[&_h4]:underline">
-              {x.artist.img.length ? (
-                <RasaImage
-                  img={x.artist.img[0]}
-                  alt={x.artist.n}
-                  className="!aspect-[4/5] hover:brightness-105"
-                  style={{ objectPosition: x.artist.pos || "50% 30%" }}
-                  width={500}
-                  height={625}
-                />
+              {x.artist.imgUrl ? (
+                x.artist.imgUrl.startsWith("/") || /^https?:\/\//i.test(x.artist.imgUrl) ? (
+                  <img
+                    src={x.artist.imgUrl}
+                    alt={x.artist.name}
+                    className="block aspect-[4/5] w-full rounded-rasa bg-plum-d object-cover hover:brightness-105"
+                    style={{ objectPosition: x.artist.pos || "50% 30%" }}
+                  />
+                ) : (
+                  <RasaImage
+                    img={x.artist.imgUrl}
+                    alt={x.artist.name}
+                    className="!aspect-[4/5] hover:brightness-105"
+                    style={{ objectPosition: x.artist.pos || "50% 30%" }}
+                    width={500}
+                    height={625}
+                  />
+                )
               ) : (
                 <div className="grid aspect-[4/5] place-items-center rounded-rasa border-2 border-dashed border-[#c9b0cd] bg-[repeating-linear-gradient(45deg,#faf6fb,#faf6fb_10px,#f2e8f3_10px,#f2e8f3_20px)] p-3 text-center text-[0.85rem] text-[#7d5f82]">
                   Photo to come
                 </div>
               )}
-              <h4 className="mt-2.5 font-body text-[1.05rem] font-bold text-plum">{x.artist.n}</h4>
-              <p className="text-[0.95rem] text-muted">{x.artist.r}</p>
+              <h4 className="mt-2.5 font-body text-[1.05rem] font-bold text-plum">{x.artist.name}</h4>
+              <p className="text-[0.95rem] text-muted">{x.artist.role}</p>
             </Link>
             </div>
           ) : (

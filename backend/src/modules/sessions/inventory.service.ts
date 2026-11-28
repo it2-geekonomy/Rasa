@@ -284,7 +284,7 @@ export class InventoryService {
     await this.requireSession(sessionId);
     const inCheckout = await this.prisma.bookingSeat.count({
       where: {
-        eventSeat: { eventSessionId: sessionId, holdToken, status: EventSeatStatus.HELD },
+        eventSeat: { holdToken, status: EventSeatStatus.HELD },
         booking: { bookingStatus: { in: ['PENDING', 'CONFIRMED'] } },
       },
     });
@@ -293,7 +293,6 @@ export class InventoryService {
     }
     const released = await this.prisma.eventSeat.updateMany({
       where: {
-        eventSessionId: sessionId,
         holdToken,
         status: EventSeatStatus.HELD,
       },
@@ -355,7 +354,7 @@ export class InventoryService {
     if (snapshot.bookingMode === 'SEAT_BASED') {
       throw new BadRequestException('This session uses seat holds');
     }
-    if (snapshot.bookingMode === 'FREE_ENTRY' && snapshot.capacity == null) {
+    if (snapshot.capacity == null) {
       return snapshot;
     }
     if (snapshot.remaining == null || quantity > snapshot.remaining) {
@@ -413,7 +412,7 @@ export class InventoryService {
         status: EventSeatStatus.HELD,
         holdExpiresAt: { lte: now },
       },
-      select: { id: true, bookingSeats: { select: { bookingId: true } } },
+      select: { id: true, holdToken: true, bookingSeats: { select: { bookingId: true } } },
     });
     const bookingIds = [
       ...new Set(stale.flatMap((seat) => seat.bookingSeats.map((line) => line.bookingId))),
@@ -425,8 +424,15 @@ export class InventoryService {
       });
     }
     if (stale.length > 0) {
+      const tokens = [...new Set(stale.map((seat) => seat.holdToken).filter((token): token is string => Boolean(token)))];
       await tx.eventSeat.updateMany({
-        where: { id: { in: stale.map((seat) => seat.id) }, status: EventSeatStatus.HELD },
+        where: {
+          status: EventSeatStatus.HELD,
+          OR: [
+            { id: { in: stale.map((seat) => seat.id) } },
+            ...(tokens.length > 0 ? [{ holdToken: { in: tokens } }] : []),
+          ],
+        },
         data: {
           status: EventSeatStatus.AVAILABLE,
           holdToken: null,
@@ -434,6 +440,100 @@ export class InventoryService {
         },
       });
     }
+  }
+
+  private async holdDayPassSeats(
+    tx: Tx,
+    sessionId: string,
+    seatIds: string[],
+    holdToken: string,
+    expiresAt: Date,
+  ) {
+    const sessionIds = await this.dayPassSessionIds(tx, sessionId);
+    if (sessionIds.length === 0 || seatIds.length === 0) return;
+    const rows = await tx.eventSeat.findMany({
+      where: { eventSessionId: { in: sessionIds }, seatId: { in: seatIds } },
+      select: { id: true, status: true, allocationOwner: true },
+    });
+    const reservable = rows.filter(
+      (row) =>
+        row.allocationOwner === AllocationOwner.RASA &&
+        (row.status === EventSeatStatus.AVAILABLE || row.status === EventSeatStatus.BLOCKED),
+    );
+    if (rows.length !== sessionIds.length * seatIds.length || reservable.length !== rows.length) {
+      throw new ConflictException('That seat is already reserved for another show on the same day');
+    }
+    const updated = await tx.eventSeat.updateMany({
+      where: {
+        id: { in: reservable.map((row) => row.id) },
+        allocationOwner: AllocationOwner.RASA,
+        status: { in: [EventSeatStatus.AVAILABLE, EventSeatStatus.BLOCKED] },
+      },
+      data: { status: EventSeatStatus.HELD, holdToken, holdExpiresAt: expiresAt },
+    });
+    if (updated.count !== reservable.length) {
+      throw new ConflictException('That seat is already reserved for another show on the same day');
+    }
+  }
+
+  private async dayPassSessionIds(db: Tx | PrismaService, sessionId: string) {
+    const session = await db.eventSession.findUnique({
+      where: { id: sessionId },
+      select: { id: true, venueId: true, startAt: true, event: { select: { slug: true } } },
+    });
+    if (!session || session.event.slug !== 'fusion-express') return [];
+    const { from, to } = istDayBounds(session.startAt);
+    const others = await db.eventSession.findMany({
+      where: {
+        id: { not: session.id },
+        venueId: session.venueId,
+        status: { not: 'CANCELLED' },
+        startAt: { gte: from, lt: to },
+        event: { bookingMode: 'SEAT_BASED', status: 'PUBLISHED' },
+      },
+      select: { id: true },
+    });
+    return others.map((row) => row.id);
+  }
+
+  private async maskDayPassSeats(
+    sessionId: string,
+    sections: Array<{ seats: Array<Record<string, unknown>> }>,
+  ) {
+    const sessionIds = await this.dayPassSessionIds(this.prisma, sessionId);
+    if (sessionIds.length === 0) return sections;
+    const seatIds = sections.flatMap((section) => section.seats.map((seat) => String(seat.seatId)));
+    const rows = await this.prisma.eventSeat.findMany({
+      where: { eventSessionId: { in: sessionIds }, seatId: { in: seatIds } },
+      select: { seatId: true, eventSessionId: true, status: true, allocationOwner: true },
+    });
+    const grouped = new Map<string, typeof rows>();
+    for (const row of rows) {
+      const list = grouped.get(row.seatId) ?? [];
+      list.push(row);
+      grouped.set(row.seatId, list);
+    }
+    for (const section of sections) {
+      for (const seat of section.seats) {
+        if (seat.bookable !== true) continue;
+        const matches = grouped.get(String(seat.seatId)) ?? [];
+        if (matches.length !== sessionIds.length) {
+          seat.bookable = false;
+          seat.status = 'BLOCKED';
+          continue;
+        }
+        if (matches.some((row) => row.allocationOwner !== AllocationOwner.RASA || row.status === 'BOOKED')) {
+          seat.bookable = false;
+          seat.status = 'BOOKED';
+          continue;
+        }
+        if (matches.some((row) => row.status === 'HELD')) {
+          seat.bookable = false;
+          seat.status = 'HELD';
+        }
+      }
+    }
+    return sections;
   }
 
   private allocationWhere(sessionId: string, dto: UpdateAllocationDto): Prisma.EventSeatWhereInput {
@@ -475,7 +575,7 @@ export class InventoryService {
   }
 
   private ttlMs() {
-    const minutes = this.config.get<number>('holds.ttlMinutes') ?? 10;
+    const minutes = this.config.get<number>('holds.ttlMinutes') ?? 5;
     return minutes * 60 * 1000;
   }
 
@@ -559,4 +659,11 @@ export class InventoryService {
     }
     return { status: 'BLOCKED', bookable: false };
   }
+}
+
+function istDayBounds(instant: Date) {
+  const shift = 330 * 60 * 1000;
+  const ist = new Date(instant.getTime() + shift);
+  const from = Date.UTC(ist.getUTCFullYear(), ist.getUTCMonth(), ist.getUTCDate()) - shift;
+  return { from: new Date(from), to: new Date(from + 24 * 60 * 60 * 1000) };
 }

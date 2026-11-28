@@ -14,9 +14,7 @@
    [
     "poster-kathak",
     "Poster: A Kathak Performance by Labonee Mohanta"
-   ]
-  ],
-  "s9": [
+   ],
    [
     "poster-khechara",
     "Poster: Khechara Academy of Bharatanatyam"
@@ -26,9 +24,7 @@
    [
     "poster-alchemy",
     "Poster: Dance Alchemy by Lourd Vijay Dance Studio"
-   ]
-  ],
-  "s10": [
+   ],
    [
     "poster-nimi",
     "Poster: Sri Nimishambha School of Dance"
@@ -44,6 +40,10 @@
    [
     "poster-warrior",
     "Poster: The Warrior's Path, Kalaripayattu by Atha Beyond"
+   ],
+   [
+    "poster-mb",
+    "Poster of Mahabharata: A Mirror to Humanity, The Dilemma of Dharma"
    ]
   ]
  },
