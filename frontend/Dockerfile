@@ -1,11 +1,11 @@
 # syntax=docker/dockerfile:1
 FROM node:22-alpine AS builder
 
-RUN npm install -g pnpm
+RUN npm install -g pnpm@9
 WORKDIR /app
 
 COPY frontend/package.json frontend/pnpm-lock.yaml* ./
-RUN pnpm install --frozen-lockfile || pnpm install
+RUN pnpm install --no-frozen-lockfile
 
 COPY frontend/ ./
 
@@ -16,7 +16,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm run build
 
 FROM node:22-alpine AS runner
-RUN npm install -g pnpm
+RUN npm install -g pnpm@9
 
 WORKDIR /app
 ENV NODE_ENV=production

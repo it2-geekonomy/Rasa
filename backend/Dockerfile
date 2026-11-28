@@ -1,11 +1,11 @@
 # syntax=docker/dockerfile:1
 FROM node:22-alpine AS builder
 
-RUN npm install -g pnpm
+RUN npm install -g pnpm@9
 WORKDIR /app/backend
 
 COPY backend/package.json backend/pnpm-lock.yaml* ./
-RUN pnpm install --frozen-lockfile || pnpm install
+RUN pnpm install --no-frozen-lockfile
 
 COPY backend/ ./
 # Copy read-only seed inputs referenced by backend/prisma/seed.ts
@@ -17,7 +17,7 @@ RUN pnpm run build
 
 FROM node:22-alpine AS runner
 RUN apk add --no-cache openssl
-RUN npm install -g pnpm
+RUN npm install -g pnpm@9
 
 WORKDIR /app/backend
 ENV NODE_ENV=production
