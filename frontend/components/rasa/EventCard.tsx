@@ -8,6 +8,7 @@ import type { FestivalEvent } from "@/lib/rasa/types";
 import { ARTISTS, TLAB } from "@/lib/rasa/catalog";
 import { fmtMinutes } from "@/lib/rasa/time";
 import { lnk } from "@/lib/rasa/ui";
+import { parseBannerImages } from "@/lib/rasa/banner-images";
 import { RasaImage } from "./RasaImage";
 import { usePlan } from "@/contexts/plan-context";
 import { useToast } from "@/contexts/toast-context";
@@ -28,12 +29,13 @@ function typeBorder(ty: string) {
 
 type Props = {
   event: FestivalEvent;
+  bannerImage?: string | null;
   defaultOpen?: boolean;
   /** Opens the seat card for a show that is on sale. */
   onPickTickets?: () => void;
 };
 
-export function EventCard({ event: e, defaultOpen, onPickTickets }: Props) {
+export function EventCard({ event: e, bannerImage, defaultOpen, onPickTickets }: Props) {
   const [open, setOpen] = useState(defaultOpen ?? false);
   const reduced = useReducedMotion();
   const { plan, togglePlan } = usePlan();
@@ -136,7 +138,19 @@ export function EventCard({ event: e, defaultOpen, onPickTickets }: Props) {
                 ))}
               </p>
             ) : null}
-            {e.img?.length ? (
+            {parseBannerImages(bannerImage).length > 0 ? (
+              <div className="mt-2.5 flex flex-wrap gap-3">
+                {parseBannerImages(bannerImage).map((url, idx) => (
+                  <img
+                    key={`${url}-${idx}`}
+                    src={url}
+                    alt={`${e.t}${idx > 0 ? ` (${idx + 1})` : ""}`}
+                    className="max-h-[360px] w-full max-w-[420px] rounded-xl border border-line object-cover"
+                    loading="lazy"
+                  />
+                ))}
+              </div>
+            ) : bannerImage === undefined && e.img?.length ? (
               <>
                 <div className="mt-2.5 flex flex-wrap gap-3">
                   {e.img.map((k, i) => (

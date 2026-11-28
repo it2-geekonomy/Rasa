@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { api, inr, when } from "@/lib/admin/api";
 import { useAdmin } from "./admin-gate";
-import { EyeIcon, fieldClass, Notice } from "./ui";
+import { EyeIcon, fieldClass, Notice, PaginationBar } from "./ui";
 
 type BookingRow = {
   id: string;
@@ -35,7 +35,11 @@ export function BookingsScreen({
   const [sessions, setSessions] = useState<SessionOption[]>([]);
   const [sessionId, setSessionId] = useState("");
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [error, setError] = useState("");
+  const pageSize = 10;
   const isWorkshop = mode === "CAPACITY_BASED";
   const isFree = mode === "FREE_ENTRY";
   const heading = isFree
@@ -69,18 +73,30 @@ export function BookingsScreen({
   }, [token, mode]);
 
   useEffect(() => {
+    setPage(1);
+  }, [search, sessionId, mode]);
+
+  useEffect(() => {
     let cancel = false;
     const query = new URLSearchParams({
-      limit: "50",
+      page: String(page),
+      limit: String(pageSize),
       bookingStatus: "CONFIRMED",
       bookingMode: mode,
     });
     if (sessionId) query.set("eventSessionId", sessionId);
     if (search.trim()) query.set("search", search.trim());
     const load = () => {
-      api<{ data: BookingRow[] }>(`/bookings?${query}`, { token })
+      api<{
+        data: BookingRow[];
+        meta?: { total: number; totalPages: number; page: number; limit: number };
+      }>(`/bookings?${query}`, { token })
         .then((result) => {
-          if (!cancel) setRows(result.data);
+          if (!cancel) {
+            setRows(result.data);
+            setTotal(result.meta?.total ?? result.data.length);
+            setTotalPages(result.meta?.totalPages ?? 1);
+          }
         })
         .catch((caught) => {
           if (!cancel) setError(caught instanceof Error ? caught.message : "Could not load bookings");
@@ -97,7 +113,7 @@ export function BookingsScreen({
       cancel = true;
       window.clearTimeout(handle);
     };
-  }, [search, token, mode, sessionId]);
+  }, [search, token, mode, sessionId, page]);
 
   return (
     <>
@@ -181,6 +197,13 @@ export function BookingsScreen({
           </tbody>
         </table>
       </div>
+      <PaginationBar
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        limit={pageSize}
+        onPageChange={setPage}
+      />
     </>
   );
 }

@@ -313,7 +313,7 @@ const AUDITORIUM_SHOWS: Array<{
 }> = [
   {
     slug: 'three-forces-agam-band',
-    title: 'Three Forces, One Stage, then Agam Band',
+    title: 'Three Forces, One Stage and Agam Band',
     sessionName: 'Friday evening',
     startAt: '2027-01-08T13:00:00.000Z',
     endAt: '2027-01-08T16:30:00.000Z',
@@ -325,7 +325,7 @@ const AUDITORIUM_SHOWS: Array<{
   },
   {
     slug: 'kathak-and-bharatanatyam',
-    title: 'A Kathak Performance, then Khechara Academy of Bharatanatyam',
+    title: 'A Kathak Performance and Khechara Academy of Bharatanatyam',
     sessionName: 'Saturday afternoon',
     startAt: '2027-01-09T10:00:00.000Z',
     endAt: '2027-01-09T12:15:00.000Z',
@@ -337,7 +337,7 @@ const AUDITORIUM_SHOWS: Array<{
   },
   {
     slug: 'dance-alchemy-and-nimishambha',
-    title: 'Dance Alchemy, then Sri Nimishambha School of Dance',
+    title: 'Dance Alchemy and Sri Nimishambha School of Dance',
     sessionName: 'Saturday early evening',
     startAt: '2027-01-09T12:15:00.000Z',
     endAt: '2027-01-09T14:05:00.000Z',
@@ -356,7 +356,7 @@ const AUDITORIUM_SHOWS: Array<{
     shortDescription:
       'Saturday 9 January, 7:45 PM to 10:00 PM in the Auditorium. The sheet says this ticket also covers the other ticketed shows that day.',
     description:
-      'Fusion Express, 7:45 PM onwards: Bickram Ghosh, Ghatam Giridhar Udupa, Sumanth Manjunath, Venkatraman S, Banjo Rancho, Ned McGowan and Quinten Rutgers. Mysore Manjunath joins for the last 30 minutes. The spreadsheet says one ticket grants access to the other ticketed events that day, and it has no ticket price yet, so every seat stays blocked until an admin opens it.',
+      'Fusion Express, 7:45 PM onwards: Bickram Ghosh, Ghatam Giridhar Udupa, Sumanth Manjunath, Venkatraman S, Banjo Rancho, Ned McGowan and Quinten Rutgers. Mysore Manjunath joins for the last 30 minutes.',
     artistSlugs: [
       'bickram',
       'sumanth',
@@ -370,7 +370,7 @@ const AUDITORIUM_SHOWS: Array<{
   },
   {
     slug: 'warriors-path-and-mahabharata',
-    title: "The Warrior's Path, then Mahabharata: A Mirror to Humanity",
+    title: "The Warrior's Path and Mahabharata: A Mirror to Humanity",
     sessionName: 'Sunday evening',
     startAt: '2027-01-10T13:30:00.000Z',
     endAt: '2027-01-10T16:00:00.000Z',
@@ -401,13 +401,21 @@ async function seedArtists() {
       ...(item.cred ? { credit: item.cred } : {}),
     };
 
+    const existingArtist = await prisma.artist.findUnique({
+      where: { slug: item.id },
+      select: { profileImage: true },
+    });
+    const keepR2Profile = existingArtist?.profileImage?.startsWith('http')
+      ? existingArtist.profileImage
+      : profileImage;
+
     const saved = await prisma.artist.upsert({
       where: { slug: item.id },
       update: {
         name: item.n,
         designation: item.r || null,
         biography,
-        profileImage,
+        profileImage: keepR2Profile,
         socialLinks,
         isActive: true,
       },
@@ -427,8 +435,11 @@ async function seedArtists() {
       where: { artistId: saved.id },
       select: { imageUrl: true },
     });
-    const existingSet = new Set(existingPhotos.map((p) => p.imageUrl));
-    const missing = resolvedUrls.filter((url) => !existingSet.has(url));
+    const fileOf = (url: string) => url.split('/').pop()?.toLowerCase() ?? url.toLowerCase();
+    const existingFiles = new Set(existingPhotos.map((p) => fileOf(p.imageUrl)));
+    if (profileImage) existingFiles.add(fileOf(profileImage));
+    const galleryUrls = [...new Set(resolvedUrls.slice(1))];
+    const missing = galleryUrls.filter((url) => !existingFiles.has(fileOf(url)));
     if (missing.length > 0) {
       await prisma.artistPhoto.createMany({
         data: missing.map((imageUrl) => ({ artistId: saved.id, imageUrl })),
@@ -533,13 +544,28 @@ async function seedAuditoriumShows(
         },
       }));
 
+    const fixedPrice =
+      show.slug === 'kathak-and-bharatanatyam' || show.slug === 'dance-alchemy-and-nimishambha'
+        ? 250
+        : null;
+
     const already = await prisma.eventSeat.count({ where: { eventSessionId: session.id } });
     if (already > 0) {
+      if (fixedPrice !== null) {
+        await prisma.eventSession.update({ where: { id: session.id }, data: { price: fixedPrice } });
+        await prisma.eventSeat.updateMany({
+          where: { eventSessionId: session.id },
+          data: { price: fixedPrice },
+        });
+      }
       console.log(`${show.title} already has ${already} seats`);
       continue;
     }
 
     const now = new Date();
+    if (fixedPrice !== null) {
+      await prisma.eventSession.update({ where: { id: session.id }, data: { price: fixedPrice } });
+    }
     await prisma.eventSeat.createMany({
       data: seats.map((seat) => ({
         eventSessionId: session.id,
@@ -548,7 +574,7 @@ async function seedAuditoriumShows(
         status: isWebsiteOpenSeat(seat.rowLabel, seat.seatNumber)
           ? EventSeatStatus.AVAILABLE
           : EventSeatStatus.BLOCKED,
-        price: AUDITORIUM_ROW_PRICE[seat.rowLabel] ?? 0,
+        price: fixedPrice ?? AUDITORIUM_ROW_PRICE[seat.rowLabel] ?? 0,
         updatedAt: now,
       })),
     });
@@ -678,6 +704,21 @@ const WORKSHOPS: Array<{
     category: 'Performance',
     shortDescription: 'Sunday 10 January, Post-show. Open for all.',
     description: 'Meet the artists after the show.',
+    artistSlugs: [],
+  },
+  {
+    slug: 'organic-food-breakfast',
+    title: 'Organic Food Breakfast',
+    sessionName: 'Sunday morning',
+    venue: 'Amphitheatre',
+    startAt: '2027-01-10T04:00:00.000Z',
+    endAt: '2027-01-10T06:00:00.000Z',
+    price: 0,
+    slots: null,
+    eventType: 'EXHIBITION',
+    category: 'Art and food',
+    shortDescription: 'Arogya (HCG). Sunday 10 January, 9:30 AM to 11:30 AM, Amphitheatre.',
+    description: 'An organic food breakfast by Arogya, HCG. Price to be announced.',
     artistSlugs: [],
   },
   {
@@ -962,6 +1003,45 @@ async function seedWorkshops(
   }
 }
 
+const R2_IMAGE_BASE = `${(
+  process.env.R2_PUBLIC_URL || 'https://pub-bbab4b37d630465e8c49b68c7d045302.r2.dev'
+).replace(/\/$/, '')}/rasa/images`;
+const r2Img = (file: string) => `${R2_IMAGE_BASE}/${encodeURIComponent(file)}`;
+
+const DEFAULT_EVENT_BANNERS: Record<string, string> = {
+  // Auditorium shows (exact posters from posters-and-workshops.json, hosted on R2)
+  'three-forces-agam-band': JSON.stringify([r2Img('poster-fri1.jpg'), r2Img('poster-fri2.jpg')]),
+  'kathak-and-bharatanatyam': JSON.stringify([r2Img('poster-kathak.jpg'), r2Img('poster-khechara.jpg')]),
+  'dance-alchemy-and-nimishambha': JSON.stringify([r2Img('poster-alchemy.jpg'), r2Img('poster-nimi.jpg')]),
+  'fusion-express': r2Img('poster-fusion.jpg'),
+  'warriors-path-and-mahabharata': JSON.stringify([r2Img('poster-warrior.jpg'), r2Img('poster-mb.jpg')]),
+  // Workshops (exact posters from events.json, hosted on R2)
+  'kolu-kalaripayattu': r2Img('Kalaripayatu-01.jpg'),
+  'salsa-workshop': r2Img('Salsa-01.jpg'),
+  'jive-workshop': r2Img('Jive-01.jpg'),
+  'salsa-jive-combo': r2Img('Salsa-01.jpg'),
+  'sound-healing-session-1': r2Img('Sound Healing-01.jpg'),
+  'sound-healing-session-2': r2Img('Sound Healing-01.jpg'),
+  'art-of-drumming': r2Img('Art of Drumming-01.jpg'),
+  'yoga-raaga': r2Img('Yoga Raaga-01.jpg'),
+  'meipadam-workshop': r2Img('Meipadam-02-01.jpg'),
+  'bharatanatyam-dikshitar-kriti': r2Img('Bharatanatyam-01.jpg'),
+  'carving-rhythm-linocut': r2Img('Linocut_-03.jpg'),
+  'fusion-culinary-exploration': r2Img('Fusion Culinary.jpg'),
+};
+
+async function seedEventBanners() {
+  let updated = 0;
+  for (const [slug, bannerImage] of Object.entries(DEFAULT_EVENT_BANNERS)) {
+    const res = await prisma.event.updateMany({
+      where: { slug, bannerImage: null },
+      data: { bannerImage },
+    });
+    updated += res.count;
+  }
+  console.log(`Event banners backfilled (only where empty): ${updated}`);
+}
+
 async function main() {
   const adminId = await seedAdmin();
   const venues = await seedVenues();
@@ -978,6 +1058,7 @@ async function main() {
   const artistsBySlug = await seedArtists();
   await seedAuditoriumShows(auditoriumId, adminId, artistsBySlug);
   await seedWorkshops(venues, adminId, artistsBySlug);
+  await seedEventBanners();
 }
 
 main()

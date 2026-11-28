@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Providers } from "@/components/rasa/Providers";
@@ -33,9 +34,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="flex min-h-dvh flex-col font-body text-ink antialiased">
-        <Providers>
-          <SiteFrame>{children}</SiteFrame>
-        </Providers>
+        <Suspense fallback={null}>
+          <Providers>
+            <SiteFrame>{children}</SiteFrame>
+          </Providers>
+        </Suspense>
       </body>
     </html>
   );

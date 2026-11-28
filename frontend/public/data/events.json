@@ -19,7 +19,7 @@
   "ts": "onwards",
   "dl": "Three Forces, One Stage 6:30 to 7:30 PM, then Agam Band from 7:30 PM",
   "ty": "perf",
-  "t": "Three Forces, One Stage, then Agam Band",
+  "t": "Three Forces, One Stage and Agam Band",
   "w": "One ticket (includes both shows)",
   "v": "Auditorium",
   "a": [
@@ -194,7 +194,7 @@
   "s": 930,
   "e": 1065,
   "ty": "perf",
-  "t": "A Kathak Performance, then Khechara Academy of Bharatanatyam",
+  "t": "A Kathak Performance and Khechara Academy of Bharatanatyam",
   "w": "One ticket (includes both shows)",
   "v": "Auditorium",
   "a": [
@@ -209,7 +209,7 @@
   "s": 1065,
   "e": 1175,
   "ty": "perf",
-  "t": "Dance Alchemy, then Sri Nimishambha School of Dance",
+  "t": "Dance Alchemy and Sri Nimishambha School of Dance",
   "w": "One ticket (includes both shows)",
   "v": "Auditorium",
   "a": [
@@ -240,7 +240,6 @@
   "ty": "perf",
   "t": "Fusion Express",
   "w": "Concert night",
-  "pair": "One ticket grants access to all other ticketed events taking place on the same day",
   "v": "Auditorium",
   "a": [
    "bickram",
@@ -412,7 +411,7 @@
   "ts": "onwards",
   "dl": "7:00 PM onwards",
   "ty": "perf",
-  "t": "The Warrior's Path, then Mahabharata: A Mirror to Humanity",
+  "t": "The Warrior's Path and Mahabharata: A Mirror to Humanity",
   "w": "One ticket (includes both shows)",
   "v": "Auditorium",
   "a": [

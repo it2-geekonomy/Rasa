@@ -9,6 +9,7 @@ import {
   formatEnum,
   labelClass,
   Notice,
+  PaginationBar,
   Panel,
   primaryButtonClass,
   quietButtonClass,
@@ -32,7 +33,9 @@ export function VenuesScreen() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [activeFilter, setActiveFilter] = useState("");
+  const [page, setPage] = useState(1);
   const [error, setError] = useState("");
+  const pageSize = 10;
   const [createOpen, setCreateOpen] = useState(false);
   const [createError, setCreateError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -54,9 +57,16 @@ export function VenuesScreen() {
     if (activeFilter === "false" && venue.isActive) return false;
     return true;
   });
+  const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pagedRows = rows.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   useEffect(() => {
-    api<{ data: Venue[] }>("/venues?limit=20", { token })
+    setPage(1);
+  }, [search, typeFilter, activeFilter]);
+
+  useEffect(() => {
+    api<{ data: Venue[] }>("/venues?limit=100", { token })
       .then((result) => setVenues(result.data))
       .catch((caught) =>
         setError(
@@ -240,7 +250,7 @@ export function VenuesScreen() {
           </thead>
 
           <tbody>
-            {rows.map((venue) => (
+            {pagedRows.map((venue) => (
               <tr
                 key={venue.id}
                 className="border-t border-line hover:bg-tint/40"
@@ -289,6 +299,13 @@ export function VenuesScreen() {
           </tbody>
         </table>
       </div>
+      <PaginationBar
+        page={safePage}
+        totalPages={totalPages}
+        total={rows.length}
+        limit={pageSize}
+        onPageChange={setPage}
+      />
     </>
   );
 }

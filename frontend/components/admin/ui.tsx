@@ -101,3 +101,50 @@ export function EyeIcon() {
     </svg>
   );
 }
+
+export function PaginationBar({
+  page,
+  totalPages,
+  total,
+  limit,
+  onPageChange,
+}: {
+  page: number;
+  totalPages: number;
+  total: number;
+  limit: number;
+  onPageChange: (nextPage: number) => void;
+}) {
+  const safeTotalPages = Math.max(1, totalPages);
+  const start = total === 0 ? 0 : (page - 1) * limit + 1;
+  const end = Math.min(total, page * limit);
+
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-rasa border border-line bg-white px-4 py-3 text-sm">
+      <p className="text-muted">
+        {total === 0 ? "Showing 0 results" : `Showing ${start}–${end} of ${total}`}
+      </p>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          className={`${quietButtonClass} !px-3 !py-1.5 disabled:cursor-not-allowed disabled:opacity-50`}
+          disabled={page <= 1}
+          onClick={() => onPageChange(page - 1)}
+        >
+          Previous
+        </button>
+        <span className="px-2 text-muted">
+          Page {page} of {safeTotalPages}
+        </span>
+        <button
+          type="button"
+          className={`${quietButtonClass} !px-3 !py-1.5 disabled:cursor-not-allowed disabled:opacity-50`}
+          disabled={page >= safeTotalPages}
+          onClick={() => onPageChange(page + 1)}
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  );
+}
