@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1
 FROM node:22-alpine AS builder
 
+RUN apk add --no-cache openssl
 RUN npm install -g pnpm@9
 WORKDIR /app/backend
 
