@@ -114,7 +114,7 @@ function toLiveProgrammeItems(rows: PublishedEventRow[]): LiveProgrammeItem[] {
       w: row.shortDescription ?? staticMatch?.w ?? "",
       v: session.venue?.name ?? staticMatch?.v ?? "",
       ty: mapEventType(row.eventType),
-      ws: row.eventType === "WORKSHOP" || staticMatch?.ws,
+      ws: row.eventType === "WORKSHOP" ? 1 : staticMatch?.ws,
       a:
         row.artists.length > 0
           ? row.artists.map((a) => a.artist.slug)
