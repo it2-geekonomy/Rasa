@@ -1,6 +1,7 @@
 import { randomBytes } from 'crypto';
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -9,7 +10,7 @@ import { BookingMode, Prisma } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { pageArgs, pageMeta } from '../../common/utils/pagination';
 import { InventoryService } from '../sessions/inventory.service';
-import { CreateBookingDto } from './dto/booking.dto';
+import { CreateBookingDto, CreateCartBookingDto } from './dto/booking.dto';
 import { ListBookingsQueryDto } from '../payments/dto/payment.dto';
 import { bookingInclude, PaymentsService } from '../payments/payments.service';
 import { qrDataUrl, TicketMailer } from '../tickets/ticket-mailer.service';
@@ -59,6 +60,60 @@ export class BookingsService {
       include: bookingInclude,
     });
     return { booking: refreshed, checkout };
+  }
+
+  async createCart(dto: CreateCartBookingDto) {
+    const created = await this.prisma.$transaction(async (tx) => {
+      const results = [];
+      for (const item of dto.items) {
+        const session = await tx.eventSession.findUnique({
+          where: { id: item.eventSessionId },
+          include: { event: { select: { id: true, status: true, bookingMode: true } } },
+        });
+        if (!session) {
+          throw new NotFoundException('Session not found');
+        }
+        if (session.event.status !== 'PUBLISHED') {
+          throw new BadRequestException('This event is not open for booking');
+        }
+        if (session.status === 'CANCELLED' || session.status === 'SOLD_OUT') {
+          throw new ConflictException('This session is not available for booking');
+        }
+        const singleDto: CreateBookingDto = {
+          eventSessionId: item.eventSessionId,
+          holdToken: item.holdToken,
+          quantity: item.quantity,
+          attendees: item.attendees,
+          customerName: dto.customerName,
+          customerEmail: dto.customerEmail,
+          customerPhone: dto.customerPhone,
+        };
+        const booking =
+          session.event.bookingMode === BookingMode.SEAT_BASED
+            ? await this.createSeatBooking(tx, singleDto, session.price)
+            : await this.createCapacityBooking(tx, singleDto, session);
+        results.push(booking);
+      }
+      return results;
+    });
+
+    const freeConfirmed = created.filter((b) => b.bookingStatus === 'CONFIRMED');
+    for (const b of freeConfirmed) {
+      void this.mailer.deliver(b.id);
+    }
+
+    const pendingPaid = created.filter((b) => b.bookingStatus !== 'CONFIRMED');
+    if (pendingPaid.length === 0) {
+      return { bookings: created, checkout: null };
+    }
+
+    const checkout = await this.payments.createCartCheckout(pendingPaid.map((b) => b.id));
+    const refreshed = await this.prisma.booking.findMany({
+      where: { id: { in: created.map((b) => b.id) } },
+      include: bookingInclude,
+      orderBy: { createdAt: 'asc' },
+    });
+    return { bookings: refreshed, checkout };
   }
 
   async retryCheckout(bookingId: string) {
