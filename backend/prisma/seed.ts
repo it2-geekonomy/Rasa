@@ -544,13 +544,28 @@ async function seedAuditoriumShows(
         },
       }));
 
+    const fixedPrice =
+      show.slug === 'kathak-and-bharatanatyam' || show.slug === 'dance-alchemy-and-nimishambha'
+        ? 250
+        : null;
+
     const already = await prisma.eventSeat.count({ where: { eventSessionId: session.id } });
     if (already > 0) {
+      if (fixedPrice !== null) {
+        await prisma.eventSession.update({ where: { id: session.id }, data: { price: fixedPrice } });
+        await prisma.eventSeat.updateMany({
+          where: { eventSessionId: session.id },
+          data: { price: fixedPrice },
+        });
+      }
       console.log(`${show.title} already has ${already} seats`);
       continue;
     }
 
     const now = new Date();
+    if (fixedPrice !== null) {
+      await prisma.eventSession.update({ where: { id: session.id }, data: { price: fixedPrice } });
+    }
     await prisma.eventSeat.createMany({
       data: seats.map((seat) => ({
         eventSessionId: session.id,
@@ -559,7 +574,7 @@ async function seedAuditoriumShows(
         status: isWebsiteOpenSeat(seat.rowLabel, seat.seatNumber)
           ? EventSeatStatus.AVAILABLE
           : EventSeatStatus.BLOCKED,
-        price: AUDITORIUM_ROW_PRICE[seat.rowLabel] ?? 0,
+        price: fixedPrice ?? AUDITORIUM_ROW_PRICE[seat.rowLabel] ?? 0,
         updatedAt: now,
       })),
     });
