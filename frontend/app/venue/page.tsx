@@ -4,6 +4,7 @@ import { rasaTitle } from "@/lib/rasa/metadata";
 export const metadata = rasaTitle("Festival Venue");
 import { PageBody } from "@/components/rasa/motion/PageBody";
 import { RasaImage } from "@/components/rasa/RasaImage";
+import { VenueGallery } from "@/components/rasa/VenueGallery";
 import { btn, card, grid2, grid3, note, wrapTight } from "@/lib/rasa/ui";
 
 export default function VenuePage() {
@@ -52,9 +53,7 @@ export default function VenuePage() {
           </div>
         </div>
         <h2 className="mt-11 font-display text-[clamp(1.5rem,3vw,2rem)]">Photos of the venue</h2>
-        <div className="mt-2.5 grid aspect-[16/6] place-items-center rounded-rasa border-2 border-dashed border-[#c9b0cd] bg-[repeating-linear-gradient(45deg,#faf6fb,#faf6fb_10px,#f2e8f3_10px,#f2e8f3_20px)] text-[0.85rem] text-[#7d5f82]">
-          Venue photos to come
-        </div>
+        <VenueGallery />
       </PageBody>
     </>
   );
