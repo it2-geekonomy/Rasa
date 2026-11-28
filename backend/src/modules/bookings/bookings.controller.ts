@@ -3,7 +3,12 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Public } from '../../common/decorators/public.decorator';
 import { ListBookingsQueryDto } from '../payments/dto/payment.dto';
 import { BookingsService } from './bookings.service';
-import { BookingLookupQueryDto, BookingStatusQueryDto, CreateBookingDto } from './dto/booking.dto';
+import {
+  BookingLookupQueryDto,
+  BookingStatusQueryDto,
+  CreateBookingDto,
+  CreateCartBookingDto,
+} from './dto/booking.dto';
 
 @ApiTags('Bookings')
 @Controller('bookings')
@@ -15,6 +20,13 @@ export class BookingsController {
   @ApiOperation({ summary: 'Create a booking from a seat hold or workshop capacity' })
   create(@Body() dto: CreateBookingDto) {
     return this.bookings.create(dto);
+  }
+
+  @Public()
+  @Post('cart')
+  @ApiOperation({ summary: 'Create multiple bookings from a cart with one combined payment' })
+  createCart(@Body() dto: CreateCartBookingDto) {
+    return this.bookings.createCart(dto);
   }
 
   @Get()
